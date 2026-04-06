@@ -1,12 +1,7 @@
-import { AppLayout } from './components/layout/AppLayout'
-import { DndProvider } from './providers/DndProvider'
+import { AlchemixShell } from './components/layout/AlchemixShell'
 
 function App() {
-  return (
-    <DndProvider>
-      <AppLayout />
-    </DndProvider>
-  )
+  return <AlchemixShell />
 }
 
 export default App

@@ -1,0 +1,52 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-h);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+}
+
+.canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--panel-bg) 55%, transparent);
+  overflow: hidden;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.canvas[data-over] {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  background: var(--accent-bg);
+}
+
+.hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem 1.25rem;
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--text);
+  opacity: 0.75;
+  pointer-events: none;
+}

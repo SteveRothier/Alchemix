@@ -1,0 +1,21 @@
+.placed {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  touch-action: none;
+}
+
+.dragSurface {
+  cursor: grab;
+  border-radius: 6px;
+  outline: none;
+}
+
+.dragSurface:active {
+  cursor: grabbing;
+}
+
+.placed[data-over-target] .dragSurface {
+  box-shadow: 0 0 0 2px var(--accent);
+  border-radius: 6px;
+}

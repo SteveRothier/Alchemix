@@ -1,0 +1,94 @@
+.viewport {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 17rem);
+  flex: 1 1 0;
+  min-height: 0;
+  gap: 0;
+  text-align: left;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+  min-height: 0;
+}
+
+.gameZone {
+  flex: 1 1 0;
+  min-height: 0;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.characterZone {
+  flex: 0 0 clamp(56px, 10dvh, 88px);
+  padding: 0.45rem 0.85rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.characterPlaceholder {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text);
+  opacity: 0.8;
+}
+
+.quickStats {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.25rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.statsLine {
+  margin: 0;
+}
+
+.inventory {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--panel-bg, var(--code-bg));
+  height: 100%;
+}
+
+.inventoryHeader {
+  flex-shrink: 0;
+  padding: 0.5rem 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.inventoryTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+@media (max-width: 560px) {
+  .shell {
+    grid-template-columns: minmax(0, 1fr) minmax(128px, 32vw);
+  }
+}
