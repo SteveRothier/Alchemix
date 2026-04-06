@@ -1,0 +1,82 @@
+.shell {
+  display: grid;
+  grid-template-columns: 1fr min(360px, 34vw);
+  min-height: 100%;
+  gap: 0;
+  text-align: left;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  min-height: 100%;
+}
+
+.gameZone {
+  flex: 1 1 auto;
+  min-height: 200px;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.characterZone {
+  flex: 0 0 auto;
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.quickStats {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.statsLine {
+  margin: 0;
+}
+
+.inventory {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--panel-bg, var(--code-bg));
+}
+
+.inventoryHeader {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.inventoryTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.placeholder {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text);
+  opacity: 0.85;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .main {
+    border-right: none;
+  }
+
+  .inventory {
+    border-top: 1px solid var(--border);
+    min-height: 240px;
+  }
+}
