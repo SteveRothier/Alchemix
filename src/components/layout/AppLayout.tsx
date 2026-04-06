@@ -1,6 +1,14 @@
+import { tierFromDiscoveryCount } from '../../lib/progression'
+import {
+  selectDiscoveryCount,
+  useAlchemixStore,
+} from '../../store/useAlchemixStore'
 import styles from './AppLayout.module.css'
 
 export function AppLayout() {
+  const discoveryCount = useAlchemixStore(selectDiscoveryCount)
+  const tier = tierFromDiscoveryCount(discoveryCount)
+
   return (
     <div className={styles.shell}>
       <div className={styles.main}>
@@ -11,8 +19,12 @@ export function AppLayout() {
           <p className={styles.placeholder}>Personnage &amp; effets (à venir)</p>
         </section>
         <aside className={styles.quickStats} aria-label="Statistiques rapides">
-          <p className={styles.statsLine}>Découvertes : —</p>
-          <p className={styles.statsLine}>Tier : —</p>
+          <p className={styles.statsLine}>
+            Découvertes : {discoveryCount}
+          </p>
+          <p className={styles.statsLine}>
+            Tier : {tier}/10
+          </p>
         </aside>
       </div>
       <aside className={styles.inventory} aria-label="Inventaire">
