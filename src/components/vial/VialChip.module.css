@@ -78,6 +78,18 @@
   font-weight: 700;
 }
 
+.chipInventory[data-vial-type='creature'] {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+}
+
+.chipInventory[data-vial-type='spell'] {
+  border-color: color-mix(in srgb, #4cc9f0 45%, var(--border));
+}
+
+.chipInventory[data-vial-type='element'] {
+  border-color: color-mix(in srgb, #94d2bd 40%, var(--border));
+}
+
 .rarity {
   font-size: 0.65rem;
   text-transform: capitalize;

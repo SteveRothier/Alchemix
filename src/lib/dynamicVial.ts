@@ -49,6 +49,7 @@ function mixHex(a: string, b: string): string {
 }
 
 function resultType(va: Vial, vb: Vial): VialType {
+  if (va.type === 'creature' || vb.type === 'creature') return 'spell'
   if (va.type === 'element' && vb.type === 'element') return 'element'
   if (va.type === 'spell' && vb.type === 'spell') return 'spell'
   return 'spell'

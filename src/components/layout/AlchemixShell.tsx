@@ -10,7 +10,11 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core'
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  CHARACTER_SIP_ID,
+  CharacterSipZone,
+} from '../character/CharacterSipZone'
 import { clientRectToCanvasPercent } from '../game/labGeometry'
 import type { LabDragData, LabPlacedVial } from '../game/labTypes'
 import { LAB_CANVAS_ID, LabCanvas } from '../game/LabCanvas'
@@ -25,25 +29,47 @@ const labCollision: CollisionDetection = (args) => {
   const hits = pointerWithin(args)
   const vialTargets = hits.filter((c) => String(c.id).startsWith('lab-target-'))
   if (vialTargets.length > 0) return vialTargets
+  const characterHit = hits.filter((c) => String(c.id) === CHARACTER_SIP_ID)
+  if (characterHit.length > 0) return characterHit
   if (hits.length > 0) return hits
   return rectIntersection(args)
 }
 
 export function AlchemixShell() {
   const vialsById = useAlchemixStore((s) => s.vials)
+  const resetToStarters = useAlchemixStore((s) => s.resetToStarters)
   const discoveryCount = useAlchemixStore(selectDiscoveryCount)
   const tier = tierFromDiscoveryCount(discoveryCount)
 
-  const inventoryList = useMemo(
-    () =>
-      Object.values(vialsById).sort((a, b) =>
-        a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }),
-      ),
-    [vialsById],
-  )
+  const sortName = (a: { name: string }, b: { name: string }) =>
+    a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' })
+
+  const inventoryGroups = useMemo(() => {
+    const list = Object.values(vialsById)
+    return {
+      elements: list.filter((v) => v.type === 'element').sort(sortName),
+      spells: list.filter((v) => v.type === 'spell').sort(sortName),
+      creatures: list.filter((v) => v.type === 'creature').sort(sortName),
+    }
+  }, [vialsById])
 
   const [placed, setPlaced] = useState<LabPlacedVial[]>([])
   const [activeDragVialId, setActiveDragVialId] = useState<string | null>(null)
+  const [sipHint, setSipHint] = useState<string | null>(null)
+  const sipTimerRef = useRef(0)
+
+  const showSipHint = useCallback((msg: string) => {
+    window.clearTimeout(sipTimerRef.current)
+    setSipHint(msg)
+    sipTimerRef.current = window.setTimeout(() => setSipHint(null), 3200)
+  }, [])
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(sipTimerRef.current)
+    },
+    [],
+  )
 
   const canvasRef = useRef<HTMLDivElement>(null)
 
@@ -63,9 +89,39 @@ export function AlchemixShell() {
   const onDragEnd = (event: DragEndEvent) => {
     setActiveDragVialId(null)
     const { active, over } = event
-    const canvasEl = canvasRef.current
     const activeData = active.data.current as LabDragData | undefined
-    if (!activeData || !canvasEl) return
+    if (!activeData) return
+
+    if (!over) return
+
+    const overId = String(over.id)
+
+    if (overId === CHARACTER_SIP_ID) {
+      const vialId = activeData.vialId
+      const store = useAlchemixStore.getState()
+      const vial = store.vials[vialId]
+      if (!vial || vial.type !== 'spell') {
+        showSipHint('Seuls les sorts peuvent être bus.')
+        return
+      }
+      const result = store.feedSpellToCharacter(vialId)
+      if (activeData.kind === 'lab') {
+        setPlaced((prev) =>
+          prev.filter((p) => p.instanceId !== activeData.instanceId),
+        )
+      }
+      if (result.ok) {
+        showSipHint(`${result.creature.name} apparaît !`)
+      } else if (result.reason === 'no_creature') {
+        showSipHint('Aucune créature ne répond à ce sort.')
+      } else if (result.reason === 'already_owned') {
+        showSipHint('Créature déjà manifestée.')
+      }
+      return
+    }
+
+    const canvasEl = canvasRef.current
+    if (!canvasEl) return
 
     const tr =
       active.rect.current.translated ?? active.rect.current.initial
@@ -73,10 +129,6 @@ export function AlchemixShell() {
 
     const rectCanvas = canvasEl.getBoundingClientRect()
     const pos = clientRectToCanvasPercent(tr, rectCanvas)
-
-    if (!over) return
-
-    const overId = String(over.id)
 
     if (overId.startsWith('lab-target-')) {
       const targetInstanceId = overId.slice('lab-target-'.length)
@@ -179,6 +231,18 @@ export function AlchemixShell() {
     setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
   }
 
+  const handleReset = () => {
+    if (
+      !window.confirm(
+        'Réinitialiser la progression ? L’inventaire reviendra aux 7 éléments de départ et le laboratoire sera vidé.',
+      )
+    ) {
+      return
+    }
+    resetToStarters()
+    setPlaced([])
+  }
+
   return (
     <div className={styles.viewport}>
       <DndContext
@@ -198,9 +262,7 @@ export function AlchemixShell() {
               />
             </section>
             <section className={styles.characterZone} aria-label="Personnage">
-              <p className={styles.characterPlaceholder}>
-                Personnage — sorts (à venir)
-              </p>
+              <CharacterSipZone hint={sipHint} />
             </section>
             <aside className={styles.quickStats} aria-label="Statistiques rapides">
               <p className={styles.statsLine}>Découvertes : {discoveryCount}</p>
@@ -210,8 +272,21 @@ export function AlchemixShell() {
           <aside className={styles.inventory} aria-label="Inventaire">
             <header className={styles.inventoryHeader}>
               <h2 className={styles.inventoryTitle}>Inventaire</h2>
+              <button
+                type="button"
+                className={styles.resetBtn}
+                onClick={handleReset}
+                title="Réinitialiser la progression"
+                aria-label="Réinitialiser : inventaire de départ et laboratoire vide"
+              >
+                Reset
+              </button>
             </header>
-            <InventoryPanel vials={inventoryList} />
+            <InventoryPanel
+              elements={inventoryGroups.elements}
+              spells={inventoryGroups.spells}
+              creatures={inventoryGroups.creatures}
+            />
           </aside>
         </div>
         <DragOverlay dropAnimation={null}>

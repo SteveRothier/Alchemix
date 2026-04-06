@@ -1,4 +1,4 @@
-export type VialType = 'element' | 'spell'
+export type VialType = 'element' | 'spell' | 'creature'
 
 export type LiquidTexture = 'bubbles' | 'smoke' | 'spark' | 'wave' | 'liquid'
 

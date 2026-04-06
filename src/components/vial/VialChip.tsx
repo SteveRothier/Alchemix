@@ -19,6 +19,7 @@ export function VialChip({ vial, compact, inventory }: VialChipProps) {
   return (
     <div
       className={chipClass}
+      data-vial-type={inventory ? vial.type : undefined}
       style={
         {
           '--vial-a': vial.liquid.primaryColor,

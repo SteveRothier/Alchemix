@@ -1,10 +1,11 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { stampStarterVials } from '../data/starterVials'
+import { resolveDrinkSpell, type DrinkSpellResult } from '../lib/drinkSpell'
 import type { Vial } from '../types'
 
 const PERSIST_KEY = 'alchemix-save'
-const PERSIST_VERSION = 1
+const PERSIST_VERSION = 2
 
 function freshStarterState(isoTime: string) {
   return {
@@ -24,6 +25,8 @@ export type AlchemixState = PersistedData & {
   addVial: (vial: Vial) => void
   recordFusion: () => void
   incrementSpellUse: (vialId: string) => void
+  /** Fait boire un sort au personnage : usage + éventuelle créature (première fois). */
+  feedSpellToCharacter: (spellVialId: string) => DrinkSpellResult
   resetToStarters: () => void
 }
 
@@ -31,7 +34,7 @@ const initialData = freshStarterState(new Date().toISOString())
 
 export const useAlchemixStore = create<AlchemixState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...initialData,
 
       addVial: (vial) =>
@@ -52,6 +55,27 @@ export const useAlchemixStore = create<AlchemixState>()(
           },
         })),
 
+      feedSpellToCharacter: (spellVialId) => {
+        const spell = get().vials[spellVialId]
+        if (!spell || spell.type !== 'spell') {
+          return { ok: false, reason: 'not_spell' }
+        }
+        const vials = get().vials
+        const result = resolveDrinkSpell(spell, vials)
+        const nextUse = (get().spellUseCount[spellVialId] ?? 0) + 1
+        if (result.ok) {
+          set((s) => ({
+            spellUseCount: { ...s.spellUseCount, [spellVialId]: nextUse },
+            vials: { ...s.vials, [result.creature.id]: result.creature },
+          }))
+        } else {
+          set((s) => ({
+            spellUseCount: { ...s.spellUseCount, [spellVialId]: nextUse },
+          }))
+        }
+        return result
+      },
+
       resetToStarters: () => set(freshStarterState(new Date().toISOString())),
     }),
     {
@@ -64,8 +88,16 @@ export const useAlchemixStore = create<AlchemixState>()(
         spellUseCount: state.spellUseCount,
       }),
       migrate: (persisted, version) => {
-        void version
-        return persisted as PersistedData
+        const data = persisted as PersistedData
+        if (version < 2 && data.vials) {
+          for (const id of Object.keys(data.vials)) {
+            if (id.startsWith('creature-')) {
+              const v = data.vials[id]
+              if (v) data.vials[id] = { ...v, type: 'creature' }
+            }
+          }
+        }
+        return data
       },
     },
   ),
