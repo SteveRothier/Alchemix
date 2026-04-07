@@ -22,7 +22,7 @@ export function LabCanvas({
   onRemovePlaced,
   onDuplicatePlaced,
 }: LabCanvasProps) {
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef } = useDroppable({
     id: LAB_CANVAS_ID,
   })
 
@@ -37,7 +37,6 @@ export function LabCanvas({
       <div
         ref={setCombinedRef}
         className={styles.canvas}
-        data-over={isOver || undefined}
         aria-label="Zone de placement des fioles"
       >
         {placed.map((p, i) => {

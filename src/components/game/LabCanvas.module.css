@@ -31,11 +31,6 @@
     background 0.15s;
 }
 
-.canvas[data-over] {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
-  background: var(--accent-bg);
-}
-
 .hint {
   position: absolute;
   inset: 0;

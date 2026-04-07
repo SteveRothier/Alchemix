@@ -61,6 +61,11 @@ body {
   overflow: hidden;
 }
 
+* {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 h2 {
   font-family: var(--heading);
   font-weight: 500;
