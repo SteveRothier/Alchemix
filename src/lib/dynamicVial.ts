@@ -1,7 +1,14 @@
-import type { Vial, VialRarity, VialType } from '../types'
+import type { NewVialDraft, Vial, VialRarity, VialType } from '../types'
+import { buildDynamicElementDraft } from './dynamicElement'
+import { buildDynamicSpellDraft } from './dynamicSpell'
+import {
+  combineIngredientProfiles,
+  ELEMENT_AFFINITY_ORDER,
+  getIngredientProfile,
+} from './ingredientProfile'
 import { pairKey } from './recipeMap'
 
-export type NewVialDraft = Omit<Vial, 'id' | 'discoveredAt'>
+export type { NewVialDraft } from '../types'
 
 const RARITY_ORDER: VialRarity[] = ['common', 'rare', 'epic', 'legendary']
 
@@ -16,38 +23,6 @@ function bumpRarity(r: VialRarity): VialRarity {
   return RARITY_ORDER[Math.min(RARITY_ORDER.length - 1, i + 1)] as VialRarity
 }
 
-function blendNamePart(a: string, b: string): string {
-  const wa = a.trim().split(/\s+/)[0] ?? a
-  const parts = b.trim().split(/\s+/)
-  const wb = parts[parts.length - 1] ?? b
-  return `${wa} ${wb}`.trim()
-}
-
-function parseHex(hex: string): { r: number; g: number; b: number } | null {
-  const h = hex.replace('#', '')
-  const full =
-    h.length === 3
-      ? h
-          .split('')
-          .map((c) => c + c)
-          .join('')
-      : h
-  if (full.length !== 6) return null
-  const n = Number.parseInt(full, 16)
-  if (Number.isNaN(n)) return null
-  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 }
-}
-
-function mixHex(a: string, b: string): string {
-  const pa = parseHex(a)
-  const pb = parseHex(b)
-  if (!pa || !pb) return a
-  const r = Math.round((pa.r + pb.r) / 2)
-  const g = Math.round((pa.g + pb.g) / 2)
-  const bl = Math.round((pa.b + pb.b) / 2)
-  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${bl.toString(16).padStart(2, '0')}`
-}
-
 function resultType(va: Vial, vb: Vial): VialType {
   if (va.type === 'creature' || vb.type === 'creature') return 'spell'
   if (va.type === 'element' && vb.type === 'element') return 'element'
@@ -55,51 +30,79 @@ function resultType(va: Vial, vb: Vial): VialType {
   return 'spell'
 }
 
-/** Id stable pour une paire inconnue du seed (ordre des ingrédients ignoré). */
+/** Id canonique : plusieurs paires d’ingrédients peuvent mener à la même fiole. */
+export function canonicalDynamicVialId(ingredientA: Vial, ingredientB: Vial): string {
+  const rt = resultType(ingredientA, ingredientB)
+  const pa = getIngredientProfile(ingredientA)
+  const pb = getIngredientProfile(ingredientB)
+  if (rt === 'element') {
+    const ia = ELEMENT_AFFINITY_ORDER.indexOf(pa.affinity)
+    const ib = ELEMENT_AFFINITY_ORDER.indexOf(pb.affinity)
+    const lo = Math.min(ia, ib)
+    const hi = Math.max(ia, ib)
+    return `dyn-el-${lo}-${hi}`
+  }
+  const { dominant, secondary } = combineIngredientProfiles(pa, pb)
+  const sec =
+    secondary && secondary !== dominant ? secondary : 'mono'
+  return `dyn-sp-${dominant}-${sec}`
+}
+
+/**
+ * @deprecated Ancien id par paire d’ingrédients — conservé pour références / saves très anciennes.
+ */
 export function dynamicVialIdForPair(vialIdA: string, vialIdB: string): string {
   return `dyn-${pairKey(vialIdA, vialIdB).replaceAll('|', '-')}`
 }
 
-export function buildDynamicVialDraft(ingredientA: Vial, ingredientB: Vial): NewVialDraft {
-  const type = resultType(ingredientA, ingredientB)
-  const baseR = bumpRarity(maxRarity(ingredientA.rarity, ingredientB.rarity))
-  const primary = mixHex(
-    ingredientA.liquid.primaryColor,
-    ingredientB.liquid.primaryColor,
-  )
+export function isInertUnseededFusion(ingredientA: Vial, ingredientB: Vial): boolean {
+  const rt = resultType(ingredientA, ingredientB)
+  const pa = getIngredientProfile(ingredientA)
+  const pb = getIngredientProfile(ingredientB)
 
-  return {
-    type,
-    name: blendNamePart(ingredientA.name, ingredientB.name),
-    description: `Fusion of ${ingredientA.name} and ${ingredientB.name}.`,
-    liquid: {
-      primaryColor: primary,
-      secondaryColor: ingredientA.liquid.secondaryColor
-        ? mixHex(ingredientA.liquid.secondaryColor, ingredientB.liquid.primaryColor)
-        : undefined,
-      opacity: Math.min(
-        0.98,
-        (ingredientA.liquid.opacity + ingredientB.liquid.opacity) / 2,
-      ),
-      texture: ingredientA.liquid.texture,
-    },
-    icon: `${ingredientA.icon}_${ingredientB.icon}`,
-    rarity: baseR,
-    recipe: {
-      ingredientA: ingredientA.id,
-      ingredientB: ingredientB.id,
-    },
-    effect:
-      type === 'spell'
-        ? {
-            animation: 'pulse',
-            color: primary,
-          }
-        : undefined,
+  if (rt === 'element') {
+    if (pa.affinity === 'arcane' && pb.affinity === 'arcane') return true
+    if (
+      /^dyn-el-\d+-\d+$/.test(ingredientA.id) &&
+      /^dyn-el-\d+-\d+$/.test(ingredientB.id)
+    ) {
+      return true
+    }
   }
+
+  if (rt === 'spell') {
+    if (
+      /^dyn-sp-/.test(ingredientA.id) &&
+      /^dyn-sp-/.test(ingredientB.id)
+    ) {
+      return true
+    }
+  }
+
+  return false
 }
 
-export interface DynamicVialGenerator {
-  generateElement(ingredientA: Vial, ingredientB: Vial): NewVialDraft
-  generateSpell(ingredientA: Vial, ingredientB: Vial): NewVialDraft
+export function buildDynamicVialDraft(
+  ingredientA: Vial,
+  ingredientB: Vial,
+  canonicalId: string,
+): NewVialDraft {
+  const type = resultType(ingredientA, ingredientB)
+  const rarity = bumpRarity(
+    maxRarity(ingredientA.rarity, ingredientB.rarity),
+  )
+  if (type === 'element') {
+    return buildDynamicElementDraft(
+      ingredientA,
+      ingredientB,
+      rarity,
+      canonicalId,
+    )
+  }
+  return buildDynamicSpellDraft(
+    ingredientA,
+    ingredientB,
+    rarity,
+    canonicalId,
+  )
 }

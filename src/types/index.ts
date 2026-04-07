@@ -37,7 +37,11 @@ export interface Vial {
   /** ISO 8601 — sérialisable (persist / export JSON) */
   discoveredAt: string
   rarity: VialRarity
+  /** Produit du catalogue seed vs fusion hors recette manuelle */
+  origin?: 'catalog' | 'dynamic'
 }
+
+export type NewVialDraft = Omit<Vial, 'id' | 'discoveredAt'>
 
 export interface Recipe {
   id: string

@@ -165,7 +165,12 @@ export function AlchemixShell() {
           const va = vials[targetPlaced.vialId]
           const vb = vials[activeData.vialId]
           if (!va || !vb) return prev
-          const { vial: result, wasNew } = resolveFusionProduct(va, vb, vials)
+          const outcome = resolveFusionProduct(va, vb, vials)
+          if (!outcome.ok) {
+            showSipHint('Ce mélange reste inerte.')
+            return prev
+          }
+          const { vial: result, wasNew } = outcome
           if (wasNew) addVial(result)
           recordFusion()
           return prev
@@ -193,7 +198,12 @@ export function AlchemixShell() {
           const va = vials[targetPlaced.vialId]
           const vb = vials[sourcePlaced.vialId]
           if (!va || !vb) return prev
-          const { vial: result, wasNew } = resolveFusionProduct(va, vb, vials)
+          const outcome = resolveFusionProduct(va, vb, vials)
+          if (!outcome.ok) {
+            showSipHint('Ce mélange reste inerte.')
+            return prev
+          }
+          const { vial: result, wasNew } = outcome
           if (wasNew) addVial(result)
           recordFusion()
           const xPct = (targetPlaced.xPct + sourcePlaced.xPct) / 2

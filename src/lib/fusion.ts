@@ -1,23 +1,35 @@
 import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
 import type { Vial } from '../types'
-import { buildDynamicVialDraft, dynamicVialIdForPair } from './dynamicVial'
+import {
+  buildDynamicVialDraft,
+  canonicalDynamicVialId,
+  isInertUnseededFusion,
+} from './dynamicVial'
 import { lookupSeedResultId } from './recipeMap'
+
+export type FusionResolution =
+  | { ok: true; vial: Vial; wasNew: boolean }
+  | { ok: false; reason: 'inert' }
 
 function buildDynamicOutcome(
   a: Vial,
   b: Vial,
   vialsById: Record<string, Vial>,
-): { vial: Vial; wasNew: boolean } {
-  const id = dynamicVialIdForPair(a.id, b.id)
+): FusionResolution {
+  if (isInertUnseededFusion(a, b)) {
+    return { ok: false, reason: 'inert' }
+  }
+  const id = canonicalDynamicVialId(a, b)
   const existing = vialsById[id]
-  if (existing) return { vial: existing, wasNew: false }
-  const draft = buildDynamicVialDraft(a, b)
+  if (existing) return { ok: true, vial: existing, wasNew: false }
+  const draft = buildDynamicVialDraft(a, b, id)
   const vial: Vial = {
     ...draft,
     id,
     discoveredAt: new Date().toISOString(),
+    origin: 'dynamic',
   }
-  return { vial, wasNew: true }
+  return { ok: true, vial, wasNew: true }
 }
 
 /** Détermine la fiole produite par la fusion (seed ou dynamique). */
@@ -25,11 +37,11 @@ export function resolveFusionProduct(
   ingredientA: Vial,
   ingredientB: Vial,
   vialsById: Record<string, Vial>,
-): { vial: Vial; wasNew: boolean } {
+): FusionResolution {
   const seedId = lookupSeedResultId(ingredientA.id, ingredientB.id)
   if (seedId) {
     const existing = vialsById[seedId]
-    if (existing) return { vial: existing, wasNew: false }
+    if (existing) return { ok: true, vial: existing, wasNew: false }
     const template = CRAFTED_VIAL_TEMPLATES[seedId]
     if (!template) {
       return buildDynamicOutcome(ingredientA, ingredientB, vialsById)
@@ -38,7 +50,7 @@ export function resolveFusionProduct(
       ...template,
       discoveredAt: new Date().toISOString(),
     }
-    return { vial, wasNew: true }
+    return { ok: true, vial, wasNew: true }
   }
   return buildDynamicOutcome(ingredientA, ingredientB, vialsById)
 }
