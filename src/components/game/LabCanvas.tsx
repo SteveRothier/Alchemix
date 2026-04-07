@@ -12,6 +12,7 @@ type LabCanvasProps = {
   vialsById: Record<string, Vial>
   canvasRef: RefObject<HTMLDivElement | null>
   onRemovePlaced: (instanceId: string) => void
+  onDuplicatePlaced: (source: LabPlacedVial) => void
 }
 
 export function LabCanvas({
@@ -19,6 +20,7 @@ export function LabCanvas({
   vialsById,
   canvasRef,
   onRemovePlaced,
+  onDuplicatePlaced,
 }: LabCanvasProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: LAB_CANVAS_ID,
@@ -48,13 +50,15 @@ export function LabCanvas({
               vial={v}
               zIndex={10 + i}
               onRemove={onRemovePlaced}
+              onDuplicate={onDuplicatePlaced}
             />
           )
         })}
         {placed.length === 0 && (
           <p className={styles.hint}>
             Glisse des fioles depuis l’inventaire. Pose-les où tu veux, puis
-            glisse-en une sur une autre pour fusionner.
+            glisse-en une sur une autre pour fusionner. Double-clic sur une
+            fiole du labo pour la dupliquer.
           </p>
         )}
       </div>

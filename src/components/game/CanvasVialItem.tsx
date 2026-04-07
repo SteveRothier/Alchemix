@@ -10,6 +10,7 @@ type CanvasVialItemProps = {
   vial: Vial
   zIndex: number
   onRemove: (instanceId: string) => void
+  onDuplicate: (source: LabPlacedVial) => void
 }
 
 export function CanvasVialItem({
@@ -17,6 +18,7 @@ export function CanvasVialItem({
   vial,
   zIndex,
   onRemove,
+  onDuplicate,
 }: CanvasVialItemProps) {
   const dragId = `lab-drag-${placed.instanceId}`
   const dropId = `lab-target-${placed.instanceId}`
@@ -63,9 +65,14 @@ export function CanvasVialItem({
         <div
           ref={setDragRef}
           className={styles.dragSurface}
-          aria-label={`${vial.name} — glisser pour déplacer, clic droit pour retirer du labo`}
+          aria-label={`${vial.name} — glisser pour déplacer, double-clic pour dupliquer, clic droit pour retirer du labo`}
           {...listeners}
           {...attributes}
+          onDoubleClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onDuplicate(placed)
+          }}
           onContextMenu={(e) => {
             e.preventDefault()
             e.stopPropagation()

@@ -241,6 +241,18 @@ export function AlchemixShell() {
     setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
   }
 
+  const duplicatePlaced = useCallback((source: LabPlacedVial) => {
+    setPlaced((prev) => [
+      ...prev,
+      {
+        instanceId: crypto.randomUUID(),
+        vialId: source.vialId,
+        xPct: Math.min(94, Math.max(6, source.xPct + 7)),
+        yPct: Math.min(90, Math.max(10, source.yPct + 6)),
+      },
+    ])
+  }, [])
+
   const handleReset = () => {
     if (
       !window.confirm(
@@ -270,6 +282,7 @@ export function AlchemixShell() {
                 vialsById={vialsById}
                 canvasRef={canvasRef}
                 onRemovePlaced={removePlaced}
+                onDuplicatePlaced={duplicatePlaced}
               />
             </section>
             <section className={styles.characterZone} aria-label="Personnage">
