@@ -41,42 +41,40 @@ export function CanvasVialItem({
     data: { instanceId: placed.instanceId, vialId: placed.vialId },
   })
 
-  const setRefs = (node: HTMLDivElement | null) => {
-    setDragRef(node)
-    setDropRef(node)
-  }
-
   const dragT = CSS.Translate.toString(transform)
-  const style = {
+  const anchorStyle = {
     left: `${placed.xPct}%`,
     top: `${placed.yPct}%`,
-    zIndex,
+    zIndex: isOver ? 800 + zIndex : isDragging ? -1 : zIndex,
     transform: dragT
       ? `translate(-50%, -50%) ${dragT}`
       : 'translate(-50%, -50%)',
-    opacity: isDragging ? 0.25 : 1,
+    opacity: isDragging ? 0 : 1,
+    pointerEvents: isDragging ? ('none' as const) : ('auto' as const),
   } as const
 
   return (
-    <div
-      ref={setRefs}
-      className={styles.placed}
-      style={style}
-      data-over-target={isOver || undefined}
-    >
+    <div className={styles.anchor} style={anchorStyle}>
       <div
-        className={styles.dragSurface}
-        title="Clic droit pour retirer du labo"
-        aria-label={`${vial.name} — glisser pour déplacer, clic droit pour retirer du labo`}
-        {...listeners}
-        {...attributes}
-        onContextMenu={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          onRemove(placed.instanceId)
-        }}
+        ref={setDropRef}
+        className={styles.dropHit}
+        data-over-target={isOver || undefined}
       >
-        <VialChip vial={vial} compact />
+        <div
+          ref={setDragRef}
+          className={styles.dragSurface}
+          title="Clic droit pour retirer du labo"
+          aria-label={`${vial.name} — glisser pour déplacer, clic droit pour retirer du labo`}
+          {...listeners}
+          {...attributes}
+          onContextMenu={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            onRemove(placed.instanceId)
+          }}
+        >
+          <VialChip vial={vial} lab />
+        </div>
       </div>
     </div>
   )

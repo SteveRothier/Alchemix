@@ -7,19 +7,25 @@ type VialChipProps = {
   compact?: boolean
   /** Grille inventaire : marges serrées, style type « pastille » */
   inventory?: boolean
+  /** Plateau labo : noms lisibles (2 lignes), fusion au survol */
+  lab?: boolean
 }
 
-export function VialChip({ vial, compact, inventory }: VialChipProps) {
-  const chipClass = inventory
-    ? styles.chipInventory
-    : compact
-      ? styles.chipCompact
-      : styles.chip
+export function VialChip({ vial, compact, inventory, lab }: VialChipProps) {
+  const chipClass = lab
+    ? styles.chipLab
+    : inventory
+      ? styles.chipInventory
+      : compact
+        ? styles.chipCompact
+        : styles.chip
 
   return (
     <div
       className={chipClass}
-      data-vial-type={inventory ? vial.type : undefined}
+      data-vial-type={
+        inventory || lab ? vial.type : undefined
+      }
       style={
         {
           '--vial-a': vial.liquid.primaryColor,
@@ -30,7 +36,7 @@ export function VialChip({ vial, compact, inventory }: VialChipProps) {
       <div className={styles.flask} aria-hidden />
       <div className={styles.meta}>
         <span className={styles.name}>{vial.name}</span>
-        {!compact && !inventory && (
+        {!compact && !inventory && !lab && (
           <span className={styles.rarity} data-rarity={vial.rarity}>
             {vial.rarity}
           </span>

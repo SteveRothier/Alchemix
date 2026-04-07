@@ -55,6 +55,9 @@ export function AlchemixShell() {
 
   const [placed, setPlaced] = useState<LabPlacedVial[]>([])
   const [activeDragVialId, setActiveDragVialId] = useState<string | null>(null)
+  const [dragSource, setDragSource] = useState<'inventory' | 'lab' | null>(
+    null,
+  )
   const [sipHint, setSipHint] = useState<string | null>(null)
   const sipTimerRef = useRef(0)
 
@@ -84,10 +87,17 @@ export function AlchemixShell() {
   const onDragStart = (event: DragStartEvent) => {
     const d = event.active.data.current as LabDragData | undefined
     setActiveDragVialId(d?.vialId ?? null)
+    setDragSource(d?.kind === 'lab' ? 'lab' : d?.kind === 'inventory' ? 'inventory' : null)
+  }
+
+  const onDragCancel = () => {
+    setActiveDragVialId(null)
+    setDragSource(null)
   }
 
   const onDragEnd = (event: DragEndEvent) => {
     setActiveDragVialId(null)
+    setDragSource(null)
     const { active, over } = event
     const activeData = active.data.current as LabDragData | undefined
     if (!activeData) return
@@ -249,6 +259,7 @@ export function AlchemixShell() {
         sensors={sensors}
         collisionDetection={labCollision}
         onDragStart={onDragStart}
+        onDragCancel={onDragCancel}
         onDragEnd={onDragEnd}
       >
         <div className={styles.shell}>
@@ -289,8 +300,14 @@ export function AlchemixShell() {
             />
           </aside>
         </div>
-        <DragOverlay dropAnimation={null}>
-          {activeDragVial ? <VialChip vial={activeDragVial} inventory /> : null}
+        <DragOverlay dropAnimation={null} zIndex={12000}>
+          {activeDragVial ? (
+            dragSource === 'lab' ? (
+              <VialChip vial={activeDragVial} lab />
+            ) : (
+              <VialChip vial={activeDragVial} inventory />
+            )
+          ) : null}
         </DragOverlay>
       </DndContext>
     </div>
