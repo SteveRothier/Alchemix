@@ -63,7 +63,6 @@ export function CanvasVialItem({
         <div
           ref={setDragRef}
           className={styles.dragSurface}
-          title="Clic droit pour retirer du labo"
           aria-label={`${vial.name} — glisser pour déplacer, clic droit pour retirer du labo`}
           {...listeners}
           {...attributes}

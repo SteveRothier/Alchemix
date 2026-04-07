@@ -244,7 +244,7 @@ export function AlchemixShell() {
   const handleReset = () => {
     if (
       !window.confirm(
-        'Réinitialiser la progression ? L’inventaire reviendra aux 7 éléments de départ et le laboratoire sera vidé.',
+        'Réinitialiser la progression ? L’inventaire reviendra aux 5 éléments de départ et le laboratoire sera vidé.',
       )
     ) {
       return
