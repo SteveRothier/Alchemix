@@ -197,14 +197,33 @@ function buildVialOptions(): { id: string; name: string; type: VialType }[] {
 }
 
 function resultType(resultId: string): VialType | 'unknown' {
-  const t = CRAFTED_VIAL_TEMPLATES[resultId]
-  if (t) return t.type
-  if (isCreatureResultId(resultId)) return 'creature'
+  const id = resultId.trim()
+  if (!id) return 'unknown'
+
+  const crafted = CRAFTED_VIAL_TEMPLATES[id]
+  if (crafted) return crafted.type
+
+  const starter = STARTER_VIAL_DEFINITIONS.find((v) => v.id === id)
+  if (starter) return starter.type
+
+  const lower = id.toLowerCase()
+  if (lower.startsWith('creature-')) return 'creature'
+  if (lower.startsWith('sp-')) return 'spell'
+  if (lower.startsWith('leg-')) return 'spell'
+  if (lower.startsWith('el-')) return 'element'
+  if (lower.startsWith('craft-')) return 'element'
+
+  /**
+   * Référence sans entrée catalogue (ex. « feur ») : en atelier c’est presque toujours un sort.
+   * Les éléments attendent en pratique le préfixe el- ou craft-.
+   */
+  if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(id)) return 'spell'
+
   return 'unknown'
 }
 
 function isCreatureResultId(resultId: string): boolean {
-  return resultId.startsWith('creature-')
+  return resultId.trim().startsWith('creature-')
 }
 
 /**
@@ -229,6 +248,23 @@ function slugifyCreatureName(name: string): string {
     .replace(/\p{M}/gu, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
+
+/** Onglet Sort : impose le préfixe `sp-` si l’utilisateur saisit seulement un slug. */
+function normalizeAtelierSpellResultId(raw: string): string {
+  const t = raw.trim()
+  if (!t) return t
+  const lower = t.toLowerCase()
+  if (
+    lower.startsWith('sp-') ||
+    lower.startsWith('creature-') ||
+    lower.startsWith('el-') ||
+    lower.startsWith('craft-') ||
+    lower.startsWith('leg-')
+  ) {
+    return t
+  }
+  return `sp-${slugifyCreatureName(t)}`
 }
 
 const TYPE_ORDER: Record<string, number> = {
@@ -706,8 +742,9 @@ export function RecipeManagerPage() {
             )
             return
           }
+          const spellResultId = normalizeAtelierSpellResultId(spRes)
           if (
-            tryAddPair(spA, spB, spRes, 'Combinaison ajoutée.', {
+            tryAddPair(spA, spB, spellResultId, 'Combinaison ajoutée.', {
               allowEmptyIngredients: true,
             })
           ) {
