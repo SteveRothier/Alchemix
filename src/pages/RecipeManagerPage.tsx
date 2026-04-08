@@ -1,0 +1,1696 @@
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from 'react'
+import { Link } from 'react-router-dom'
+import {
+  ArrowDownAZ,
+  ArrowDownUp,
+  ArrowDownWideNarrow,
+  Pencil,
+  RefreshCcw,
+  Trash2,
+} from 'lucide-react'
+import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
+import { MANUAL_RECIPE_PAIRS } from '../data/manualRecipePairs'
+import { MANUAL_SOLO_ELEMENT_IDS } from '../data/manualSoloElements'
+import { STARTER_VIAL_DEFINITIONS } from '../data/starterVials'
+import { inferLabelFromRef } from '../lib/inferVialLabel'
+import { pairKey } from '../lib/recipeMap'
+import type { VialType } from '../types'
+import styles from './RecipeManagerPage.module.css'
+
+const STORAGE_KEY_PAIRS = 'alchemix-recipe-manager-pairs'
+const STORAGE_KEY_SOLO = 'alchemix-recipe-manager-solo'
+const STORAGE_KEY_HIDDEN_CATALOG_SOLO =
+  'alchemix-recipe-manager-hidden-catalog-solo'
+
+export type EditablePair = {
+  clientId: number
+  a: string
+  b: string
+  resultId: string
+}
+
+export type EditableSolo = {
+  clientId: number
+  id: string
+  /** Ligne dérivée du catalogue (type élément), sans entrée utilisateur */
+  fromCatalog?: boolean
+}
+
+/** État modale : `catalogSourceId` si la ligne éditée venait du catalogue synthétique. */
+type EditingSoloState = EditableSolo & { catalogSourceId?: string }
+
+type RegistreDeletePrompt =
+  | null
+  | { kind: 'pair'; clientId: number }
+  | { kind: 'solo'; solo: EditableSolo }
+
+type CreateMode = 'element' | 'spell' | 'creature' | 'solo'
+type SortKey = 'result' | 'pair' | 'type'
+
+type RegistreRow =
+  | { kind: 'pair'; data: EditablePair }
+  | { kind: 'solo'; data: EditableSolo }
+
+function seedPairs(): EditablePair[] {
+  return MANUAL_RECIPE_PAIRS.map((p, i) => ({
+    clientId: i + 1,
+    a: p.a,
+    b: p.b,
+    resultId: p.resultId,
+  }))
+}
+
+function seedSolo(): EditableSolo[] {
+  return MANUAL_SOLO_ELEMENT_IDS.map((id, i) => ({
+    clientId: 10_000 + i,
+    id,
+  }))
+}
+
+function loadPairs(): EditablePair[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_PAIRS)
+    if (!raw) return seedPairs()
+    const parsed = JSON.parse(raw) as EditablePair[]
+    if (!Array.isArray(parsed) || parsed.length === 0) return seedPairs()
+    return parsed.map((row, i) => ({
+      clientId: typeof row.clientId === 'number' ? row.clientId : i + 1,
+      a: String(row.a),
+      b: String(row.b),
+      resultId: String(row.resultId),
+    }))
+  } catch {
+    return seedPairs()
+  }
+}
+
+function loadSolo(): EditableSolo[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_SOLO)
+    if (!raw) return seedSolo()
+    const parsed = JSON.parse(raw) as EditableSolo[]
+    if (!Array.isArray(parsed)) return seedSolo()
+    return parsed.map((row, i) => ({
+      clientId: typeof row.clientId === 'number' ? row.clientId : 10_000 + i,
+      id: String(row.id ?? ''),
+    })).filter((r) => r.id)
+  } catch {
+    return seedSolo()
+  }
+}
+
+function savePairs(pairs: EditablePair[]) {
+  localStorage.setItem(STORAGE_KEY_PAIRS, JSON.stringify(pairs))
+}
+
+function saveSolo(rows: EditableSolo[]) {
+  localStorage.setItem(STORAGE_KEY_SOLO, JSON.stringify(rows))
+}
+
+function loadHiddenCatalogSoloIds(): string[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_HIDDEN_CATALOG_SOLO)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as string[]
+    return Array.isArray(parsed) ? parsed.map(String) : []
+  } catch {
+    return []
+  }
+}
+
+function saveHiddenCatalogSoloIds(ids: string[]) {
+  localStorage.setItem(STORAGE_KEY_HIDDEN_CATALOG_SOLO, JSON.stringify(ids))
+}
+
+function collectAllRecipeRefs(
+  pairs: EditablePair[],
+  soloRows: EditableSolo[],
+): Set<string> {
+  const s = new Set<string>()
+  for (const p of pairs) {
+    s.add(p.a)
+    s.add(p.b)
+    s.add(p.resultId)
+  }
+  for (const r of soloRows) {
+    s.add(r.id)
+  }
+  return s
+}
+
+/**
+ * Résout une saisie (nom affiché ou id technique) vers la référence enregistrée.
+ */
+function resolveRefFromDisplayInput(
+  input: string,
+  displayName: (id: string) => string,
+  allIds: Set<string>,
+): { ref: string; error?: 'empty' | 'ambiguous' } {
+  const t = input.trim()
+  if (!t) return { ref: '', error: 'empty' }
+
+  if (allIds.has(t)) return { ref: t }
+
+  const candidates: string[] = []
+  for (const id of allIds) {
+    const lab = displayName(id)
+    if (lab.localeCompare(t, 'fr', { sensitivity: 'base' }) === 0) {
+      candidates.push(id)
+    }
+  }
+  if (candidates.length === 1) return { ref: candidates[0]! }
+  if (candidates.length > 1) return { ref: '', error: 'ambiguous' }
+  return { ref: t }
+}
+
+function buildVialOptions(): { id: string; name: string; type: VialType }[] {
+  const map = new Map<string, { id: string; name: string; type: VialType }>()
+  for (const v of STARTER_VIAL_DEFINITIONS) {
+    map.set(v.id, { id: v.id, name: v.name, type: v.type })
+  }
+  for (const [id, t] of Object.entries(CRAFTED_VIAL_TEMPLATES)) {
+    map.set(id, { id, name: t.name, type: t.type })
+  }
+  return [...map.values()].sort((x, y) =>
+    x.name.localeCompare(y.name, 'fr', { sensitivity: 'base' }),
+  )
+}
+
+function resultType(resultId: string): VialType | 'unknown' {
+  const t = CRAFTED_VIAL_TEMPLATES[resultId]
+  return t?.type ?? 'unknown'
+}
+
+function slugifyCreatureName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+const TYPE_ORDER: Record<string, number> = {
+  element: 0,
+  spell: 1,
+  creature: 2,
+  unknown: 3,
+  fioleSeule: 4,
+}
+
+function compareRegistreRowsByResult(
+  x: RegistreRow,
+  y: RegistreRow,
+  displayName: (id: string) => string,
+): number {
+  const nx =
+    x.kind === 'solo'
+      ? displayName(x.data.id)
+      : displayName(x.data.resultId)
+  const ny =
+    y.kind === 'solo'
+      ? displayName(y.data.id)
+      : displayName(y.data.resultId)
+  return nx.localeCompare(ny, 'fr', { sensitivity: 'base' })
+}
+
+/** Paire (nom1, nom2) des libellés des ingrédients, ordre A/B indifférent. Élément seul : (nom, nom). */
+function comboDisplaySortTuple(
+  row: RegistreRow,
+  displayName: (id: string) => string,
+): [string, string] {
+  if (row.kind === 'solo') {
+    const n = displayName(row.data.id)
+    return [n, n]
+  }
+  const na = displayName(row.data.a)
+  const nb = displayName(row.data.b)
+  if (na.localeCompare(nb, 'fr', { sensitivity: 'base' }) <= 0) {
+    return [na, nb]
+  }
+  return [nb, na]
+}
+
+/** Tri Combinaison : d’abord le 1er ingrédient (nom affiché), puis le 2e ; symétrique pour A/B. */
+function compareRegistreRowsByPair(
+  x: RegistreRow,
+  y: RegistreRow,
+  displayName: (id: string) => string,
+): number {
+  const [ax, ay] = comboDisplaySortTuple(x, displayName)
+  const [bx, by] = comboDisplaySortTuple(y, displayName)
+  const c1 = ax.localeCompare(bx, 'fr', { sensitivity: 'base' })
+  if (c1 !== 0) return c1
+  return ay.localeCompare(by, 'fr', { sensitivity: 'base' })
+}
+
+function compareRegistreRowsByType(
+  x: RegistreRow,
+  y: RegistreRow,
+  displayName: (id: string) => string,
+): number {
+  const tx =
+    x.kind === 'solo' ? 'fioleSeule' : resultType(x.data.resultId)
+  const ty =
+    y.kind === 'solo' ? 'fioleSeule' : resultType(y.data.resultId)
+  const ox = TYPE_ORDER[tx] ?? 9
+  const oy = TYPE_ORDER[ty] ?? 9
+  if (ox !== oy) return ox - oy
+  const nx =
+    x.kind === 'solo'
+      ? displayName(x.data.id)
+      : displayName(x.data.resultId)
+  const ny =
+    y.kind === 'solo'
+      ? displayName(y.data.id)
+      : displayName(y.data.resultId)
+  return nx.localeCompare(ny, 'fr', { sensitivity: 'base' })
+}
+
+/** Plusieurs critères : appliqués dans l’ordre du tableau (priorité décroissante). */
+function compareRegistreRowsByKeys(
+  x: RegistreRow,
+  y: RegistreRow,
+  keys: SortKey[],
+  displayName: (id: string) => string,
+): number {
+  for (const key of keys) {
+    let c = 0
+    if (key === 'result') {
+      c = compareRegistreRowsByResult(x, y, displayName)
+    } else if (key === 'pair') {
+      c = compareRegistreRowsByPair(x, y, displayName)
+    } else {
+      c = compareRegistreRowsByType(x, y, displayName)
+    }
+    if (c !== 0) return c
+  }
+  return 0
+}
+
+function stableCatalogSoloClientId(id: string): number {
+  let h = 0
+  for (let i = 0; i < id.length; i++) {
+    h = Math.imul(31, h) + id.charCodeAt(i)
+  }
+  return -Math.abs(h | 0)
+}
+
+function buildManualPairsTs(pairs: EditablePair[]): string {
+  const body = pairs
+    .map(
+      (p) =>
+        `  { a: ${JSON.stringify(p.a)}, b: ${JSON.stringify(p.b)}, resultId: ${JSON.stringify(p.resultId)} },`,
+    )
+    .join('\n')
+  return `/**\n * Recettes catalogue (symétriques côté jeu : ordre a/b indifférent).\n * Mis à jour depuis l’atelier recettes (/#/recipes) — bouton Enregistrer.\n */\nexport const MANUAL_RECIPE_PAIRS: { a: string; b: string; resultId: string }[] = [\n${body}\n]\n`
+}
+
+function buildManualSoloTs(ids: string[]): string {
+  const sorted = [...new Set(ids.map((x) => x.trim()).filter(Boolean))].sort()
+  const json = JSON.stringify(sorted, null, 2)
+  return `/**\n * Références de fioles déclarées seules (sans recette de paire).\n * Mis à jour depuis l’atelier recettes (/#/recipes) — bouton Enregistrer.\n */\nexport const MANUAL_SOLO_ELEMENT_IDS: string[] = ${json}\n`
+}
+
+type AlertItem = { id: number; message: string; kind: 'success' | 'error' }
+
+export function RecipeManagerPage() {
+  const vialOptions = useMemo(() => buildVialOptions(), [])
+  const spellOptions = useMemo(
+    () => vialOptions.filter((v) => v.type === 'spell'),
+    [vialOptions],
+  )
+
+  const catalogElementIds = useMemo(() => {
+    const ids = vialOptions
+      .filter((v) => v.type === 'element')
+      .map((v) => v.id)
+    return ids.sort((a, b) => {
+      const na =
+        vialOptions.find((o) => o.id === a)?.name ?? inferLabelFromRef(a)
+      const nb =
+        vialOptions.find((o) => o.id === b)?.name ?? inferLabelFromRef(b)
+      return na.localeCompare(nb, 'fr', { sensitivity: 'base' })
+    })
+  }, [vialOptions])
+
+  const [pairs, setPairs] = useState<EditablePair[]>(() => loadPairs())
+  const [soloRows, setSoloRows] = useState<EditableSolo[]>(() => loadSolo())
+  const [search, setSearch] = useState('')
+  const [activeSortKeys, setActiveSortKeys] = useState<SortKey[]>(['result'])
+  const [alerts, setAlerts] = useState<AlertItem[]>([])
+  const [editingPair, setEditingPair] = useState<EditablePair | null>(null)
+  const [pairEditDraft, setPairEditDraft] = useState({
+    a: '',
+    b: '',
+    resultId: '',
+  })
+  const [editingSolo, setEditingSolo] = useState<EditingSoloState | null>(null)
+  const [registreDeletePrompt, setRegistreDeletePrompt] =
+    useState<RegistreDeletePrompt>(null)
+  const [hiddenCatalogSoloIds, setHiddenCatalogSoloIds] = useState<string[]>(
+    () => loadHiddenCatalogSoloIds(),
+  )
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const [createMode, setCreateMode] = useState<CreateMode>('element')
+  const [elA, setElA] = useState('')
+  const [elB, setElB] = useState('')
+  const [elRes, setElRes] = useState('')
+  const [spA, setSpA] = useState('')
+  const [spB, setSpB] = useState('')
+  const [spRes, setSpRes] = useState('')
+  const [crSpell, setCrSpell] = useState('')
+  const [crName, setCrName] = useState('')
+  const [soloIdInput, setSoloIdInput] = useState('')
+
+  const pushAlert = useCallback((message: string, kind: AlertItem['kind']) => {
+    const id = Date.now()
+    setAlerts((prev) => [...prev, { id, message, kind }])
+    window.setTimeout(() => {
+      setAlerts((prev) => prev.filter((a) => a.id !== id))
+    }, 2200)
+  }, [])
+
+  useEffect(() => {
+    savePairs(pairs)
+  }, [pairs])
+
+  useEffect(() => {
+    saveSolo(soloRows)
+  }, [soloRows])
+
+  useEffect(() => {
+    saveHiddenCatalogSoloIds(hiddenCatalogSoloIds)
+  }, [hiddenCatalogSoloIds])
+
+  const displayName = useCallback(
+    (id: string) =>
+      vialOptions.find((o) => o.id === id)?.name ?? inferLabelFromRef(id),
+    [vialOptions],
+  )
+
+  const toggleSortKey = useCallback((key: SortKey) => {
+    setActiveSortKeys((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    )
+  }, [])
+
+  const allKnownVialIds = useMemo(() => {
+    const s = new Set<string>(vialOptions.map((o) => o.id))
+    for (const id of collectAllRecipeRefs(pairs, soloRows)) {
+      s.add(id)
+    }
+    return s
+  }, [vialOptions, pairs, soloRows])
+
+  useEffect(() => {
+    if (!editingPair) return
+    setPairEditDraft({
+      a: displayName(editingPair.a),
+      b: displayName(editingPair.b),
+      resultId: displayName(editingPair.resultId),
+    })
+  }, [editingPair, displayName])
+
+  const catalogElementIdSet = useMemo(
+    () => new Set(catalogElementIds),
+    [catalogElementIds],
+  )
+
+  const nextClientId = useCallback(() => {
+    const fromPairs = pairs.reduce((m, p) => Math.max(m, p.clientId), 0)
+    const fromSolo = soloRows.reduce((m, s) => Math.max(m, s.clientId), 0)
+    return Math.max(fromPairs, fromSolo) + 1
+  }, [pairs, soloRows])
+
+  const hiddenCatalogSet = useMemo(
+    () => new Set(hiddenCatalogSoloIds),
+    [hiddenCatalogSoloIds],
+  )
+
+  /** Fioles seules : entrée utilisateur prime ; sinon ligne catalogue si non masquée ; puis extras hors catalogue. */
+  const mergedSoloEntries = useMemo((): EditableSolo[] => {
+    const userById = new Map(soloRows.map((s) => [s.id, s]))
+    const out: EditableSolo[] = []
+    for (const id of catalogElementIds) {
+      const user = userById.get(id)
+      if (user) {
+        out.push({ ...user, fromCatalog: false })
+      } else if (!hiddenCatalogSet.has(id)) {
+        out.push({
+          id,
+          clientId: stableCatalogSoloClientId(id),
+          fromCatalog: true,
+        })
+      }
+    }
+    for (const s of soloRows) {
+      if (!catalogElementIdSet.has(s.id)) {
+        out.push({ ...s, fromCatalog: false })
+      }
+    }
+    return out
+  }, [
+    catalogElementIds,
+    catalogElementIdSet,
+    soloRows,
+    hiddenCatalogSet,
+  ])
+
+  const allRows = useMemo((): RegistreRow[] => {
+    const solo: RegistreRow[] = mergedSoloEntries.map((data) => ({
+      kind: 'solo',
+      data,
+    }))
+    const pr: RegistreRow[] = pairs.map((data) => ({ kind: 'pair', data }))
+    return [...solo, ...pr]
+  }, [pairs, mergedSoloEntries])
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    let list = allRows
+    if (q) {
+      list = list.filter((row) => {
+        if (row.kind === 'solo') {
+          const id = row.data.id.toLowerCase()
+          const name = displayName(row.data.id).toLowerCase()
+          return id.includes(q) || name.includes(q)
+        }
+        const p = row.data
+        const ta = displayName(p.a).toLowerCase()
+        const tb = displayName(p.b).toLowerCase()
+        const tr = displayName(p.resultId).toLowerCase()
+        return (
+          p.a.toLowerCase().includes(q) ||
+          p.b.toLowerCase().includes(q) ||
+          p.resultId.toLowerCase().includes(q) ||
+          ta.includes(q) ||
+          tb.includes(q) ||
+          tr.includes(q)
+        )
+      })
+    }
+    const sorted = [...list]
+    if (activeSortKeys.length === 0) {
+      return sorted
+    }
+    sorted.sort((x, y) =>
+      compareRegistreRowsByKeys(x, y, activeSortKeys, displayName),
+    )
+    return sorted
+  }, [allRows, search, activeSortKeys, displayName])
+
+  const stats = useMemo(() => {
+    let elements = 0
+    let spells = 0
+    let creatures = 0
+    for (const p of pairs) {
+      const t = resultType(p.resultId)
+      if (t === 'element') elements += 1
+      else if (t === 'spell') spells += 1
+      else if (t === 'creature') creatures += 1
+    }
+    return {
+      totalRows: pairs.length + mergedSoloEntries.length,
+      pairs: pairs.length,
+      fiolesSeules: mergedSoloEntries.length,
+      elements,
+      spells,
+      creatures,
+    }
+  }, [pairs, mergedSoloEntries])
+
+  const tryAddPair = useCallback(
+    (a: string, b: string, resultId: string, successMsg: string) => {
+      const ta = a.trim()
+      const tb = b.trim()
+      const tr = resultId.trim()
+      if (!ta || !tb || !tr) {
+        pushAlert('Renseigne les deux ingrédients et le résultat.', 'error')
+        return false
+      }
+      const key = pairKey(ta, tb)
+      const dup = pairs.some((p) => pairKey(p.a, p.b) === key)
+      if (dup) {
+        pushAlert(
+          'Cette combinaison existe déjà : même paire d’ingrédients (ordre indifférent).',
+          'error',
+        )
+        return false
+      }
+      setPairs((prev) => [
+        ...prev,
+        { clientId: nextClientId(), a: ta, b: tb, resultId: tr },
+      ])
+      pushAlert(successMsg, 'success')
+      return true
+    },
+    [pairs, nextClientId, pushAlert],
+  )
+
+  const tryAddSolo = useCallback(() => {
+    const id = soloIdInput.trim()
+    if (!id) {
+      pushAlert('Saisis une référence.', 'error')
+      return
+    }
+    const norm = id
+    if (catalogElementIdSet.has(norm)) {
+      pushAlert(
+        'Cette référence est déjà couverte : toutes les recettes du catalogue y figurent.',
+        'error',
+      )
+      return
+    }
+    if (soloRows.some((s) => s.id === norm)) {
+      pushAlert('Cette référence est déjà dans tes entrées « élément ».', 'error')
+      return
+    }
+    setSoloRows((prev) => [
+      ...prev,
+      { clientId: nextClientId(), id: norm },
+    ])
+    setSoloIdInput('')
+    pushAlert('Élément ajouté.', 'success')
+  }, [
+    soloIdInput,
+    soloRows,
+    nextClientId,
+    pushAlert,
+    catalogElementIdSet,
+  ])
+
+  const handleAddSubmit = useCallback(
+    (e: FormEvent) => {
+      e.preventDefault()
+      switch (createMode) {
+        case 'element':
+          if (tryAddPair(elA, elB, elRes, 'Recette ajoutée.')) {
+            setElA('')
+            setElB('')
+            setElRes('')
+          }
+          break
+        case 'spell': {
+          if (!spA || !spB || !spRes.trim()) {
+            pushAlert('Choisis les deux ingrédients et le résultat.', 'error')
+            return
+          }
+          if (tryAddPair(spA, spB, spRes, 'Combinaison ajoutée.')) {
+            setSpA('')
+            setSpB('')
+            setSpRes('')
+          }
+          break
+        }
+        case 'creature': {
+          const spell = crSpell.trim()
+          const slug = slugifyCreatureName(crName)
+          if (!spell || !slug) {
+            pushAlert('Choisis un sort et un nom de créature.', 'error')
+            return
+          }
+          const resultId = `creature-${slug}`
+          if (
+            tryAddPair(
+              spell,
+              spell,
+              resultId,
+              'Créature ajoutée. Modifie la ligne si la 2e fiole doit être autre chose.',
+            )
+          ) {
+            setCrSpell('')
+            setCrName('')
+          }
+          break
+        }
+        case 'solo':
+          tryAddSolo()
+          break
+      }
+    },
+    [
+      createMode,
+      tryAddPair,
+      tryAddSolo,
+      elA,
+      elB,
+      elRes,
+      spA,
+      spB,
+      spRes,
+      crSpell,
+      crName,
+      pushAlert,
+    ],
+  )
+
+  const removeRegistrePair = useCallback(
+    (clientId: number) => {
+      setPairs((prev) => prev.filter((row) => row.clientId !== clientId))
+      pushAlert('Combinaison supprimée.', 'success')
+    },
+    [pushAlert],
+  )
+
+  const removeRegistreSolo = useCallback(
+    (s: EditableSolo) => {
+      if (s.fromCatalog) {
+        setHiddenCatalogSoloIds((prev) =>
+          prev.includes(s.id) ? prev : [...prev, s.id],
+        )
+        pushAlert('Élément retiré du registre (tu peux réinitialiser le dépôt pour tout revoir).', 'success')
+        return
+      }
+      setSoloRows((prev) => prev.filter((r) => r.clientId !== s.clientId))
+      pushAlert('Entrée supprimée.', 'success')
+    },
+    [pushAlert],
+  )
+
+  const resetDefaults = useCallback(() => {
+    if (
+      !window.confirm(
+        'Recharger les données depuis le dépôt ? Les modifications locales seront perdues.',
+      )
+    ) {
+      return
+    }
+    setPairs(seedPairs())
+    setSoloRows(seedSolo())
+    setHiddenCatalogSoloIds([])
+    pushAlert('Données réinitialisées depuis le code source.', 'success')
+  }, [pushAlert])
+
+  const exportJson = useCallback(() => {
+    if (pairs.length === 0 && soloRows.length === 0) {
+      pushAlert('Rien à exporter.', 'error')
+      return
+    }
+    const blob = new Blob(
+      [
+        JSON.stringify(
+          {
+            version: 3,
+            exportedAt: new Date().toISOString(),
+            pairs: pairs.map(({ a, b, resultId }) => ({ a, b, resultId })),
+            soloElements: soloRows.map((s) => s.id),
+          },
+          null,
+          2,
+        ),
+      ],
+      { type: 'application/json' },
+    )
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `alchemix-recipes-${Date.now()}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+    pushAlert('JSON téléchargé.', 'success')
+  }, [pairs, soloRows, pushAlert])
+
+  const saveToSourceFiles = useCallback(async () => {
+    const pairsTs = buildManualPairsTs(pairs)
+    const soloTs = buildManualSoloTs(soloRows.map((s) => s.id))
+
+    const download = (name: string, content: string) => {
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+      const u = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = u
+      a.download = name
+      a.click()
+      URL.revokeObjectURL(u)
+    }
+
+    type SavePickerWindow = Window & {
+      showSaveFilePicker?: (options: {
+        suggestedName?: string
+        types?: { description: string; accept: Record<string, string[]> }[]
+      }) => Promise<{
+        createWritable: () => Promise<FileSystemWritableFileStream>
+      }>
+    }
+    const w = window as SavePickerWindow
+
+    if (typeof w.showSaveFilePicker === 'function') {
+      try {
+        const h1 = await w.showSaveFilePicker({
+          suggestedName: 'manualRecipePairs.ts',
+          types: [
+            {
+              description: 'TypeScript',
+              accept: { 'text/plain': ['.ts'] },
+            },
+          ],
+        })
+        const wr1 = await h1.createWritable()
+        await wr1.write(pairsTs)
+        await wr1.close()
+        pushAlert(
+          'Paires enregistrées. Choisis maintenant manualSoloElements.ts dans src/data/.',
+          'success',
+        )
+        const h2 = await w.showSaveFilePicker({
+          suggestedName: 'manualSoloElements.ts',
+          types: [
+            {
+              description: 'TypeScript',
+              accept: { 'text/plain': ['.ts'] },
+            },
+          ],
+        })
+        const wr2 = await h2.createWritable()
+        await wr2.write(soloTs)
+        await wr2.close()
+        pushAlert(
+          'Les deux fichiers sont à jour. Relance le serveur de dev si besoin.',
+          'success',
+        )
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return
+        download('manualRecipePairs.ts', pairsTs)
+        download('manualSoloElements.ts', soloTs)
+        pushAlert(
+          'Enregistrement direct impossible : les deux fichiers ont été téléchargés.',
+          'success',
+        )
+      }
+    } else {
+      download('manualRecipePairs.ts', pairsTs)
+      download('manualSoloElements.ts', soloTs)
+      pushAlert(
+        'Télécharge les fichiers et remplace src/data/manualRecipePairs.ts et manualSoloElements.ts.',
+        'success',
+      )
+    }
+  }, [pairs, soloRows, pushAlert])
+
+  const onImportFile = useCallback(
+    (ev: ChangeEvent<HTMLInputElement>) => {
+      const file = ev.target.files?.[0]
+      ev.target.value = ''
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(String(reader.result))
+          const raw = Array.isArray(data.pairs)
+            ? data.pairs
+            : Array.isArray(data.recipes)
+              ? data.recipes
+              : null
+          if (!raw) {
+            pushAlert('JSON invalide : attendu pairs ou recipes.', 'error')
+            return
+          }
+          const mapped: EditablePair[] = raw.map(
+            (
+              row: { a?: string; b?: string; resultId?: string; result?: string },
+              i: number,
+            ) => ({
+              clientId: i + 1,
+              a: String(row.a ?? ''),
+              b: String(row.b ?? ''),
+              resultId: String(row.resultId ?? row.result ?? ''),
+            }),
+          )
+          const valid = mapped.filter((p) => p.a && p.b && p.resultId)
+          if (valid.length === 0) {
+            pushAlert('Aucune paire valide dans le fichier.', 'error')
+            return
+          }
+          let nid = 1
+          setPairs(
+            valid.map((p) => ({
+              ...p,
+              clientId: nid++,
+            })),
+          )
+          let soloMsg = ''
+          if ('soloElements' in data && Array.isArray(data.soloElements)) {
+            const solos = data.soloElements.map(String).filter(Boolean)
+            setSoloRows(
+              solos.map((id: string, i: number) => ({
+                clientId: 10_000 + i,
+                id,
+              })),
+            )
+            soloMsg = `, ${solos.length} seul(s)`
+          }
+          pushAlert(`${valid.length} paire(s)${soloMsg} importé(s).`, 'success')
+        } catch {
+          pushAlert('Fichier JSON illisible.', 'error')
+        }
+      }
+      reader.readAsText(file)
+    },
+    [pushAlert],
+  )
+
+  const saveEditPair = useCallback(() => {
+    if (!editingPair) return
+    const { clientId } = editingPair
+    const ra = resolveRefFromDisplayInput(
+      pairEditDraft.a,
+      displayName,
+      allKnownVialIds,
+    )
+    const rb = resolveRefFromDisplayInput(
+      pairEditDraft.b,
+      displayName,
+      allKnownVialIds,
+    )
+    const rr = resolveRefFromDisplayInput(
+      pairEditDraft.resultId,
+      displayName,
+      allKnownVialIds,
+    )
+    if (ra.error === 'empty' || rb.error === 'empty' || rr.error === 'empty') {
+      pushAlert('Champs incomplets.', 'error')
+      return
+    }
+    if (
+      ra.error === 'ambiguous' ||
+      rb.error === 'ambiguous' ||
+      rr.error === 'ambiguous'
+    ) {
+      pushAlert(
+        'Plusieurs fioles correspondent à un même nom : précise la référence technique ou un nom unique.',
+        'error',
+      )
+      return
+    }
+    const ta = ra.ref
+    const tb = rb.ref
+    const tr = rr.ref
+    const clash = pairs.some(
+      (p) =>
+        p.clientId !== clientId && pairKey(p.a, p.b) === pairKey(ta, tb),
+    )
+    if (clash) {
+      pushAlert('Une autre ligne utilise déjà cette paire d’ingrédients.', 'error')
+      return
+    }
+    setPairs((prev) =>
+      prev.map((p) =>
+        p.clientId === clientId ? { ...p, a: ta, b: tb, resultId: tr } : p,
+      ),
+    )
+    setEditingPair(null)
+    pushAlert('Combinaison mise à jour.', 'success')
+  }, [
+    editingPair,
+    pairEditDraft,
+    pairs,
+    pushAlert,
+    displayName,
+    allKnownVialIds,
+  ])
+
+  const saveEditSolo = useCallback(() => {
+    if (!editingSolo) return
+    const newId = editingSolo.id.trim()
+    if (!newId) {
+      pushAlert('Référence vide.', 'error')
+      return
+    }
+    const src = editingSolo.catalogSourceId
+
+    if (src) {
+      if (soloRows.some((r) => r.id === newId)) {
+        pushAlert('Cette référence existe déjà dans tes entrées « élément ».', 'error')
+        return
+      }
+      setHiddenCatalogSoloIds((prev) =>
+        prev.includes(src) ? prev : [...prev, src],
+      )
+      setSoloRows((prev) => [
+        ...prev,
+        { clientId: nextClientId(), id: newId },
+      ])
+      setEditingSolo(null)
+      pushAlert('Élément enregistré.', 'success')
+      return
+    }
+
+    const clash = soloRows.some(
+      (s) => s.clientId !== editingSolo.clientId && s.id === newId,
+    )
+    if (clash) {
+      pushAlert('Cette référence existe déjà comme élément.', 'error')
+      return
+    }
+    setSoloRows((prev) =>
+      prev.map((s) =>
+        s.clientId === editingSolo.clientId ? { ...s, id: newId } : s,
+      ),
+    )
+    setEditingSolo(null)
+    pushAlert('Référence mise à jour.', 'success')
+  }, [editingSolo, soloRows, nextClientId, pushAlert])
+
+  const typeClass = (t: VialType | 'unknown' | 'fioleSeule') => {
+    if (t === 'fioleSeule') return styles.typeSolo
+    if (t === 'element') return styles.typeElement
+    if (t === 'spell') return styles.typeSpell
+    if (t === 'creature') return styles.typeCreature
+    return styles.typeUnknown
+  }
+
+  const typeLabel = (t: VialType | 'unknown' | 'fioleSeule') => {
+    if (t === 'fioleSeule') return 'Élément'
+    if (t === 'element') return 'Recette'
+    if (t === 'spell') return 'Sort'
+    if (t === 'creature') return 'Créature'
+    return 'Inconnu'
+  }
+
+  return (
+    <div className={styles.page}>
+      <div className={styles.alerts} aria-live="polite">
+        {alerts.map((a) => (
+          <div
+            key={a.id}
+            className={`${styles.alert} ${a.kind === 'success' ? styles.alertSuccess : styles.alertError}`}
+          >
+            <span>{a.message}</span>
+            <button
+              type="button"
+              className={styles.alertClose}
+              aria-label="Fermer"
+              onClick={() =>
+                setAlerts((prev) => prev.filter((x) => x.id !== a.id))
+              }
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+
+      <div className={styles.container}>
+        <header className={styles.topBar}>
+          <h1 className={styles.pageTitle}>Alchemix — Atelier des recettes</h1>
+          <Link className={styles.navLink} to="/">
+            Retour au laboratoire
+          </Link>
+        </header>
+
+        <div className={styles.mainGrid}>
+          <section className={`${styles.panel} ${styles.panelForm}`}>
+            <h2 className={styles.panelTitle}>Nouvelle entrée</h2>
+
+            <div className={styles.modeTabs} role="tablist" aria-label="Type de création">
+              {(
+                [
+                  ['element', 'Recette'],
+                  ['spell', 'Sort'],
+                  ['creature', 'Créature'],
+                  ['solo', 'Élément'],
+                ] as const
+              ).map(([key, lab]) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={createMode === key}
+                  className={`${styles.modeTab} ${createMode === key ? styles.modeTabActive : ''}`}
+                  onClick={() => setCreateMode(key)}
+                >
+                  {lab}
+                </button>
+              ))}
+            </div>
+
+            <form className={styles.formStack} onSubmit={handleAddSubmit}>
+              <div className={styles.formBody}>
+                {createMode === 'element' && (
+                  <>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="elA">
+                        Ingrédient A<span className={styles.required}>*</span>
+                      </label>
+                      <input
+                        id="elA"
+                        className={styles.input}
+                        value={elA}
+                        onChange={(e) => setElA(e.target.value)}
+                        placeholder="Référence fiole A"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="elB">
+                        Ingrédient B<span className={styles.required}>*</span>
+                      </label>
+                      <input
+                        id="elB"
+                        className={styles.input}
+                        value={elB}
+                        onChange={(e) => setElB(e.target.value)}
+                        placeholder="Référence fiole B"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="elRes">
+                        Résultat<span className={styles.required}>*</span>
+                      </label>
+                      <input
+                        id="elRes"
+                        className={styles.input}
+                        value={elRes}
+                        onChange={(e) => setElRes(e.target.value)}
+                        placeholder="Référence produite"
+                        autoComplete="off"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {createMode === 'spell' && (
+                  <>
+                    <div className={styles.formRow}>
+                      <div className={styles.formGroup}>
+                        <label htmlFor="spA">
+                          Ingrédient A<span className={styles.required}>*</span>
+                        </label>
+                        <select
+                          id="spA"
+                          className={styles.select}
+                          value={spA}
+                          onChange={(e) => setSpA(e.target.value)}
+                        >
+                          <option value="">— Choisir —</option>
+                          {vialOptions.map((v) => (
+                            <option key={v.id} value={v.id}>
+                              {v.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className={styles.formGroup}>
+                        <label htmlFor="spB">
+                          Ingrédient B<span className={styles.required}>*</span>
+                        </label>
+                        <select
+                          id="spB"
+                          className={styles.select}
+                          value={spB}
+                          onChange={(e) => setSpB(e.target.value)}
+                        >
+                          <option value="">— Choisir —</option>
+                          {vialOptions.map((v) => (
+                            <option key={v.id} value={v.id}>
+                              {v.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="spRes">
+                        Résultat produit<span className={styles.required}>*</span>
+                      </label>
+                      <input
+                        id="spRes"
+                        className={styles.input}
+                        value={spRes}
+                        onChange={(e) => setSpRes(e.target.value)}
+                        placeholder="Saisir la référence du sort créé"
+                        autoComplete="off"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {createMode === 'creature' && (
+                  <>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="crSpell">
+                        Sort<span className={styles.required}>*</span>
+                      </label>
+                      <select
+                        id="crSpell"
+                        className={styles.select}
+                        value={crSpell}
+                        onChange={(e) => setCrSpell(e.target.value)}
+                      >
+                        <option value="">— Choisir un sort —</option>
+                        {spellOptions.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="crName">
+                        Nom de la créature<span className={styles.required}>*</span>
+                      </label>
+                      <input
+                        id="crName"
+                        className={styles.input}
+                        value={crName}
+                        onChange={(e) => setCrName(e.target.value)}
+                        placeholder="Nom de la fiole créature"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <p className={styles.hint}>
+                      La paire est enregistrée comme sort + sort. Corrige via « modifier »
+                      si besoin.
+                    </p>
+                  </>
+                )}
+
+                {createMode === 'solo' && (
+                  <>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="soloId">
+                        Référence fiole<span className={styles.required}>*</span>
+                      </label>
+                      <input
+                        id="soloId"
+                        className={styles.input}
+                        value={soloIdInput}
+                        onChange={(e) => setSoloIdInput(e.target.value)}
+                        placeholder="Hors recettes déjà listées du catalogue"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <p className={styles.hint}>
+                      Les recettes du catalogue sont déjà listées. Ici, ajoute un élément
+                      hors catalogue (sort, craft, etc.).
+                    </p>
+                  </>
+                )}
+              </div>
+
+              <div className={styles.formSubmitBar}>
+                <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>
+                  Ajouter
+                </button>
+              </div>
+            </form>
+
+            <div className={styles.ioRow}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={saveToSourceFiles}
+              >
+                Enregistrer (fichiers)
+              </button>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={exportJson}
+              >
+                JSON
+              </button>
+            </div>
+            <div className={styles.ioRow}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => fileRef.current?.click()}
+              >
+                Importer JSON
+              </button>
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".json,application/json"
+                hidden
+                onChange={onImportFile}
+              />
+            </div>
+          </section>
+
+          <section className={`${styles.panel} ${styles.panelTable}`}>
+            <div className={styles.tableHeader}>
+              <div className={styles.tableHeaderLeft}>
+                <h2>Registre ({stats.totalRows})</h2>
+                <div className={styles.searchWrap}>
+                  <input
+                    className={`${styles.input} ${styles.searchField}`}
+                    placeholder="Filtrer…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    aria-label="Filtrer"
+                  />
+                </div>
+              </div>
+              <div className={styles.tableHeaderRight}>
+                <button
+                  type="button"
+                  className={`${styles.btn} ${styles.btnSecondary} ${styles.headerToolbarBtn} ${styles.iconHeaderBtn}`}
+                  onClick={resetDefaults}
+                  title="Recharger le dépôt"
+                  aria-label="Recharger le dépôt"
+                >
+                  <RefreshCcw size={16} strokeWidth={2.25} aria-hidden />
+                </button>
+              </div>
+            </div>
+
+            <div className={styles.tableWrap}>
+              <div className={styles.tableScroll}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>
+                        <div className={styles.thWithSort}>
+                          <span>Combinaison</span>
+                          <button
+                            type="button"
+                            className={`${styles.sortHeaderBtn} ${activeSortKeys.includes('pair') ? styles.sortHeaderBtnActive : ''}`}
+                            title={
+                              activeSortKeys.length > 1
+                                ? `Tri combinaison (noms des ingrédients) — priorité ${activeSortKeys.indexOf('pair') + 1} sur ${activeSortKeys.length} (cliquer pour retirer)`
+                                : 'Trier par les noms des deux ingrédients (A–Z, ordre A/B indifférent ; cumulable)'
+                            }
+                            aria-label="Trier par noms des ingrédients de la combinaison"
+                            aria-pressed={activeSortKeys.includes('pair')}
+                            onClick={() => toggleSortKey('pair')}
+                          >
+                            {activeSortKeys.length > 1 &&
+                              activeSortKeys.includes('pair') && (
+                                <span
+                                  className={styles.sortPriorityBadge}
+                                  aria-hidden
+                                >
+                                  {activeSortKeys.indexOf('pair') + 1}
+                                </span>
+                              )}
+                            <ArrowDownWideNarrow
+                              size={15}
+                              strokeWidth={2.25}
+                              aria-hidden
+                            />
+                          </button>
+                        </div>
+                      </th>
+                      <th>
+                        <div className={styles.thWithSort}>
+                          <span>Résultat</span>
+                          <button
+                            type="button"
+                            className={`${styles.sortHeaderBtn} ${activeSortKeys.includes('result') ? styles.sortHeaderBtnActive : ''}`}
+                            title={
+                              activeSortKeys.length > 1
+                                ? `Tri résultat A–Z — priorité ${activeSortKeys.indexOf('result') + 1} sur ${activeSortKeys.length} (cliquer pour retirer)`
+                                : 'Activer le tri par nom du résultat (cumulable avec les autres ; ordre = priorité)'
+                            }
+                            aria-label="Trier par nom du résultat"
+                            aria-pressed={activeSortKeys.includes('result')}
+                            onClick={() => toggleSortKey('result')}
+                          >
+                            {activeSortKeys.length > 1 &&
+                              activeSortKeys.includes('result') && (
+                                <span
+                                  className={styles.sortPriorityBadge}
+                                  aria-hidden
+                                >
+                                  {activeSortKeys.indexOf('result') + 1}
+                                </span>
+                              )}
+                            <ArrowDownAZ
+                              size={15}
+                              strokeWidth={2.25}
+                              aria-hidden
+                            />
+                          </button>
+                        </div>
+                      </th>
+                      <th>
+                        <div className={styles.thWithSort}>
+                          <span>Type</span>
+                          <button
+                            type="button"
+                            className={`${styles.sortHeaderBtn} ${activeSortKeys.includes('type') ? styles.sortHeaderBtnActive : ''}`}
+                            title={
+                              activeSortKeys.length > 1
+                                ? `Tri par type — priorité ${activeSortKeys.indexOf('type') + 1} sur ${activeSortKeys.length} (cliquer pour retirer)`
+                                : 'Activer le tri par type (cumulable avec les autres ; ordre = priorité)'
+                            }
+                            aria-label="Trier par type"
+                            aria-pressed={activeSortKeys.includes('type')}
+                            onClick={() => toggleSortKey('type')}
+                          >
+                            {activeSortKeys.length > 1 &&
+                              activeSortKeys.includes('type') && (
+                                <span
+                                  className={styles.sortPriorityBadge}
+                                  aria-hidden
+                                >
+                                  {activeSortKeys.indexOf('type') + 1}
+                                </span>
+                              )}
+                            <ArrowDownUp
+                              size={15}
+                              strokeWidth={2.25}
+                              aria-hidden
+                            />
+                          </button>
+                        </div>
+                      </th>
+                      <th className={styles.thActions} aria-label="Actions" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.length === 0 ? (
+                      <tr>
+                        <td colSpan={5}>
+                          <div className={styles.empty}>
+                            {stats.totalRows === 0
+                              ? 'Aucune ligne.'
+                              : 'Aucun résultat pour ce filtre.'}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      filtered.map((row, i) => {
+                        if (row.kind === 'solo') {
+                          const s = row.data
+                          return (
+                            <tr key={`solo-${s.clientId}`}>
+                              <td>{i + 1}</td>
+                              <td>
+                                <span className={styles.dashCell}>—</span>
+                              </td>
+                              <td className={styles.tdResult}>
+                                {displayName(s.id)}
+                              </td>
+                              <td>
+                                <span
+                                  className={`${styles.typeTag} ${typeClass('fioleSeule')}`}
+                                >
+                                  {typeLabel('fioleSeule')}
+                                </span>
+                              </td>
+                              <td>
+                                <div className={styles.actions}>
+                                  <button
+                                    type="button"
+                                    className={styles.iconBtn}
+                                    title="Modifier"
+                                    aria-label="Modifier"
+                                    onClick={() =>
+                                      setEditingSolo(
+                                        s.fromCatalog
+                                          ? { ...s, catalogSourceId: s.id }
+                                          : { ...s },
+                                      )
+                                    }
+                                  >
+                                    <Pencil size={16} strokeWidth={2.25} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                                    title="Supprimer"
+                                    aria-label="Supprimer"
+                                    onClick={() =>
+                                      setRegistreDeletePrompt({
+                                        kind: 'solo',
+                                        solo: { ...s },
+                                      })
+                                    }
+                                  >
+                                    <Trash2 size={16} strokeWidth={2.25} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        }
+                        const p = row.data
+                        const rt = resultType(p.resultId)
+                        return (
+                          <tr key={`pair-${p.clientId}`}>
+                            <td>{i + 1}</td>
+                            <td>
+                              <div className={styles.combo}>
+                                <span className={styles.pill}>
+                                  {displayName(p.a)}
+                                </span>
+                                <span className={styles.plus}>+</span>
+                                <span className={styles.pill}>
+                                  {displayName(p.b)}
+                                </span>
+                              </div>
+                            </td>
+                            <td className={styles.tdResult}>
+                              {displayName(p.resultId)}
+                            </td>
+                            <td>
+                              <span
+                                className={`${styles.typeTag} ${typeClass(rt)}`}
+                              >
+                                {typeLabel(rt)}
+                              </span>
+                            </td>
+                            <td>
+                              <div className={styles.actions}>
+                                <button
+                                  type="button"
+                                  className={styles.iconBtn}
+                                  title="Modifier"
+                                  aria-label="Modifier"
+                                  onClick={() => setEditingPair({ ...p })}
+                                >
+                                  <Pencil size={16} strokeWidth={2.25} />
+                                </button>
+                                <button
+                                  type="button"
+                                  className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                                  title="Supprimer"
+                                  aria-label="Supprimer"
+                                  onClick={() =>
+                                    setRegistreDeletePrompt({
+                                      kind: 'pair',
+                                      clientId: p.clientId,
+                                    })
+                                  }
+                                >
+                                  <Trash2 size={16} strokeWidth={2.25} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div className={styles.stats}>
+          <span className={styles.statInline}>
+            <strong>{stats.pairs}</strong> paires
+          </span>
+          <span className={styles.statInline}>
+            <strong>{stats.fiolesSeules}</strong> éléments
+          </span>
+          <span className={styles.statInline}>
+            <strong>{stats.elements}</strong> → recette
+          </span>
+          <span className={styles.statInline}>
+            <strong>{stats.spells}</strong> → sort
+          </span>
+          <span className={styles.statInline}>
+            <strong>{stats.creatures}</strong> → créature
+          </span>
+        </div>
+      </div>
+
+      {registreDeletePrompt && (
+        <div
+          className={`${styles.modalOverlay} ${styles.modalOverlayConfirm}`}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="registre-delete-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setRegistreDeletePrompt(null)
+          }}
+        >
+          <div className={styles.modal}>
+            <h3 id="registre-delete-title">Supprimer du registre</h3>
+            <p className={styles.modalBody}>
+              {registreDeletePrompt.kind === 'pair'
+                ? (() => {
+                    const row = pairs.find(
+                      (r) =>
+                        r.clientId === registreDeletePrompt.clientId,
+                    )
+                    return row
+                      ? `Supprimer la recette « ${displayName(row.a)} + ${displayName(row.b)} → ${displayName(row.resultId)} » ?`
+                      : 'Supprimer cette ligne du registre ?'
+                  })()
+                : `Supprimer l’élément « ${displayName(registreDeletePrompt.solo.id)} » ?`}
+            </p>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => setRegistreDeletePrompt(null)}
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnDanger}`}
+                onClick={() => {
+                  const payload = registreDeletePrompt
+                  if (!payload) return
+                  setRegistreDeletePrompt(null)
+                  if (payload.kind === 'pair') {
+                    removeRegistrePair(payload.clientId)
+                  } else {
+                    removeRegistreSolo(payload.solo)
+                  }
+                }}
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingPair && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-pair-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditingPair(null)
+          }}
+        >
+          <div className={styles.modal}>
+            <h3 id="edit-pair-title">Modifier la combinaison</h3>
+            <div className={styles.formGroup}>
+              <label htmlFor="edA">Ingrédient A</label>
+              <input
+                id="edA"
+                className={styles.input}
+                value={pairEditDraft.a}
+                onChange={(e) =>
+                  setPairEditDraft((d) => ({ ...d, a: e.target.value }))
+                }
+                autoComplete="off"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="edB">Ingrédient B</label>
+              <input
+                id="edB"
+                className={styles.input}
+                value={pairEditDraft.b}
+                onChange={(e) =>
+                  setPairEditDraft((d) => ({ ...d, b: e.target.value }))
+                }
+                autoComplete="off"
+              />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="edR">Résultat</label>
+              <input
+                id="edR"
+                className={styles.input}
+                value={pairEditDraft.resultId}
+                onChange={(e) =>
+                  setPairEditDraft((d) => ({ ...d, resultId: e.target.value }))
+                }
+                autoComplete="off"
+              />
+            </div>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={saveEditPair}
+              >
+                Enregistrer
+              </button>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => setEditingPair(null)}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editingSolo && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-solo-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setEditingSolo(null)
+          }}
+        >
+          <div className={styles.modal}>
+            <h3 id="edit-solo-title">
+              {editingSolo.catalogSourceId
+                ? 'Enregistrer cet élément'
+                : 'Modifier l’élément'}
+            </h3>
+            <div className={styles.formGroup}>
+              <label htmlFor="edSolo">Référence fiole</label>
+              <input
+                id="edSolo"
+                className={styles.input}
+                value={editingSolo.id}
+                onChange={(e) =>
+                  setEditingSolo((s) => (s ? { ...s, id: e.target.value } : s))
+                }
+              />
+            </div>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                onClick={saveEditSolo}
+              >
+                Enregistrer
+              </button>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSecondary}`}
+                onClick={() => setEditingSolo(null)}
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

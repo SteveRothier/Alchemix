@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# Alchemix
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack technique
 
-## React Compiler
+- **React 19** + **TypeScript**
+- **Vite 8** (build & dev server)
+- **Zustand** avec persistance (`localStorage`) pour l’inventaire et les compteurs
+- **@dnd-kit** pour le drag & drop (inventaire → labo, fusions sur le plateau)
+- **GSAP** (animations côté effets / UI si utilisés)
+- **Vitest** pour quelques tests sur la logique de fusion
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Lancer le projet
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Autres commandes utiles :
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build   # TypeScript + build Vite
+npm run lint
+npm run test    # Vitest (fusions dynamiques, noms d’éléments)
 ```
+
+## Boucle de jeu
+
+1. **Inventaire** (colonne de droite) : éléments, sorts et créatures découverts.
+2. **Laboratoire** : tu poses des fioles sur le plateau, tu les déplaces, tu en superposes une sur une pour **fusionner**.
+3. **Personnage** : certaines fioles de type **sort** peuvent être données à boire au personnage ; cela peut faire apparaître une **créature** (liée au sort dans la config).
+4. **Reset** : réinitialise la progression et repart des éléments de départ (voir ci‑dessous).
+
+## Système de fusion
+
+## UX laboratoire & inventaire
+
+- **Double-clic** sur une fiole déjà posée dans le labo : **duplication** sur le plateau (léger décalage).
+- **Clic droit** sur une fiole du labo : retirer du plateau.
+
+## Structure utile du code
+
+
+| Zone                        | Fichiers / dossiers                                                                                   |
+| --------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Shell UI, DnD, état plateau | `src/components/layout/AlchemixShell.tsx`                                                             |
+| Zone labo                   | `src/components/game/LabCanvas.tsx`, `CanvasVialItem.tsx`                                             |
+| Inventaire                  | `src/components/inventory/`                                                                           |
+| Données fioles & recettes   | `src/data/craftedVials.ts`, `src/data/starterVials.ts`                                                |
+| Fusion & dynamique          | `src/lib/fusion.ts`, `src/lib/dynamicVial.ts`, `src/lib/dynamicElement.ts`, `src/lib/dynamicSpell.ts` |
+| Persistance                 | `src/store/useAlchemixStore.ts`                                                                       |
+| Types                       | `src/types/index.ts`                                                                                  |
+
+

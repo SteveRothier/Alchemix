@@ -1,4 +1,4 @@
-import { MANUAL_RECIPE_PAIRS } from '../data/craftedVials'
+import { MANUAL_RECIPE_PAIRS } from '../data/manualRecipePairs'
 
 function pairKey(idA: string, idB: string): string {
   return [idA, idB].sort().join('|')

@@ -21,6 +21,7 @@ import { LAB_CANVAS_ID, LabCanvas } from '../game/LabCanvas'
 import { InventoryPanel } from '../inventory/InventoryPanel'
 import { VialChip } from '../vial/VialChip'
 import { resolveFusionProduct } from '../../lib/fusion'
+import type { DrinkSpellResult } from '../../lib/drinkSpell'
 import { tierFromDiscoveryCount } from '../../lib/progression'
 import { useAlchemixStore, selectDiscoveryCount } from '../../store/useAlchemixStore'
 import styles from './AlchemixShell.module.css'
@@ -114,18 +115,25 @@ export function AlchemixShell() {
         showSipHint('Seuls les sorts peuvent être bus.')
         return
       }
-      const result = store.feedSpellToCharacter(vialId)
+      const result: DrinkSpellResult = store.feedSpellToCharacter(vialId)
       if (activeData.kind === 'lab') {
         setPlaced((prev) =>
           prev.filter((p) => p.instanceId !== activeData.instanceId),
         )
       }
-      if (result.ok) {
-        showSipHint(`${result.creature.name} apparaît !`)
-      } else if (result.reason === 'no_creature') {
-        showSipHint('Aucune créature ne répond à ce sort.')
-      } else if (result.reason === 'already_owned') {
-        showSipHint('Créature déjà manifestée.')
+      switch (result.ok) {
+        case true:
+          showSipHint(`${result.creature.name} apparaît !`)
+          break
+        case false: {
+          const { reason } = result
+          if (reason === 'no_creature') {
+            showSipHint('Aucune créature ne répond à ce sort.')
+          } else if (reason === 'already_owned') {
+            showSipHint('Créature déjà manifestée.')
+          }
+          break
+        }
       }
       return
     }
@@ -306,15 +314,17 @@ export function AlchemixShell() {
           <aside className={styles.inventory} aria-label="Inventaire">
             <header className={styles.inventoryHeader}>
               <h2 className={styles.inventoryTitle}>Inventaire</h2>
-              <button
-                type="button"
-                className={styles.resetBtn}
-                onClick={handleReset}
-                title="Réinitialiser la progression"
-                aria-label="Réinitialiser : inventaire de départ et laboratoire vide"
-              >
-                Reset
-              </button>
+              <div className={styles.inventoryHeaderActions}>
+                <button
+                  type="button"
+                  className={styles.resetBtn}
+                  onClick={handleReset}
+                  title="Réinitialiser la progression"
+                  aria-label="Réinitialiser : inventaire de départ et laboratoire vide"
+                >
+                  Reset
+                </button>
+              </div>
             </header>
             <InventoryPanel
               elements={inventoryGroups.elements}

@@ -1,5 +1,6 @@
 import { useDroppable } from '@dnd-kit/core'
 import type { RefObject } from 'react'
+import { Link } from 'react-router-dom'
 import type { Vial } from '../../types'
 import { CanvasVialItem } from './CanvasVialItem'
 import type { LabPlacedVial } from './labTypes'
@@ -33,7 +34,16 @@ export function LabCanvas({
 
   return (
     <div className={styles.wrap}>
-      <h2 className={styles.title}>Laboratoire</h2>
+      <div className={styles.titleRow}>
+        <h2 className={styles.title}>Laboratoire</h2>
+        <Link
+          className={styles.recipesBtn}
+          to="/recipes"
+          title="Gérer les combinaisons de fioles"
+        >
+          Recettes
+        </Link>
+      </div>
       <div
         ref={setCombinedRef}
         className={styles.canvas}

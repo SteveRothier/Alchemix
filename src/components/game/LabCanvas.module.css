@@ -7,6 +7,15 @@
   min-width: 0;
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
 .title {
   margin: 0;
   font-size: 0.85rem;
@@ -14,7 +23,32 @@
   color: var(--text-h);
   text-transform: uppercase;
   letter-spacing: 0.06em;
+  min-width: 0;
+}
+
+.recipesBtn {
   flex-shrink: 0;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-muted, var(--text));
+  text-decoration: none;
+  line-height: 1.2;
+}
+
+.recipesBtn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.recipesBtn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .canvas {
