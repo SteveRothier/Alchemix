@@ -76,6 +76,7 @@ function VialOptionCombo({
   onChange,
   options,
   placeholder = 'Tape pour filtrer ou choisir…',
+  autoComplete = 'on',
 }: {
   inputId: string
   label: ReactNode
@@ -83,6 +84,7 @@ function VialOptionCombo({
   onChange: (id: string) => void
   options: VialPickOption[]
   placeholder?: string
+  autoComplete?: string
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
@@ -224,7 +226,7 @@ function VialOptionCombo({
           className={styles.input}
           value={typing ? text : selectedLabel}
           placeholder={placeholder}
-          autoComplete="off"
+          autoComplete={autoComplete}
           role="combobox"
           aria-expanded={open}
           aria-controls={listId}
@@ -1464,32 +1466,30 @@ export function RecipeManagerPage() {
               <div className={styles.formBody}>
                 {createMode === 'element' && (
                   <>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="elA">
-                        Ingrédient A<span className={styles.required}>*</span>
-                      </label>
-                      <input
-                        id="elA"
-                        className={styles.input}
-                        value={elA}
-                        onChange={(e) => setElA(e.target.value)}
-                        placeholder="Référence fiole A"
-                        autoComplete="off"
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="elB">
-                        Ingrédient B<span className={styles.required}>*</span>
-                      </label>
-                      <input
-                        id="elB"
-                        className={styles.input}
-                        value={elB}
-                        onChange={(e) => setElB(e.target.value)}
-                        placeholder="Référence fiole B"
-                        autoComplete="off"
-                      />
-                    </div>
+                    <VialOptionCombo
+                      inputId="elA"
+                      label={
+                        <>
+                          Ingrédient A<span className={styles.required}>*</span>
+                        </>
+                      }
+                      value={elA}
+                      onChange={setElA}
+                      options={vialOptions}
+                      placeholder="Tape pour chercher un ingrédient…"
+                    />
+                    <VialOptionCombo
+                      inputId="elB"
+                      label={
+                        <>
+                          Ingrédient B<span className={styles.required}>*</span>
+                        </>
+                      }
+                      value={elB}
+                      onChange={setElB}
+                      options={vialOptions}
+                      placeholder="Tape pour chercher un ingrédient…"
+                    />
                     <div className={styles.formGroup}>
                       <label htmlFor="elRes">
                         Résultat<span className={styles.required}>*</span>
@@ -2002,48 +2002,43 @@ export function RecipeManagerPage() {
                 : 'Modifier la combinaison'}
             </h3>
             {isCreatureResultId(editingPair.resultId) ? (
-              <div className={styles.formGroup}>
-                <label htmlFor="edCreatureSpell">Sort</label>
-                <input
-                  id="edCreatureSpell"
-                  className={styles.input}
-                  value={pairEditDraft.a}
-                  onChange={(e) =>
-                    setPairEditDraft((d) => ({
-                      ...d,
-                      a: e.target.value,
-                      b: e.target.value,
-                    }))
-                  }
-                  autoComplete="off"
-                />
-              </div>
+              <VialOptionCombo
+                inputId="edCreatureSpell"
+                label="Sort"
+                value={pairEditDraft.a}
+                onChange={(id) =>
+                  setPairEditDraft((d) => ({
+                    ...d,
+                    a: id,
+                    b: id,
+                  }))
+                }
+                options={spellOptions}
+                placeholder="Tape pour chercher un sort…"
+                autoComplete="on"
+              />
             ) : (
               <>
-                <div className={styles.formGroup}>
-                  <label htmlFor="edA">Ingrédient A</label>
-                  <input
-                    id="edA"
-                    className={styles.input}
-                    value={pairEditDraft.a}
-                    onChange={(e) =>
-                      setPairEditDraft((d) => ({ ...d, a: e.target.value }))
-                    }
-                    autoComplete="off"
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="edB">Ingrédient B</label>
-                  <input
-                    id="edB"
-                    className={styles.input}
-                    value={pairEditDraft.b}
-                    onChange={(e) =>
-                      setPairEditDraft((d) => ({ ...d, b: e.target.value }))
-                    }
-                    autoComplete="off"
-                  />
-                </div>
+                <VialOptionCombo
+                  inputId="edA"
+                  label="Ingrédient A"
+                  value={pairEditDraft.a}
+                  onChange={(id) =>
+                    setPairEditDraft((d) => ({ ...d, a: id }))
+                  }
+                  options={vialOptions}
+                  placeholder="Tape pour chercher un ingrédient…"
+                />
+                <VialOptionCombo
+                  inputId="edB"
+                  label="Ingrédient B"
+                  value={pairEditDraft.b}
+                  onChange={(id) =>
+                    setPairEditDraft((d) => ({ ...d, b: id }))
+                  }
+                  options={vialOptions}
+                  placeholder="Tape pour chercher un ingrédient…"
+                />
               </>
             )}
             <div className={styles.formGroup}>
