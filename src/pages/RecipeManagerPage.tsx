@@ -1159,24 +1159,42 @@ export function RecipeManagerPage() {
     if (!editingPair) return
     const { clientId } = editingPair
     const creatureEdit = isCreatureResultId(editingPair.resultId)
-
-    const rr = resolveRefFromDisplayInput(
-      pairEditDraft.resultId,
-      displayName,
-      allKnownVialIds,
-    )
-    if (rr.error === 'empty' || !rr.ref.trim()) {
-      pushAlert('Le résultat est obligatoire.', 'error')
-      return
-    }
-    if (rr.error === 'ambiguous') {
-      pushAlert(
-        'Plusieurs fioles correspondent à un même nom : précise la référence technique ou un nom unique.',
-        'error',
+    let tr = ''
+    if (creatureEdit) {
+      const raw = pairEditDraft.resultId.trim()
+      if (!raw) {
+        pushAlert('Le nom de la créature est obligatoire.', 'error')
+        return
+      }
+      const lower = raw.toLowerCase()
+      const base = lower.startsWith('creature-')
+        ? raw.slice('creature-'.length)
+        : raw
+      const slug = slugifyCreatureName(base)
+      if (!slug) {
+        pushAlert('Le nom de la créature est invalide.', 'error')
+        return
+      }
+      tr = `creature-${slug}`
+    } else {
+      const rr = resolveRefFromDisplayInput(
+        pairEditDraft.resultId,
+        displayName,
+        allKnownVialIds,
       )
-      return
+      if (rr.error === 'empty' || !rr.ref.trim()) {
+        pushAlert('Le résultat est obligatoire.', 'error')
+        return
+      }
+      if (rr.error === 'ambiguous') {
+        pushAlert(
+          'Plusieurs fioles correspondent à un même nom : précise la référence technique ou un nom unique.',
+          'error',
+        )
+        return
+      }
+      tr = rr.ref.trim()
     }
-    const tr = rr.ref.trim()
 
     let ta: string
     let tb: string
