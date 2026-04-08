@@ -171,6 +171,18 @@ function resolveRefFromDisplayInput(
   return { ref: t }
 }
 
+/** Ingrédient vide autorisé ; sinon résolution comme `resolveRefFromDisplayInput`. */
+function resolveIngredientDraft(
+  input: string,
+  displayName: (id: string) => string,
+  allIds: Set<string>,
+): { ref: string; error?: 'ambiguous' } {
+  if (!input.trim()) return { ref: '' }
+  const r = resolveRefFromDisplayInput(input, displayName, allIds)
+  if (r.error === 'empty') return { ref: '' }
+  return { ref: r.ref, error: r.error }
+}
+
 function buildVialOptions(): { id: string; name: string; type: VialType }[] {
   const map = new Map<string, { id: string; name: string; type: VialType }>()
   for (const v of STARTER_VIAL_DEFINITIONS) {
@@ -187,13 +199,26 @@ function buildVialOptions(): { id: string; name: string; type: VialType }[] {
 function resultType(resultId: string): VialType | 'unknown' {
   const t = CRAFTED_VIAL_TEMPLATES[resultId]
   if (t) return t.type
-  if (resultId.startsWith('creature-')) return 'creature'
+  if (isCreatureResultId(resultId)) return 'creature'
   return 'unknown'
 }
 
-/** Recette créature ajoutée depuis l’atelier : même sort en a et b, résultat creature-*. */
+function isCreatureResultId(resultId: string): boolean {
+  return resultId.startsWith('creature-')
+}
+
+/**
+ * Créature avec un seul sort affiché en combinaison (a et b identiques et non vides).
+ */
 function isCreatureRecipePair(p: Pick<EditablePair, 'a' | 'b' | 'resultId'>): boolean {
-  return p.resultId.startsWith('creature-') && p.a === p.b
+  const a = p.a.trim()
+  const b = p.b.trim()
+  if (!a || !b) return false
+  return isCreatureResultId(p.resultId) && a === b
+}
+
+function hasNoCombination(p: Pick<EditablePair, 'a' | 'b'>): boolean {
+  return !p.a.trim() && !p.b.trim()
 }
 
 function slugifyCreatureName(name: string): string {
@@ -362,6 +387,7 @@ export function RecipeManagerPage() {
     resultId: '',
   })
   const [editingSolo, setEditingSolo] = useState<EditingSoloState | null>(null)
+  const [soloEditDraft, setSoloEditDraft] = useState('')
   const [registreDeletePrompt, setRegistreDeletePrompt] =
     useState<RegistreDeletePrompt>(null)
   const [hiddenCatalogSoloIds, setHiddenCatalogSoloIds] = useState<string[]>(
@@ -422,12 +448,31 @@ export function RecipeManagerPage() {
 
   useEffect(() => {
     if (!editingPair) return
-    setPairEditDraft({
-      a: displayName(editingPair.a),
-      b: displayName(editingPair.b),
-      resultId: displayName(editingPair.resultId),
-    })
+    if (isCreatureResultId(editingPair.resultId)) {
+      const spellDisp =
+        !editingPair.a.trim() && !editingPair.b.trim()
+          ? ''
+          : editingPair.a.trim()
+            ? displayName(editingPair.a)
+            : displayName(editingPair.b)
+      setPairEditDraft({
+        a: spellDisp,
+        b: spellDisp,
+        resultId: displayName(editingPair.resultId),
+      })
+    } else {
+      setPairEditDraft({
+        a: displayName(editingPair.a),
+        b: displayName(editingPair.b),
+        resultId: displayName(editingPair.resultId),
+      })
+    }
   }, [editingPair, displayName])
+
+  useEffect(() => {
+    if (!editingSolo) return
+    setSoloEditDraft(displayName(editingSolo.id))
+  }, [editingSolo, displayName])
 
   const catalogElementIdSet = useMemo(
     () => new Set(catalogElementIds),
@@ -538,19 +583,58 @@ export function RecipeManagerPage() {
   }, [pairs, mergedSoloEntries])
 
   const tryAddPair = useCallback(
-    (a: string, b: string, resultId: string, successMsg: string) => {
+    (
+      a: string,
+      b: string,
+      resultId: string,
+      successMsg: string,
+      options?: { allowEmptyIngredients?: boolean },
+    ) => {
       const ta = a.trim()
       const tb = b.trim()
       const tr = resultId.trim()
-      if (!ta || !tb || !tr) {
-        pushAlert('Renseigne les deux ingrédients et le résultat.', 'error')
+      const allowEmpty = options?.allowEmptyIngredients ?? false
+
+      if (!tr) {
+        pushAlert(
+          allowEmpty
+            ? 'Renseigne au moins le résultat.'
+            : 'Renseigne les deux ingrédients et le résultat.',
+          'error',
+        )
         return false
       }
-      const key = pairKey(ta, tb)
-      const dup = pairs.some((p) => pairKey(p.a, p.b) === key)
+
+      if (!allowEmpty) {
+        if (!ta || !tb) {
+          pushAlert('Renseigne les deux ingrédients et le résultat.', 'error')
+          return false
+        }
+      } else if ((ta && !tb) || (!ta && tb)) {
+        pushAlert(
+          'Les deux ingrédients doivent être renseignés, ou aucun (pas un seul seul).',
+          'error',
+        )
+        return false
+      }
+
+      let dup: boolean
+      if (ta === '' && tb === '') {
+        dup = pairs.some(
+          (p) =>
+            !p.a.trim() &&
+            !p.b.trim() &&
+            p.resultId.trim() === tr,
+        )
+      } else {
+        const key = pairKey(ta, tb)
+        dup = pairs.some((p) => pairKey(p.a.trim(), p.b.trim()) === key)
+      }
       if (dup) {
         pushAlert(
-          'Cette combinaison existe déjà : même paire d’ingrédients (ordre indifférent).',
+          ta === '' && tb === ''
+            ? 'Cette entrée existe déjà : même résultat sans combinaison.'
+            : 'Cette combinaison existe déjà : même paire d’ingrédients (ordre indifférent).',
           'error',
         )
         return false
@@ -609,11 +693,24 @@ export function RecipeManagerPage() {
           }
           break
         case 'spell': {
-          if (!spA || !spB || !spRes.trim()) {
-            pushAlert('Choisis les deux ingrédients et le résultat.', 'error')
+          if (!spRes.trim()) {
+            pushAlert('Saisis la référence du sort produit (résultat).', 'error')
             return
           }
-          if (tryAddPair(spA, spB, spRes, 'Combinaison ajoutée.')) {
+          const sA = spA.trim()
+          const sB = spB.trim()
+          if ((sA && !sB) || (!sA && sB)) {
+            pushAlert(
+              'Choisis les deux ingrédients ou laisse les deux vides (pas un seul).',
+              'error',
+            )
+            return
+          }
+          if (
+            tryAddPair(spA, spB, spRes, 'Combinaison ajoutée.', {
+              allowEmptyIngredients: true,
+            })
+          ) {
             setSpA('')
             setSpB('')
             setSpRes('')
@@ -621,12 +718,12 @@ export function RecipeManagerPage() {
           break
         }
         case 'creature': {
-          const spell = crSpell.trim()
           const slug = slugifyCreatureName(crName)
-          if (!spell || !slug) {
-            pushAlert('Choisis un sort et un nom de créature.', 'error')
+          if (!slug) {
+            pushAlert('Saisis un nom de créature.', 'error')
             return
           }
+          const spell = crSpell.trim()
           const resultId = `creature-${slug}`
           if (
             tryAddPair(
@@ -634,6 +731,7 @@ export function RecipeManagerPage() {
               spell,
               resultId,
               'Créature ajoutée.',
+              { allowEmptyIngredients: true },
             )
           ) {
             setCrSpell('')
@@ -834,7 +932,13 @@ export function RecipeManagerPage() {
               resultId: String(row.resultId ?? row.result ?? ''),
             }),
           )
-          const valid = mapped.filter((p) => p.a && p.b && p.resultId)
+          const valid = mapped.filter((p) => {
+            const tr = p.resultId.trim()
+            if (!tr) return false
+            const hasA = Boolean(p.a.trim())
+            const hasB = Boolean(p.b.trim())
+            return (hasA && hasB) || (!hasA && !hasB)
+          })
           if (valid.length === 0) {
             pushAlert('Aucune paire valide dans le fichier.', 'error')
             return
@@ -870,45 +974,95 @@ export function RecipeManagerPage() {
   const saveEditPair = useCallback(() => {
     if (!editingPair) return
     const { clientId } = editingPair
-    const ra = resolveRefFromDisplayInput(
-      pairEditDraft.a,
-      displayName,
-      allKnownVialIds,
-    )
-    const rb = resolveRefFromDisplayInput(
-      pairEditDraft.b,
-      displayName,
-      allKnownVialIds,
-    )
+    const creatureEdit = isCreatureResultId(editingPair.resultId)
+
     const rr = resolveRefFromDisplayInput(
       pairEditDraft.resultId,
       displayName,
       allKnownVialIds,
     )
-    if (ra.error === 'empty' || rb.error === 'empty' || rr.error === 'empty') {
-      pushAlert('Champs incomplets.', 'error')
+    if (rr.error === 'empty' || !rr.ref.trim()) {
+      pushAlert('Le résultat est obligatoire.', 'error')
       return
     }
-    if (
-      ra.error === 'ambiguous' ||
-      rb.error === 'ambiguous' ||
-      rr.error === 'ambiguous'
-    ) {
+    if (rr.error === 'ambiguous') {
       pushAlert(
         'Plusieurs fioles correspondent à un même nom : précise la référence technique ou un nom unique.',
         'error',
       )
       return
     }
-    const ta = ra.ref
-    const tb = rb.ref
-    const tr = rr.ref
-    const clash = pairs.some(
-      (p) =>
-        p.clientId !== clientId && pairKey(p.a, p.b) === pairKey(ta, tb),
-    )
+    const tr = rr.ref.trim()
+
+    let ta: string
+    let tb: string
+    if (creatureEdit) {
+      const rs = resolveIngredientDraft(
+        pairEditDraft.a,
+        displayName,
+        allKnownVialIds,
+      )
+      if (rs.error === 'ambiguous') {
+        pushAlert(
+          'Plusieurs fioles correspondent à un même nom : précise la référence technique ou un nom unique.',
+          'error',
+        )
+        return
+      }
+      const spellRef = rs.ref.trim()
+      ta = spellRef
+      tb = spellRef
+    } else {
+      const ra = resolveIngredientDraft(
+        pairEditDraft.a,
+        displayName,
+        allKnownVialIds,
+      )
+      const rb = resolveIngredientDraft(
+        pairEditDraft.b,
+        displayName,
+        allKnownVialIds,
+      )
+      if (ra.error === 'ambiguous' || rb.error === 'ambiguous') {
+        pushAlert(
+          'Plusieurs fioles correspondent à un même nom : précise la référence technique ou un nom unique.',
+          'error',
+        )
+        return
+      }
+      ta = ra.ref.trim()
+      tb = rb.ref.trim()
+      if ((ta && !tb) || (!ta && tb)) {
+        pushAlert(
+          'Les deux ingrédients doivent être renseignés, ou aucun (pas un seul seul).',
+          'error',
+        )
+        return
+      }
+    }
+    let clash: boolean
+    if (ta === '' && tb === '') {
+      clash = pairs.some(
+        (p) =>
+          p.clientId !== clientId &&
+          !p.a.trim() &&
+          !p.b.trim() &&
+          p.resultId.trim() === tr,
+      )
+    } else {
+      clash = pairs.some(
+        (p) =>
+          p.clientId !== clientId &&
+          pairKey(p.a.trim(), p.b.trim()) === pairKey(ta, tb),
+      )
+    }
     if (clash) {
-      pushAlert('Une autre ligne utilise déjà cette paire d’ingrédients.', 'error')
+      pushAlert(
+        ta === '' && tb === ''
+          ? 'Une autre ligne a déjà ce résultat sans combinaison.'
+          : 'Une autre ligne utilise déjà cette paire d’ingrédients.',
+        'error',
+      )
       return
     }
     setPairs((prev) =>
@@ -929,11 +1083,23 @@ export function RecipeManagerPage() {
 
   const saveEditSolo = useCallback(() => {
     if (!editingSolo) return
-    const newId = editingSolo.id.trim()
-    if (!newId) {
-      pushAlert('Référence vide.', 'error')
+    const resolved = resolveRefFromDisplayInput(
+      soloEditDraft,
+      displayName,
+      allKnownVialIds,
+    )
+    if (resolved.error === 'empty' || !resolved.ref.trim()) {
+      pushAlert('Le nom ou la référence est vide.', 'error')
       return
     }
+    if (resolved.error === 'ambiguous') {
+      pushAlert(
+        'Plusieurs fioles correspondent à un même nom : précise la référence technique ou un nom unique.',
+        'error',
+      )
+      return
+    }
+    const newId = resolved.ref.trim()
     const src = editingSolo.catalogSourceId
 
     if (src) {
@@ -967,7 +1133,15 @@ export function RecipeManagerPage() {
     )
     setEditingSolo(null)
     pushAlert('Référence mise à jour.', 'success')
-  }, [editingSolo, soloRows, nextClientId, pushAlert])
+  }, [
+    editingSolo,
+    soloEditDraft,
+    soloRows,
+    nextClientId,
+    pushAlert,
+    displayName,
+    allKnownVialIds,
+  ])
 
   const typeClass = (t: VialType | 'unknown' | 'fioleSeule') => {
     if (t === 'fioleSeule') return styles.typeSolo
@@ -1092,9 +1266,7 @@ export function RecipeManagerPage() {
                   <>
                     <div className={styles.formRow}>
                       <div className={styles.formGroup}>
-                        <label htmlFor="spA">
-                          Ingrédient A<span className={styles.required}>*</span>
-                        </label>
+                        <label htmlFor="spA">Ingrédient A (optionnel)</label>
                         <select
                           id="spA"
                           className={styles.select}
@@ -1110,9 +1282,7 @@ export function RecipeManagerPage() {
                         </select>
                       </div>
                       <div className={styles.formGroup}>
-                        <label htmlFor="spB">
-                          Ingrédient B<span className={styles.required}>*</span>
-                        </label>
+                        <label htmlFor="spB">Ingrédient B (optionnel)</label>
                         <select
                           id="spB"
                           className={styles.select}
@@ -1141,15 +1311,17 @@ export function RecipeManagerPage() {
                         autoComplete="off"
                       />
                     </div>
+                    <p className={styles.hint}>
+                      Laisse les ingrédients vides pour n’enregistrer que le sort (résultat), sans
+                      combinaison dans le registre.
+                    </p>
                   </>
                 )}
 
                 {createMode === 'creature' && (
                   <>
                     <div className={styles.formGroup}>
-                      <label htmlFor="crSpell">
-                        Sort<span className={styles.required}>*</span>
-                      </label>
+                      <label htmlFor="crSpell">Sort (optionnel)</label>
                       <select
                         id="crSpell"
                         className={styles.select}
@@ -1178,8 +1350,8 @@ export function RecipeManagerPage() {
                       />
                     </div>
                     <p className={styles.hint}>
-                      Un seul sort dans la combinaison ; le registre affiche le type Créature
-                      pour le résultat.
+                      Sans sort : pas de combinaison (—). Avec un sort : une seule fiole affichée ;
+                      le type du résultat reste Créature.
                     </p>
                   </>
                 )}
@@ -1454,7 +1626,9 @@ export function RecipeManagerPage() {
                             <td>{i + 1}</td>
                             <td>
                               <div className={styles.combo}>
-                                {isCreatureRecipePair(p) ? (
+                                {hasNoCombination(p) ? (
+                                  <span className={styles.dashCell}>—</span>
+                                ) : isCreatureRecipePair(p) ? (
                                   <span className={styles.pill}>
                                     {displayName(p.a)}
                                   </span>
@@ -1559,9 +1733,11 @@ export function RecipeManagerPage() {
                     )
                     return row
                       ? (() => {
-                          const combo = isCreatureRecipePair(row)
-                            ? displayName(row.a)
-                            : `${displayName(row.a)} + ${displayName(row.b)}`
+                          const combo = hasNoCombination(row)
+                            ? '—'
+                            : isCreatureRecipePair(row)
+                              ? displayName(row.a)
+                              : `${displayName(row.a)} + ${displayName(row.b)}`
                           return `Supprimer la recette « ${combo} → ${displayName(row.resultId)} » ?`
                         })()
                       : 'Supprimer cette ligne du registre ?'
@@ -1608,31 +1784,56 @@ export function RecipeManagerPage() {
           }}
         >
           <div className={styles.modal}>
-            <h3 id="edit-pair-title">Modifier la combinaison</h3>
-            <div className={styles.formGroup}>
-              <label htmlFor="edA">Ingrédient A</label>
-              <input
-                id="edA"
-                className={styles.input}
-                value={pairEditDraft.a}
-                onChange={(e) =>
-                  setPairEditDraft((d) => ({ ...d, a: e.target.value }))
-                }
-                autoComplete="off"
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label htmlFor="edB">Ingrédient B</label>
-              <input
-                id="edB"
-                className={styles.input}
-                value={pairEditDraft.b}
-                onChange={(e) =>
-                  setPairEditDraft((d) => ({ ...d, b: e.target.value }))
-                }
-                autoComplete="off"
-              />
-            </div>
+            <h3 id="edit-pair-title">
+              {isCreatureResultId(editingPair.resultId)
+                ? 'Modifier la créature'
+                : 'Modifier la combinaison'}
+            </h3>
+            {isCreatureResultId(editingPair.resultId) ? (
+              <div className={styles.formGroup}>
+                <label htmlFor="edCreatureSpell">Sort</label>
+                <input
+                  id="edCreatureSpell"
+                  className={styles.input}
+                  value={pairEditDraft.a}
+                  onChange={(e) =>
+                    setPairEditDraft((d) => ({
+                      ...d,
+                      a: e.target.value,
+                      b: e.target.value,
+                    }))
+                  }
+                  autoComplete="off"
+                />
+              </div>
+            ) : (
+              <>
+                <div className={styles.formGroup}>
+                  <label htmlFor="edA">Ingrédient A</label>
+                  <input
+                    id="edA"
+                    className={styles.input}
+                    value={pairEditDraft.a}
+                    onChange={(e) =>
+                      setPairEditDraft((d) => ({ ...d, a: e.target.value }))
+                    }
+                    autoComplete="off"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="edB">Ingrédient B</label>
+                  <input
+                    id="edB"
+                    className={styles.input}
+                    value={pairEditDraft.b}
+                    onChange={(e) =>
+                      setPairEditDraft((d) => ({ ...d, b: e.target.value }))
+                    }
+                    autoComplete="off"
+                  />
+                </div>
+              </>
+            )}
             <div className={styles.formGroup}>
               <label htmlFor="edR">Résultat</label>
               <input
@@ -1682,14 +1883,13 @@ export function RecipeManagerPage() {
                 : 'Modifier l’élément'}
             </h3>
             <div className={styles.formGroup}>
-              <label htmlFor="edSolo">Référence fiole</label>
+              <label htmlFor="edSolo">Nom de l’élément</label>
               <input
                 id="edSolo"
                 className={styles.input}
-                value={editingSolo.id}
-                onChange={(e) =>
-                  setEditingSolo((s) => (s ? { ...s, id: e.target.value } : s))
-                }
+                value={soloEditDraft}
+                onChange={(e) => setSoloEditDraft(e.target.value)}
+                autoComplete="off"
               />
             </div>
             <div className={styles.modalActions}>
