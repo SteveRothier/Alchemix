@@ -1098,6 +1098,23 @@ export function RecipeManagerPage() {
     const pairsTs = buildManualPairsTs(pairs)
     const soloTs = buildManualSoloTs(soloRows.map((s) => s.id))
 
+    try {
+      const res = await fetch('/api/save-recipes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pairsTs, soloTs }),
+      })
+      if (res.ok) {
+        pushAlert(
+          'Fichiers mis a jour directement dans src/data. Relance le serveur de dev si besoin.',
+          'success',
+        )
+        return
+      }
+    } catch {
+      // Fallback handled below for non-dev contexts.
+    }
+
     const download = (name: string, content: string) => {
       const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
       const u = URL.createObjectURL(blob)
