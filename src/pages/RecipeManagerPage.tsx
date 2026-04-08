@@ -1,12 +1,15 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type ChangeEvent,
   type FormEvent,
+  type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import {
   ArrowDownAZ,
@@ -58,6 +61,210 @@ type SortKey = 'result' | 'pair' | 'type'
 type RegistreRow =
   | { kind: 'pair'; data: EditablePair }
   | { kind: 'solo'; data: EditableSolo }
+
+type VialPickOption = { id: string; name: string }
+
+const COMBO_LIST_LIMIT = 120
+
+/**
+ * Champ texte + liste filtrée (comportement type sélecteur avec recherche par nom ou id).
+ */
+function VialOptionCombo({
+  inputId,
+  label,
+  value,
+  onChange,
+  options,
+  placeholder = 'Tape pour filtrer ou choisir…',
+}: {
+  inputId: string
+  label: ReactNode
+  value: string
+  onChange: (id: string) => void
+  options: VialPickOption[]
+  placeholder?: string
+}) {
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false)
+  const [text, setText] = useState('')
+  const [typing, setTyping] = useState(false)
+  const [menuPos, setMenuPos] = useState<{
+    top: number
+    left: number
+    width: number
+  } | null>(null)
+
+  const selectedLabel = useMemo(() => {
+    const o = options.find((x) => x.id === value)
+    return o?.name ?? (value ? inferLabelFromRef(value) : '')
+  }, [options, value])
+
+  const filtered = useMemo(() => {
+    const q = (typing ? text : selectedLabel).trim().toLowerCase()
+    if (!q) return options.slice(0, COMBO_LIST_LIMIT)
+    return options
+      .filter(
+        (o) =>
+          o.name.toLowerCase().includes(q) || o.id.toLowerCase().includes(q),
+      )
+      .slice(0, COMBO_LIST_LIMIT)
+  }, [options, text, typing, selectedLabel])
+
+  const commitFromString = useCallback(
+    (raw: string) => {
+      const t = raw.trim()
+      if (!t) {
+        onChange('')
+        setText('')
+        return
+      }
+      const byName = options.find(
+        (o) => o.name.localeCompare(t, 'fr', { sensitivity: 'base' }) === 0,
+      )
+      if (byName) {
+        onChange(byName.id)
+        setText(byName.name)
+        return
+      }
+      const byId = options.find((o) => o.id === t)
+      if (byId) {
+        onChange(byId.id)
+        setText(byId.name)
+        return
+      }
+      if (value) {
+        const keep = options.find((o) => o.id === value)
+        setText(keep?.name ?? inferLabelFromRef(value))
+      } else {
+        setText('')
+      }
+    },
+    [options, value, onChange],
+  )
+
+  const pick = useCallback(
+    (id: string) => {
+      const o = options.find((x) => x.id === id)
+      onChange(id)
+      setText(o?.name ?? inferLabelFromRef(id))
+      setOpen(false)
+      setTyping(false)
+    },
+    [onChange, options],
+  )
+
+  const listId = `${inputId}-listbox`
+
+  const updateMenuPos = useCallback(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    setMenuPos({
+      top: r.bottom + 2,
+      left: r.left,
+      width: r.width,
+    })
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!open || filtered.length === 0) return
+    updateMenuPos()
+    const onReposition = () => updateMenuPos()
+    window.addEventListener('scroll', onReposition, true)
+    window.addEventListener('resize', onReposition)
+    return () => {
+      window.removeEventListener('scroll', onReposition, true)
+      window.removeEventListener('resize', onReposition)
+    }
+  }, [open, filtered.length, updateMenuPos])
+
+  const listNode =
+    open &&
+    filtered.length > 0 &&
+    menuPos &&
+    createPortal(
+      <ul
+        id={listId}
+        className={styles.vialComboList}
+        role="listbox"
+        style={{
+          position: 'fixed',
+          top: menuPos.top,
+          left: menuPos.left,
+          width: menuPos.width,
+          zIndex: 12_000,
+        }}
+      >
+        {filtered.map((o) => (
+          <li key={o.id} role="presentation">
+            <button
+              type="button"
+              role="option"
+              className={styles.vialComboOption}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                pick(o.id)
+              }}
+            >
+              <span className={styles.vialComboName}>{o.name}</span>
+            </button>
+          </li>
+        ))}
+      </ul>,
+      document.body,
+    )
+
+  return (
+    <div className={styles.formGroup}>
+      <label htmlFor={inputId}>{label}</label>
+      <div ref={wrapRef} className={styles.vialComboAnchor}>
+        <input
+          id={inputId}
+          type="text"
+          className={styles.input}
+          value={typing ? text : selectedLabel}
+          placeholder={placeholder}
+          autoComplete="off"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          onChange={(e) => {
+            const v = e.target.value
+            setText(v)
+            setTyping(true)
+            setOpen(true)
+            if (value) {
+              const cur = options.find((o) => o.id === value)
+              if (
+                cur &&
+                v.localeCompare(cur.name, 'fr', { sensitivity: 'base' }) !==
+                  0
+              ) {
+                onChange('')
+              }
+            }
+          }}
+          onFocus={() => {
+            setText(selectedLabel)
+            setOpen(true)
+          }}
+          onBlur={(e) => {
+            const rt = e.relatedTarget as Node | null
+            if (rt && wrapRef.current?.contains(rt)) return
+            const listEl = document.getElementById(listId)
+            if (rt && listEl?.contains(rt)) return
+            const raw = typing ? text : selectedLabel
+            setTyping(false)
+            setOpen(false)
+            commitFromString(raw)
+          }}
+        />
+      </div>
+      {listNode}
+    </div>
+  )
+}
 
 function seedPairs(): EditablePair[] {
   return MANUAL_RECIPE_PAIRS.map((p, i) => ({
@@ -1302,38 +1509,22 @@ export function RecipeManagerPage() {
                 {createMode === 'spell' && (
                   <>
                     <div className={styles.formRow}>
-                      <div className={styles.formGroup}>
-                        <label htmlFor="spA">Ingrédient A (optionnel)</label>
-                        <select
-                          id="spA"
-                          className={styles.select}
-                          value={spA}
-                          onChange={(e) => setSpA(e.target.value)}
-                        >
-                          <option value="">— Choisir —</option>
-                          {vialOptions.map((v) => (
-                            <option key={v.id} value={v.id}>
-                              {v.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className={styles.formGroup}>
-                        <label htmlFor="spB">Ingrédient B (optionnel)</label>
-                        <select
-                          id="spB"
-                          className={styles.select}
-                          value={spB}
-                          onChange={(e) => setSpB(e.target.value)}
-                        >
-                          <option value="">— Choisir —</option>
-                          {vialOptions.map((v) => (
-                            <option key={v.id} value={v.id}>
-                              {v.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <VialOptionCombo
+                        inputId="spA"
+                        label="Ingrédient A"
+                        value={spA}
+                        onChange={setSpA}
+                        options={vialOptions}
+                        placeholder="Tape pour chercher un ingrédient…"
+                      />
+                      <VialOptionCombo
+                        inputId="spB"
+                        label="Ingrédient B"
+                        value={spB}
+                        onChange={setSpB}
+                        options={vialOptions}
+                        placeholder="Tape pour chercher un ingrédient…"
+                      />
                     </div>
                     <div className={styles.formGroup}>
                       <label htmlFor="spRes">
@@ -1344,35 +1535,23 @@ export function RecipeManagerPage() {
                         className={styles.input}
                         value={spRes}
                         onChange={(e) => setSpRes(e.target.value)}
-                        placeholder="Saisir la référence du sort créé"
+                        placeholder="Référence du sort créé (résultat)"
                         autoComplete="off"
                       />
                     </div>
-                    <p className={styles.hint}>
-                      Laisse les ingrédients vides pour n’enregistrer que le sort (résultat), sans
-                      combinaison dans le registre.
-                    </p>
                   </>
                 )}
 
                 {createMode === 'creature' && (
                   <>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="crSpell">Sort (optionnel)</label>
-                      <select
-                        id="crSpell"
-                        className={styles.select}
-                        value={crSpell}
-                        onChange={(e) => setCrSpell(e.target.value)}
-                      >
-                        <option value="">— Choisir un sort —</option>
-                        {spellOptions.map((v) => (
-                          <option key={v.id} value={v.id}>
-                            {v.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    <VialOptionCombo
+                      inputId="crSpell"
+                      label="Sort"
+                      value={crSpell}
+                      onChange={setCrSpell}
+                      options={spellOptions}
+                      placeholder="Tape pour chercher un sort…"
+                    />
                     <div className={styles.formGroup}>
                       <label htmlFor="crName">
                         Nom de la créature<span className={styles.required}>*</span>
@@ -1386,10 +1565,6 @@ export function RecipeManagerPage() {
                         autoComplete="off"
                       />
                     </div>
-                    <p className={styles.hint}>
-                      Sans sort : pas de combinaison (—). Avec un sort : une seule fiole affichée ;
-                      le type du résultat reste Créature.
-                    </p>
                   </>
                 )}
 
