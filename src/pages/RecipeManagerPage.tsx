@@ -5,7 +5,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type ChangeEvent,
   type FormEvent,
   type ReactNode,
 } from 'react'
@@ -646,7 +645,6 @@ export function RecipeManagerPage() {
   const [hiddenCatalogSoloIds, setHiddenCatalogSoloIds] = useState<string[]>(
     () => loadHiddenCatalogSoloIds(),
   )
-  const fileRef = useRef<HTMLInputElement>(null)
 
   const [createMode, setCreateMode] = useState<CreateMode>('element')
   const [elA, setElA] = useState('')
@@ -684,6 +682,32 @@ export function RecipeManagerPage() {
       vialOptions.find((o) => o.id === id)?.name ?? inferLabelFromRef(id),
     [vialOptions],
   )
+  const toPairEditDraft = useCallback(
+    (pair: EditablePair) => {
+      if (isCreatureResultId(pair.resultId)) {
+        const spellDisp =
+          !pair.a.trim() && !pair.b.trim()
+            ? ''
+            : pair.a.trim()
+              ? displayName(pair.a)
+              : displayName(pair.b)
+        return {
+          a: spellDisp,
+          b: spellDisp,
+          resultId: displayName(pair.resultId),
+        }
+      }
+      return {
+        a: displayName(pair.a),
+        b: displayName(pair.b),
+        resultId: displayName(pair.resultId),
+      }
+    },
+    [displayName],
+  )
+  const toSoloEditDraft = useCallback((solo: EditableSolo) => displayName(solo.id), [
+    displayName,
+  ])
 
   const toggleSortKey = useCallback((key: SortKey) => {
     setActiveSortKeys((prev) =>
@@ -698,34 +722,6 @@ export function RecipeManagerPage() {
     }
     return s
   }, [vialOptions, pairs, soloRows])
-
-  useEffect(() => {
-    if (!editingPair) return
-    if (isCreatureResultId(editingPair.resultId)) {
-      const spellDisp =
-        !editingPair.a.trim() && !editingPair.b.trim()
-          ? ''
-          : editingPair.a.trim()
-            ? displayName(editingPair.a)
-            : displayName(editingPair.b)
-      setPairEditDraft({
-        a: spellDisp,
-        b: spellDisp,
-        resultId: displayName(editingPair.resultId),
-      })
-    } else {
-      setPairEditDraft({
-        a: displayName(editingPair.a),
-        b: displayName(editingPair.b),
-        resultId: displayName(editingPair.resultId),
-      })
-    }
-  }, [editingPair, displayName])
-
-  useEffect(() => {
-    if (!editingSolo) return
-    setSoloEditDraft(displayName(editingSolo.id))
-  }, [editingSolo, displayName])
 
   const catalogElementIdSet = useMemo(
     () => new Set(catalogElementIds),
@@ -1065,35 +1061,6 @@ export function RecipeManagerPage() {
     pushAlert('Données réinitialisées depuis le code source.', 'success')
   }, [pushAlert])
 
-  const exportJson = useCallback(() => {
-    if (pairs.length === 0 && soloRows.length === 0) {
-      pushAlert('Rien à exporter.', 'error')
-      return
-    }
-    const blob = new Blob(
-      [
-        JSON.stringify(
-          {
-            version: 3,
-            exportedAt: new Date().toISOString(),
-            pairs: pairs.map(({ a, b, resultId }) => ({ a, b, resultId })),
-            soloElements: soloRows.map((s) => s.id),
-          },
-          null,
-          2,
-        ),
-      ],
-      { type: 'application/json' },
-    )
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `alchemix-recipes-${Date.now()}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-    pushAlert('JSON téléchargé.', 'success')
-  }, [pairs, soloRows, pushAlert])
-
   const saveToSourceFiles = useCallback(async () => {
     const pairsTs = buildManualPairsTs(pairs)
     const soloTs = buildManualSoloTs(soloRows.map((s) => s.id))
@@ -1187,74 +1154,6 @@ export function RecipeManagerPage() {
       )
     }
   }, [pairs, soloRows, pushAlert])
-
-  const onImportFile = useCallback(
-    (ev: ChangeEvent<HTMLInputElement>) => {
-      const file = ev.target.files?.[0]
-      ev.target.value = ''
-      if (!file) return
-      const reader = new FileReader()
-      reader.onload = () => {
-        try {
-          const data = JSON.parse(String(reader.result))
-          const raw = Array.isArray(data.pairs)
-            ? data.pairs
-            : Array.isArray(data.recipes)
-              ? data.recipes
-              : null
-          if (!raw) {
-            pushAlert('JSON invalide : attendu pairs ou recipes.', 'error')
-            return
-          }
-          const mapped: EditablePair[] = raw.map(
-            (
-              row: { a?: string; b?: string; resultId?: string; result?: string },
-              i: number,
-            ) => ({
-              clientId: i + 1,
-              a: String(row.a ?? ''),
-              b: String(row.b ?? ''),
-              resultId: String(row.resultId ?? row.result ?? ''),
-            }),
-          )
-          const valid = mapped.filter((p) => {
-            const tr = p.resultId.trim()
-            if (!tr) return false
-            const hasA = Boolean(p.a.trim())
-            const hasB = Boolean(p.b.trim())
-            return (hasA && hasB) || (!hasA && !hasB)
-          })
-          if (valid.length === 0) {
-            pushAlert('Aucune paire valide dans le fichier.', 'error')
-            return
-          }
-          let nid = 1
-          setPairs(
-            valid.map((p) => ({
-              ...p,
-              clientId: nid++,
-            })),
-          )
-          let soloMsg = ''
-          if ('soloElements' in data && Array.isArray(data.soloElements)) {
-            const solos = data.soloElements.map(String).filter(Boolean)
-            setSoloRows(
-              solos.map((id: string, i: number) => ({
-                clientId: 10_000 + i,
-                id,
-              })),
-            )
-            soloMsg = `, ${solos.length} seul(s)`
-          }
-          pushAlert(`${valid.length} paire(s)${soloMsg} importé(s).`, 'success')
-        } catch {
-          pushAlert('Fichier JSON illisible.', 'error')
-        }
-      }
-      reader.readAsText(file)
-    },
-    [pushAlert],
-  )
 
   const saveEditPair = useCallback(() => {
     if (!editingPair) return
@@ -1480,9 +1379,18 @@ export function RecipeManagerPage() {
       <div className={styles.container}>
         <header className={styles.topBar}>
           <h1 className={styles.pageTitle}>Alchemix — Atelier des recettes</h1>
-          <Link className={styles.navLink} to="/">
-            Retour au laboratoire
-          </Link>
+          <div className={styles.topActions}>
+            <button
+              type="button"
+              className={`${styles.btn} ${styles.btnSecondary}`}
+              onClick={saveToSourceFiles}
+            >
+              Enregistrer
+            </button>
+            <Link className={styles.navLink} to="/">
+              Retour au laboratoire
+            </Link>
+          </div>
         </header>
 
         <div className={styles.mainGrid}>
@@ -1647,38 +1555,6 @@ export function RecipeManagerPage() {
               </div>
             </form>
 
-            <div className={styles.ioRow}>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnSecondary}`}
-                onClick={saveToSourceFiles}
-              >
-                Enregistrer (fichiers)
-              </button>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnSecondary}`}
-                onClick={exportJson}
-              >
-                JSON
-              </button>
-            </div>
-            <div className={styles.ioRow}>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnSecondary}`}
-                onClick={() => fileRef.current?.click()}
-              >
-                Importer JSON
-              </button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept=".json,application/json"
-                hidden
-                onChange={onImportFile}
-              />
-            </div>
           </section>
 
           <section className={`${styles.panel} ${styles.panelTable}`}>
@@ -1851,13 +1727,14 @@ export function RecipeManagerPage() {
                                     className={styles.iconBtn}
                                     title="Modifier"
                                     aria-label="Modifier"
-                                    onClick={() =>
+                                    onClick={() => {
+                                      setSoloEditDraft(toSoloEditDraft(s))
                                       setEditingSolo(
                                         s.fromCatalog
                                           ? { ...s, catalogSourceId: s.id }
                                           : { ...s },
                                       )
-                                    }
+                                    }}
                                   >
                                     <Pencil size={16} strokeWidth={2.25} />
                                   </button>
@@ -1923,7 +1800,10 @@ export function RecipeManagerPage() {
                                   className={styles.iconBtn}
                                   title="Modifier"
                                   aria-label="Modifier"
-                                  onClick={() => setEditingPair({ ...p })}
+                                  onClick={() => {
+                                    setPairEditDraft(toPairEditDraft(p))
+                                    setEditingPair({ ...p })
+                                  }}
                                 >
                                   <Pencil size={16} strokeWidth={2.25} />
                                 </button>

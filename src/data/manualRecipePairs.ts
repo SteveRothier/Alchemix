@@ -72,5 +72,5 @@ export const MANUAL_RECIPE_PAIRS: { a: string; b: string; resultId: string }[] =
   { a: "sp-plague-swarm", b: "craft-blight", resultId: "leg-pestilence" },
   { a: "sp-chain-lightning", b: "craft-tempest", resultId: "leg-storm-king" },
   { a: "sp-void-rift", b: "sp-void-rift", resultId: "creature-plom" },
-  { a: "", b: "", resultId: "creature-plomlegoat" },
+  { a: "", b: "", resultId: "Plomlegoat2" },
 ]
