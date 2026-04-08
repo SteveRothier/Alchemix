@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
@@ -26,6 +27,7 @@ function json(res: { statusCode: number; setHeader: (key: string, value: string)
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    tailwindcss(),
     react(),
     {
       name: 'local-recipes-writer',

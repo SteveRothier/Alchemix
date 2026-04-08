@@ -25,7 +25,7 @@ import { STARTER_VIAL_DEFINITIONS } from '../data/starterVials'
 import { inferLabelFromRef } from '../lib/inferVialLabel'
 import { pairKey } from '../lib/recipeMap'
 import type { VialType } from '../types'
-import styles from './RecipeManagerPage.module.css'
+import './recipeAtelier.css'
 
 const STORAGE_KEY_PAIRS = 'alchemix-recipe-manager-pairs'
 const STORAGE_KEY_SOLO = 'alchemix-recipe-manager-solo'
@@ -186,7 +186,7 @@ function VialOptionCombo({
     createPortal(
       <ul
         id={listId}
-        className={styles.vialComboList}
+        className="ra-vialComboList"
         role="listbox"
         style={{
           position: 'fixed',
@@ -201,13 +201,13 @@ function VialOptionCombo({
             <button
               type="button"
               role="option"
-              className={styles.vialComboOption}
+              className="ra-vialComboOption"
               onMouseDown={(e) => {
                 e.preventDefault()
                 pick(o.id)
               }}
             >
-              <span className={styles.vialComboName}>{o.name}</span>
+              <span className="ra-vialComboName">{o.name}</span>
             </button>
           </li>
         ))}
@@ -216,13 +216,13 @@ function VialOptionCombo({
     )
 
   return (
-    <div className={styles.formGroup}>
+    <div className="ra-formGroup">
       <label htmlFor={inputId}>{label}</label>
-      <div ref={wrapRef} className={styles.vialComboAnchor}>
+      <div ref={wrapRef} className="ra-vialComboAnchor">
         <input
           id={inputId}
           type="text"
-          className={styles.input}
+          className="ra-input"
           value={typing ? text : selectedLabel}
           placeholder={placeholder}
           autoComplete={autoComplete}
@@ -1356,11 +1356,11 @@ export function RecipeManagerPage() {
   ])
 
   const typeClass = (t: VialType | 'unknown' | 'fioleSeule') => {
-    if (t === 'fioleSeule') return styles.typeSolo
-    if (t === 'element') return styles.typeElement
-    if (t === 'spell') return styles.typeSpell
-    if (t === 'creature') return styles.typeCreature
-    return styles.typeUnknown
+    if (t === 'fioleSeule') return 'ra-typeSolo'
+    if (t === 'element') return 'ra-typeElement'
+    if (t === 'spell') return 'ra-typeSpell'
+    if (t === 'creature') return 'ra-typeCreature'
+    return 'ra-typeUnknown'
   }
 
   const typeLabel = (t: VialType | 'unknown' | 'fioleSeule') => {
@@ -1372,17 +1372,17 @@ export function RecipeManagerPage() {
   }
 
   return (
-    <div className={styles.page}>
-      <div className={styles.alerts} aria-live="polite">
+    <div className="recipe-atelier relative box-border flex h-dvh max-h-dvh shrink-0 flex-col overflow-hidden px-3 pb-2 pt-2">
+      <div className="ra-alerts flex flex-col gap-1.5" aria-live="polite">
         {alerts.map((a) => (
           <div
             key={a.id}
-            className={`${styles.alert} ${a.kind === 'success' ? styles.alertSuccess : styles.alertError}`}
+            className={`ra-alert ${a.kind === 'success' ? 'ra-alertSuccess' : 'ra-alertError'}`}
           >
             <span>{a.message}</span>
             <button
               type="button"
-              className={styles.alertClose}
+              className="ra-alertClose"
               aria-label="Fermer"
               onClick={() =>
                 setAlerts((prev) => prev.filter((x) => x.id !== a.id))
@@ -1394,28 +1394,28 @@ export function RecipeManagerPage() {
         ))}
       </div>
 
-      <div className={styles.container}>
-        <header className={styles.topBar}>
-          <h1 className={styles.pageTitle}>Alchemix — Atelier des recettes</h1>
-          <div className={styles.topActions}>
+      <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-1.5">
+        <header className="flex shrink-0 flex-nowrap items-center justify-between gap-3 border-b border-[color:var(--lab-border)] pb-1.5">
+          <h1 className="ra-pageTitle">Alchemix — Atelier des recettes</h1>
+          <div className="ra-topActions flex shrink-0 items-center gap-2">
             <button
               type="button"
-              className={`${styles.btn} ${styles.btnSecondary}`}
+              className="ra-btn ra-btnSecondary"
               onClick={saveToSourceFiles}
             >
               Enregistrer
             </button>
-            <Link className={styles.navLink} to="/">
+            <Link className="ra-navLink" to="/">
               Retour au laboratoire
             </Link>
           </div>
         </header>
 
-        <div className={styles.mainGrid}>
-          <section className={`${styles.panel} ${styles.panelForm}`}>
-            <h2 className={styles.panelTitle}>Nouvelle entrée</h2>
+        <div className="grid min-h-0 flex-1 grid-cols-1 gap-[0.65rem] overflow-hidden min-[901px]:grid-cols-[minmax(240px,0.95fr)_minmax(0,2fr)] min-[901px]:grid-rows-1 max-[900px]:grid-rows-[auto_minmax(0,1fr)]">
+          <section className="ra-panel ra-panelForm flex min-h-0 min-w-0 flex-1 flex-col">
+            <h2 className="ra-panelTitle">Nouvelle entrée</h2>
 
-            <div className={styles.modeTabs} role="tablist" aria-label="Type de création">
+            <div className="ra-modeTabs" role="tablist" aria-label="Type de création">
               {(
                 [
                   ['element', 'Recette'],
@@ -1429,7 +1429,7 @@ export function RecipeManagerPage() {
                   type="button"
                   role="tab"
                   aria-selected={createMode === key}
-                  className={`${styles.modeTab} ${createMode === key ? styles.modeTabActive : ''}`}
+                  className={`ra-modeTab ${createMode === key ? 'ra-modeTabActive' : ''}`}
                   onClick={() => setCreateMode(key)}
                 >
                   {lab}
@@ -1437,15 +1437,15 @@ export function RecipeManagerPage() {
               ))}
             </div>
 
-            <form className={styles.formStack} onSubmit={handleAddSubmit}>
-              <div className={styles.formBody}>
+            <form className="ra-formStack" onSubmit={handleAddSubmit}>
+              <div className="ra-formBody">
                 {createMode === 'element' && (
                   <>
                     <VialOptionCombo
                       inputId="elA"
                       label={
                         <>
-                          Ingrédient A<span className={styles.required}>*</span>
+                          Ingrédient A<span className="ra-required">*</span>
                         </>
                       }
                       value={elA}
@@ -1457,7 +1457,7 @@ export function RecipeManagerPage() {
                       inputId="elB"
                       label={
                         <>
-                          Ingrédient B<span className={styles.required}>*</span>
+                          Ingrédient B<span className="ra-required">*</span>
                         </>
                       }
                       value={elB}
@@ -1465,13 +1465,13 @@ export function RecipeManagerPage() {
                       options={vialOptions}
                       placeholder="Tape pour chercher un ingrédient…"
                     />
-                    <div className={styles.formGroup}>
+                    <div className="ra-formGroup">
                       <label htmlFor="elRes">
-                        Résultat<span className={styles.required}>*</span>
+                        Résultat<span className="ra-required">*</span>
                       </label>
                       <input
                         id="elRes"
-                        className={styles.input}
+                        className="ra-input"
                         value={elRes}
                         onChange={(e) => setElRes(e.target.value)}
                         placeholder="Référence produite"
@@ -1483,7 +1483,7 @@ export function RecipeManagerPage() {
 
                 {createMode === 'spell' && (
                   <>
-                    <div className={styles.formRow}>
+                    <div className="grid max-[520px]:grid-cols-1 grid-cols-2 gap-[0.45rem]">
                       <VialOptionCombo
                         inputId="spA"
                         label="Ingrédient A"
@@ -1501,13 +1501,13 @@ export function RecipeManagerPage() {
                         placeholder="Tape pour chercher un ingrédient…"
                       />
                     </div>
-                    <div className={styles.formGroup}>
+                    <div className="ra-formGroup">
                       <label htmlFor="spRes">
-                        Résultat produit<span className={styles.required}>*</span>
+                        Résultat produit<span className="ra-required">*</span>
                       </label>
                       <input
                         id="spRes"
-                        className={styles.input}
+                        className="ra-input"
                         value={spRes}
                         onChange={(e) => setSpRes(e.target.value)}
                         placeholder="Référence du sort créé (résultat)"
@@ -1527,13 +1527,13 @@ export function RecipeManagerPage() {
                       options={spellOptions}
                       placeholder="Tape pour chercher un sort…"
                     />
-                    <div className={styles.formGroup}>
+                    <div className="ra-formGroup">
                       <label htmlFor="crName">
-                        Nom de la créature<span className={styles.required}>*</span>
+                        Nom de la créature<span className="ra-required">*</span>
                       </label>
                       <input
                         id="crName"
-                        className={styles.input}
+                        className="ra-input"
                         value={crName}
                         onChange={(e) => setCrName(e.target.value)}
                         placeholder="Nom de la fiole créature"
@@ -1545,20 +1545,20 @@ export function RecipeManagerPage() {
 
                 {createMode === 'solo' && (
                   <>
-                    <div className={styles.formGroup}>
+                    <div className="ra-formGroup">
                       <label htmlFor="soloId">
-                        Référence fiole<span className={styles.required}>*</span>
+                        Référence fiole<span className="ra-required">*</span>
                       </label>
                       <input
                         id="soloId"
-                        className={styles.input}
+                        className="ra-input"
                         value={soloIdInput}
                         onChange={(e) => setSoloIdInput(e.target.value)}
                         placeholder="Hors recettes déjà listées du catalogue"
                         autoComplete="off"
                       />
                     </div>
-                    <p className={styles.hint}>
+                    <p className="ra-hint">
                       Les recettes du catalogue sont déjà listées. Ici, ajoute un élément
                       hors catalogue (sort, craft, etc.).
                     </p>
@@ -1566,8 +1566,8 @@ export function RecipeManagerPage() {
                 )}
               </div>
 
-              <div className={styles.formSubmitBar}>
-                <button type="submit" className={`${styles.btn} ${styles.btnPrimary}`}>
+              <div className="ra-formSubmitBar">
+                <button type="submit" className="ra-btn ra-btnPrimary">
                   Ajouter
                 </button>
               </div>
@@ -1575,13 +1575,13 @@ export function RecipeManagerPage() {
 
           </section>
 
-          <section className={`${styles.panel} ${styles.panelTable}`}>
-            <div className={styles.tableHeader}>
-              <div className={styles.tableHeaderLeft}>
+          <section className="ra-panel ra-panelTable flex min-h-0 min-w-0 flex-1 flex-col">
+            <div className="ra-tableHeader">
+              <div className="ra-tableHeaderLeft">
                 <h2>Registre ({stats.totalRows})</h2>
-                <div className={styles.searchWrap}>
+                <div className="ra-searchWrap">
                   <input
-                    className={`${styles.input} ${styles.searchField}`}
+                    className="ra-input ra-searchField"
                     placeholder="Filtrer…"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
@@ -1589,10 +1589,10 @@ export function RecipeManagerPage() {
                   />
                 </div>
               </div>
-              <div className={styles.tableHeaderRight}>
+              <div className="ra-tableHeaderRight">
                 <button
                   type="button"
-                  className={`${styles.btn} ${styles.btnSecondary} ${styles.headerToolbarBtn} ${styles.iconHeaderBtn}`}
+                  className="ra-btn ra-btnSecondary ra-headerToolbarBtn ra-iconHeaderBtn"
                   onClick={resetDefaults}
                   title="Recharger le dépôt"
                   aria-label="Recharger le dépôt"
@@ -1602,18 +1602,18 @@ export function RecipeManagerPage() {
               </div>
             </div>
 
-            <div className={styles.tableWrap}>
-              <div className={styles.tableScroll}>
-                <table className={styles.table}>
+            <div className="ra-tableWrap flex min-h-0 flex-1 flex-col">
+              <div className="ra-tableScroll">
+                <table className="ra-table">
                   <thead>
                     <tr>
                       <th>#</th>
                       <th>
-                        <div className={styles.thWithSort}>
+                        <div className="ra-thWithSort">
                           <span>Combinaison</span>
                           <button
                             type="button"
-                            className={`${styles.sortHeaderBtn} ${activeSortKeys.includes('pair') ? styles.sortHeaderBtnActive : ''}`}
+                            className={`ra-sortHeaderBtn${activeSortKeys.includes('pair') ? ' ra-sortHeaderBtnActive' : ''}`}
                             title={
                               activeSortKeys.length > 1
                                 ? `Tri combinaison (noms des ingrédients) — priorité ${activeSortKeys.indexOf('pair') + 1} sur ${activeSortKeys.length} (cliquer pour retirer)`
@@ -1626,7 +1626,7 @@ export function RecipeManagerPage() {
                             {activeSortKeys.length > 1 &&
                               activeSortKeys.includes('pair') && (
                                 <span
-                                  className={styles.sortPriorityBadge}
+                                  className="ra-sortPriorityBadge"
                                   aria-hidden
                                 >
                                   {activeSortKeys.indexOf('pair') + 1}
@@ -1641,11 +1641,11 @@ export function RecipeManagerPage() {
                         </div>
                       </th>
                       <th>
-                        <div className={styles.thWithSort}>
+                        <div className="ra-thWithSort">
                           <span>Résultat</span>
                           <button
                             type="button"
-                            className={`${styles.sortHeaderBtn} ${activeSortKeys.includes('result') ? styles.sortHeaderBtnActive : ''}`}
+                            className={`ra-sortHeaderBtn${activeSortKeys.includes('result') ? ' ra-sortHeaderBtnActive' : ''}`}
                             title={
                               activeSortKeys.length > 1
                                 ? `Tri résultat A–Z — priorité ${activeSortKeys.indexOf('result') + 1} sur ${activeSortKeys.length} (cliquer pour retirer)`
@@ -1658,7 +1658,7 @@ export function RecipeManagerPage() {
                             {activeSortKeys.length > 1 &&
                               activeSortKeys.includes('result') && (
                                 <span
-                                  className={styles.sortPriorityBadge}
+                                  className="ra-sortPriorityBadge"
                                   aria-hidden
                                 >
                                   {activeSortKeys.indexOf('result') + 1}
@@ -1673,11 +1673,11 @@ export function RecipeManagerPage() {
                         </div>
                       </th>
                       <th>
-                        <div className={styles.thWithSort}>
+                        <div className="ra-thWithSort">
                           <span>Type</span>
                           <button
                             type="button"
-                            className={`${styles.sortHeaderBtn} ${activeSortKeys.includes('type') ? styles.sortHeaderBtnActive : ''}`}
+                            className={`ra-sortHeaderBtn${activeSortKeys.includes('type') ? ' ra-sortHeaderBtnActive' : ''}`}
                             title={
                               activeSortKeys.length > 1
                                 ? `Tri par type — priorité ${activeSortKeys.indexOf('type') + 1} sur ${activeSortKeys.length} (cliquer pour retirer)`
@@ -1690,7 +1690,7 @@ export function RecipeManagerPage() {
                             {activeSortKeys.length > 1 &&
                               activeSortKeys.includes('type') && (
                                 <span
-                                  className={styles.sortPriorityBadge}
+                                  className="ra-sortPriorityBadge"
                                   aria-hidden
                                 >
                                   {activeSortKeys.indexOf('type') + 1}
@@ -1704,14 +1704,14 @@ export function RecipeManagerPage() {
                           </button>
                         </div>
                       </th>
-                      <th className={styles.thActions} aria-label="Actions" />
+                      <th className="ra-thActions" aria-label="Actions" />
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.length === 0 ? (
                       <tr>
                         <td colSpan={5}>
-                          <div className={styles.empty}>
+                          <div className="ra-empty">
                             {stats.totalRows === 0
                               ? 'Aucune ligne.'
                               : 'Aucun résultat pour ce filtre.'}
@@ -1726,23 +1726,23 @@ export function RecipeManagerPage() {
                             <tr key={`solo-${s.clientId}`}>
                               <td>{i + 1}</td>
                               <td>
-                                <span className={styles.dashCell}>—</span>
+                                <span className="ra-dashCell">—</span>
                               </td>
-                              <td className={styles.tdResult}>
+                              <td className="ra-tdResult">
                                 {displayName(s.id)}
                               </td>
                               <td>
                                 <span
-                                  className={`${styles.typeTag} ${typeClass('fioleSeule')}`}
+                                  className={`ra-typeTag ${typeClass('fioleSeule')}`}
                                 >
                                   {typeLabel('fioleSeule')}
                                 </span>
                               </td>
                               <td>
-                                <div className={styles.actions}>
+                                <div className="ra-actions">
                                   <button
                                     type="button"
-                                    className={styles.iconBtn}
+                                    className="ra-iconBtn"
                                     title="Modifier"
                                     aria-label="Modifier"
                                     onClick={() => {
@@ -1758,7 +1758,7 @@ export function RecipeManagerPage() {
                                   </button>
                                   <button
                                     type="button"
-                                    className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                                    className="ra-iconBtn ra-iconBtnDanger"
                                     title="Supprimer"
                                     aria-label="Supprimer"
                                     onClick={() =>
@@ -1781,41 +1781,41 @@ export function RecipeManagerPage() {
                           <tr key={`pair-${p.clientId}`}>
                             <td>{i + 1}</td>
                             <td>
-                              <div className={styles.combo}>
+                              <div className="ra-combo">
                                 {hasNoCombination(p) ? (
-                                  <span className={styles.dashCell}>—</span>
+                                  <span className="ra-dashCell">—</span>
                                 ) : isCreatureRecipePair(p) ? (
-                                  <span className={styles.pill}>
+                                  <span className="ra-pill">
                                     {displayName(p.a)}
                                   </span>
                                 ) : (
                                   <>
-                                    <span className={styles.pill}>
+                                    <span className="ra-pill">
                                       {displayName(p.a)}
                                     </span>
-                                    <span className={styles.plus}>+</span>
-                                    <span className={styles.pill}>
+                                    <span className="ra-plus">+</span>
+                                    <span className="ra-pill">
                                       {displayName(p.b)}
                                     </span>
                                   </>
                                 )}
                               </div>
                             </td>
-                            <td className={styles.tdResult}>
+                            <td className="ra-tdResult">
                               {displayName(p.resultId)}
                             </td>
                             <td>
                               <span
-                                className={`${styles.typeTag} ${typeClass(rt)}`}
+                                className={`ra-typeTag ${typeClass(rt)}`}
                               >
                                 {typeLabel(rt)}
                               </span>
                             </td>
                             <td>
-                              <div className={styles.actions}>
+                              <div className="ra-actions">
                                 <button
                                   type="button"
-                                  className={styles.iconBtn}
+                                  className="ra-iconBtn"
                                   title="Modifier"
                                   aria-label="Modifier"
                                   onClick={() => {
@@ -1827,7 +1827,7 @@ export function RecipeManagerPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                                  className="ra-iconBtn ra-iconBtnDanger"
                                   title="Supprimer"
                                   aria-label="Supprimer"
                                   onClick={() =>
@@ -1852,20 +1852,20 @@ export function RecipeManagerPage() {
           </section>
         </div>
 
-        <div className={styles.stats}>
-          <span className={styles.statInline}>
+        <div className="ra-stats">
+          <span className="ra-statInline">
             <strong>{stats.pairs}</strong> paires
           </span>
-          <span className={styles.statInline}>
+          <span className="ra-statInline">
             <strong>{stats.fiolesSeules}</strong> éléments
           </span>
-          <span className={styles.statInline}>
+          <span className="ra-statInline">
             <strong>{stats.elements}</strong> → recette
           </span>
-          <span className={styles.statInline}>
+          <span className="ra-statInline">
             <strong>{stats.spells}</strong> → sort
           </span>
-          <span className={styles.statInline}>
+          <span className="ra-statInline">
             <strong>{stats.creatures}</strong> → créature
           </span>
         </div>
@@ -1873,7 +1873,7 @@ export function RecipeManagerPage() {
 
       {registreDeletePrompt && (
         <div
-          className={`${styles.modalOverlay} ${styles.modalOverlayConfirm}`}
+          className="ra-modalOverlay ra-modalOverlayConfirm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="registre-delete-title"
@@ -1881,9 +1881,9 @@ export function RecipeManagerPage() {
             if (e.target === e.currentTarget) setRegistreDeletePrompt(null)
           }}
         >
-          <div className={styles.modal}>
+          <div className="ra-modal">
             <h3 id="registre-delete-title">Supprimer du registre</h3>
-            <p className={styles.modalBody}>
+            <p className="ra-modalBody">
               {registreDeletePrompt.kind === 'pair'
                 ? (() => {
                     const row = pairs.find(
@@ -1903,17 +1903,17 @@ export function RecipeManagerPage() {
                   })()
                 : `Supprimer l’élément « ${displayName(registreDeletePrompt.solo.id)} » ?`}
             </p>
-            <div className={styles.modalActions}>
+            <div className="ra-modalActions">
               <button
                 type="button"
-                className={`${styles.btn} ${styles.btnSecondary}`}
+                className="ra-btn ra-btnSecondary"
                 onClick={() => setRegistreDeletePrompt(null)}
               >
                 Annuler
               </button>
               <button
                 type="button"
-                className={`${styles.btn} ${styles.btnDanger}`}
+                className="ra-btn ra-btnDanger"
                 onClick={() => {
                   const payload = registreDeletePrompt
                   if (!payload) return
@@ -1934,7 +1934,7 @@ export function RecipeManagerPage() {
 
       {editingPair && (
         <div
-          className={styles.modalOverlay}
+          className="ra-modalOverlay"
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-pair-title"
@@ -1942,7 +1942,7 @@ export function RecipeManagerPage() {
             if (e.target === e.currentTarget) setEditingPair(null)
           }}
         >
-          <div className={styles.modal}>
+          <div className="ra-modal">
             <h3 id="edit-pair-title">
               {isCreatureResultId(editingPair.resultId)
                 ? 'Modifier la créature'
@@ -1988,11 +1988,11 @@ export function RecipeManagerPage() {
                 />
               </>
             )}
-            <div className={styles.formGroup}>
+            <div className="ra-formGroup">
               <label htmlFor="edR">Résultat</label>
               <input
                 id="edR"
-                className={styles.input}
+                className="ra-input"
                 value={pairEditDraft.resultId}
                 onChange={(e) =>
                   setPairEditDraft((d) => ({ ...d, resultId: e.target.value }))
@@ -2000,17 +2000,17 @@ export function RecipeManagerPage() {
                 autoComplete="off"
               />
             </div>
-            <div className={styles.modalActions}>
+            <div className="ra-modalActions">
               <button
                 type="button"
-                className={`${styles.btn} ${styles.btnPrimary}`}
+                className="ra-btn ra-btnPrimary"
                 onClick={saveEditPair}
               >
                 Enregistrer
               </button>
               <button
                 type="button"
-                className={`${styles.btn} ${styles.btnSecondary}`}
+                className="ra-btn ra-btnSecondary"
                 onClick={() => setEditingPair(null)}
               >
                 Annuler
@@ -2022,7 +2022,7 @@ export function RecipeManagerPage() {
 
       {editingSolo && (
         <div
-          className={styles.modalOverlay}
+          className="ra-modalOverlay"
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-solo-title"
@@ -2030,33 +2030,33 @@ export function RecipeManagerPage() {
             if (e.target === e.currentTarget) setEditingSolo(null)
           }}
         >
-          <div className={styles.modal}>
+          <div className="ra-modal">
             <h3 id="edit-solo-title">
               {editingSolo.catalogSourceId
                 ? 'Enregistrer cet élément'
                 : 'Modifier l’élément'}
             </h3>
-            <div className={styles.formGroup}>
+            <div className="ra-formGroup">
               <label htmlFor="edSolo">Nom de l’élément</label>
               <input
                 id="edSolo"
-                className={styles.input}
+                className="ra-input"
                 value={soloEditDraft}
                 onChange={(e) => setSoloEditDraft(e.target.value)}
                 autoComplete="off"
               />
             </div>
-            <div className={styles.modalActions}>
+            <div className="ra-modalActions">
               <button
                 type="button"
-                className={`${styles.btn} ${styles.btnPrimary}`}
+                className="ra-btn ra-btnPrimary"
                 onClick={saveEditSolo}
               >
                 Enregistrer
               </button>
               <button
                 type="button"
-                className={`${styles.btn} ${styles.btnSecondary}`}
+                className="ra-btn ra-btnSecondary"
                 onClick={() => setEditingSolo(null)}
               >
                 Annuler
