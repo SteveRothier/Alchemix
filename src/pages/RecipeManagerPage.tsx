@@ -186,7 +186,14 @@ function buildVialOptions(): { id: string; name: string; type: VialType }[] {
 
 function resultType(resultId: string): VialType | 'unknown' {
   const t = CRAFTED_VIAL_TEMPLATES[resultId]
-  return t?.type ?? 'unknown'
+  if (t) return t.type
+  if (resultId.startsWith('creature-')) return 'creature'
+  return 'unknown'
+}
+
+/** Recette créature ajoutée depuis l’atelier : même sort en a et b, résultat creature-*. */
+function isCreatureRecipePair(p: Pick<EditablePair, 'a' | 'b' | 'resultId'>): boolean {
+  return p.resultId.startsWith('creature-') && p.a === p.b
 }
 
 function slugifyCreatureName(name: string): string {
@@ -626,7 +633,7 @@ export function RecipeManagerPage() {
               spell,
               spell,
               resultId,
-              'Créature ajoutée. Modifie la ligne si la 2e fiole doit être autre chose.',
+              'Créature ajoutée.',
             )
           ) {
             setCrSpell('')
@@ -1171,8 +1178,8 @@ export function RecipeManagerPage() {
                       />
                     </div>
                     <p className={styles.hint}>
-                      La paire est enregistrée comme sort + sort. Corrige via « modifier »
-                      si besoin.
+                      Un seul sort dans la combinaison ; le registre affiche le type Créature
+                      pour le résultat.
                     </p>
                   </>
                 )}
@@ -1447,13 +1454,21 @@ export function RecipeManagerPage() {
                             <td>{i + 1}</td>
                             <td>
                               <div className={styles.combo}>
-                                <span className={styles.pill}>
-                                  {displayName(p.a)}
-                                </span>
-                                <span className={styles.plus}>+</span>
-                                <span className={styles.pill}>
-                                  {displayName(p.b)}
-                                </span>
+                                {isCreatureRecipePair(p) ? (
+                                  <span className={styles.pill}>
+                                    {displayName(p.a)}
+                                  </span>
+                                ) : (
+                                  <>
+                                    <span className={styles.pill}>
+                                      {displayName(p.a)}
+                                    </span>
+                                    <span className={styles.plus}>+</span>
+                                    <span className={styles.pill}>
+                                      {displayName(p.b)}
+                                    </span>
+                                  </>
+                                )}
                               </div>
                             </td>
                             <td className={styles.tdResult}>
@@ -1543,7 +1558,12 @@ export function RecipeManagerPage() {
                         r.clientId === registreDeletePrompt.clientId,
                     )
                     return row
-                      ? `Supprimer la recette « ${displayName(row.a)} + ${displayName(row.b)} → ${displayName(row.resultId)} » ?`
+                      ? (() => {
+                          const combo = isCreatureRecipePair(row)
+                            ? displayName(row.a)
+                            : `${displayName(row.a)} + ${displayName(row.b)}`
+                          return `Supprimer la recette « ${combo} → ${displayName(row.resultId)} » ?`
+                        })()
                       : 'Supprimer cette ligne du registre ?'
                   })()
                 : `Supprimer l’élément « ${displayName(registreDeletePrompt.solo.id)} » ?`}
