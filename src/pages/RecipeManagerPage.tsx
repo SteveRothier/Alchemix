@@ -606,6 +606,14 @@ export function RecipeManagerPage() {
     () => vialOptions.filter((v) => v.type === 'spell'),
     [vialOptions],
   )
+  const knownVialIdSet = useMemo(
+    () => new Set(vialOptions.map((v) => v.id)),
+    [vialOptions],
+  )
+  const knownSpellIdSet = useMemo(
+    () => new Set(spellOptions.map((v) => v.id)),
+    [spellOptions],
+  )
 
   const catalogElementIds = useMemo(() => {
     const ids = vialOptions
@@ -931,6 +939,10 @@ export function RecipeManagerPage() {
       e.preventDefault()
       switch (createMode) {
         case 'element':
+          if (!knownVialIdSet.has(elA.trim()) || !knownVialIdSet.has(elB.trim())) {
+            pushAlert('Choisis des ingrédients existants dans la liste.', 'error')
+            return
+          }
           if (tryAddPair(elA, elB, elRes, 'Recette ajoutée.')) {
             setElA('')
             setElB('')
@@ -949,6 +961,10 @@ export function RecipeManagerPage() {
               'Choisis les deux ingrédients ou laisse les deux vides (pas un seul).',
               'error',
             )
+            return
+          }
+          if ((sA && !knownVialIdSet.has(sA)) || (sB && !knownVialIdSet.has(sB))) {
+            pushAlert('Choisis des ingrédients existants dans la liste.', 'error')
             return
           }
           const spellResultId = normalizeAtelierSpellResultId(spRes)
@@ -970,6 +986,10 @@ export function RecipeManagerPage() {
             return
           }
           const spell = crSpell.trim()
+          if (spell && !knownSpellIdSet.has(spell)) {
+            pushAlert('Choisis un sort existant dans la liste.', 'error')
+            return
+          }
           const resultId = `creature-${slug}`
           if (
             tryAddPair(
@@ -1003,6 +1023,8 @@ export function RecipeManagerPage() {
       crSpell,
       crName,
       pushAlert,
+      knownVialIdSet,
+      knownSpellIdSet,
     ],
   )
 
@@ -1256,6 +1278,10 @@ export function RecipeManagerPage() {
         return
       }
       const spellRef = rs.ref.trim()
+      if (spellRef && !knownSpellIdSet.has(spellRef)) {
+        pushAlert('Choisis un sort existant dans la liste.', 'error')
+        return
+      }
       ta = spellRef
       tb = spellRef
     } else {
@@ -1278,6 +1304,10 @@ export function RecipeManagerPage() {
       }
       ta = ra.ref.trim()
       tb = rb.ref.trim()
+      if ((ta && !knownVialIdSet.has(ta)) || (tb && !knownVialIdSet.has(tb))) {
+        pushAlert('Choisis des ingrédients existants dans la liste.', 'error')
+        return
+      }
       if ((ta && !tb) || (!ta && tb)) {
         pushAlert(
           'Les deux ingrédients doivent être renseignés, ou aucun (pas un seul seul).',
@@ -1325,6 +1355,8 @@ export function RecipeManagerPage() {
     pushAlert,
     displayName,
     allKnownVialIds,
+    knownVialIdSet,
+    knownSpellIdSet,
   ])
 
   const saveEditSolo = useCallback(() => {
