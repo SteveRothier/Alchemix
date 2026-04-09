@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import type { Vial } from '../../types'
 import { CanvasVialItem } from './CanvasVialItem'
 import type { LabPlacedVial } from './labTypes'
-import styles from './LabCanvas.module.css'
 
 const LAB_CANVAS_ID = 'lab-canvas'
 
@@ -33,11 +32,11 @@ export function LabCanvas({
   }
 
   return (
-    <div className={styles.wrap}>
-      <div className={styles.titleRow}>
-        <h2 className={styles.title}>Laboratoire</h2>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[0.45rem]">
+      <div className="flex min-w-0 shrink-0 items-center justify-between gap-2">
+        <h2 className="lab-canvasTitle">Laboratoire</h2>
         <Link
-          className={styles.recipesBtn}
+          className="lab-recipesBtn"
           to="/recipes"
           title="Gérer les combinaisons de fioles"
         >
@@ -46,7 +45,7 @@ export function LabCanvas({
       </div>
       <div
         ref={setCombinedRef}
-        className={styles.canvas}
+        className="lab-canvas"
         aria-label="Zone de placement des fioles"
       >
         {placed.map((p, i) => {
@@ -64,7 +63,7 @@ export function LabCanvas({
           )
         })}
         {placed.length === 0 && (
-          <p className={styles.hint}>
+          <p className="lab-canvasHint">
             Glisse des fioles depuis l’inventaire. Pose-les où tu veux, puis
             glisse-en une sur une autre pour fusionner. Double-clic sur une
             fiole du labo pour la dupliquer.

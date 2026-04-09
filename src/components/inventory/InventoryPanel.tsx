@@ -1,6 +1,5 @@
 import type { Vial } from '../../types'
 import { InventoryVialItem } from './InventoryVialItem'
-import styles from './InventoryPanel.module.css'
 
 type InventoryPanelProps = {
   elements: Vial[]
@@ -16,12 +15,18 @@ function InventorySection({
   vials: Vial[]
 }) {
   return (
-    <section className={styles.section} aria-label={title}>
-      <h3 className={styles.sectionTitle}>{title}</h3>
+    <section
+      className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden"
+      aria-label={title}
+    >
+      <h3 className="lab-invSectionTitle">{title}</h3>
       {vials.length === 0 ? (
-        <p className={styles.empty}>—</p>
+        <p className="lab-invEmpty">—</p>
       ) : (
-        <div className={styles.grid} role="list">
+        <div
+          className="flex flex-wrap content-start items-start justify-start gap-[5px]"
+          role="list"
+        >
           {vials.map((vial) => (
             <InventoryVialItem key={vial.id} vial={vial} />
           ))}
@@ -33,7 +38,7 @@ function InventorySection({
 
 export function InventoryPanel({ elements, spells, creatures }: InventoryPanelProps) {
   return (
-    <div className={styles.panel}>
+    <div className="flex min-h-0 flex-1 flex-col gap-[0.45rem] overflow-hidden">
       <InventorySection title="Éléments" vials={elements} />
       <InventorySection title="Sorts" vials={spells} />
       <InventorySection title="Créatures" vials={creatures} />

@@ -1,6 +1,5 @@
 import type { CSSProperties } from 'react'
 import type { Vial } from '../../types'
-import styles from './VialChip.module.css'
 
 type VialChipProps = {
   vial: Vial
@@ -13,12 +12,12 @@ type VialChipProps = {
 
 export function VialChip({ vial, compact, inventory, lab }: VialChipProps) {
   const chipClass = lab
-    ? styles.chipLab
+    ? 'lab-chipLab'
     : inventory
-      ? styles.chipInventory
+      ? 'lab-chipInventory'
       : compact
-        ? styles.chipCompact
-        : styles.chip
+        ? 'lab-chipCompact'
+        : 'lab-chip'
 
   return (
     <div
@@ -33,11 +32,11 @@ export function VialChip({ vial, compact, inventory, lab }: VialChipProps) {
         } as CSSProperties
       }
     >
-      <div className={styles.flask} aria-hidden />
-      <div className={styles.meta}>
-        <span className={styles.name}>{vial.name}</span>
+      <div className="lab-flask" aria-hidden />
+      <div className="lab-meta">
+        <span className="lab-name">{vial.name}</span>
         {!compact && !inventory && !lab && (
-          <span className={styles.rarity} data-rarity={vial.rarity}>
+          <span className="lab-rarity" data-rarity={vial.rarity}>
             {vial.rarity}
           </span>
         )}

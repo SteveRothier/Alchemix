@@ -3,7 +3,6 @@ import { CSS } from '@dnd-kit/utilities'
 import type { Vial } from '../../types'
 import { VialChip } from '../vial/VialChip'
 import type { LabPlacedVial } from './labTypes'
-import styles from './CanvasVialItem.module.css'
 
 type CanvasVialItemProps = {
   placed: LabPlacedVial
@@ -56,15 +55,18 @@ export function CanvasVialItem({
   } as const
 
   return (
-    <div className={styles.anchor} style={anchorStyle}>
+    <div
+      className="absolute flex touch-none items-center justify-center"
+      style={anchorStyle}
+    >
       <div
         ref={setDropRef}
-        className={styles.dropHit}
+        className="lab-dropHit"
         data-over-target={isOver || undefined}
       >
         <div
           ref={setDragRef}
-          className={styles.dragSurface}
+          className="lab-dragSurface"
           aria-label={`${vial.name} — glisser pour déplacer, double-clic pour dupliquer, clic droit pour retirer du labo`}
           {...listeners}
           {...attributes}

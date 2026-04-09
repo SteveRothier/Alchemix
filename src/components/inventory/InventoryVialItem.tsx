@@ -2,7 +2,6 @@ import { useDraggable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import type { Vial } from '../../types'
 import { VialChip } from '../vial/VialChip'
-import styles from './InventoryVialItem.module.css'
 
 type InventoryVialItemProps = {
   vial: Vial
@@ -23,7 +22,7 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
     <div
       ref={setNodeRef}
       style={style}
-      className={styles.wrap}
+      className="lab-invItemWrap"
       {...listeners}
       {...attributes}
     >

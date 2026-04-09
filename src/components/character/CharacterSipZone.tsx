@@ -1,5 +1,4 @@
 import { useDroppable } from '@dnd-kit/core'
-import styles from './CharacterSipZone.module.css'
 
 export const CHARACTER_SIP_ID = 'character-sip'
 
@@ -13,20 +12,20 @@ export function CharacterSipZone({ hint }: CharacterSipZoneProps) {
   return (
     <div
       ref={setNodeRef}
-      className={styles.zone}
+      className="lab-characterZone min-w-0 flex-1"
       data-over={isOver || undefined}
       aria-label="Personnage — dépose un sort ici pour le faire boire"
     >
-      <div className={styles.avatar} aria-hidden>
-        <span className={styles.glyph}>🧙</span>
+      <div className="lab-characterAvatar" aria-hidden>
+        <span className="lab-characterGlyph">🧙</span>
       </div>
-      <div className={styles.copy}>
-        <p className={styles.title}>Personnage</p>
-        <p className={styles.instructions}>
+      <div className="min-w-0 flex-1">
+        <p className="lab-characterTitle">Personnage</p>
+        <p className="lab-characterInstructions">
           Glisse un <strong>sort</strong> ici pour le faire boire. Certains sorts
           manifestent une <strong>créature</strong> une première fois.
         </p>
-        {hint ? <p className={styles.hint}>{hint}</p> : null}
+        {hint ? <p className="lab-characterHint">{hint}</p> : null}
       </div>
     </div>
   )

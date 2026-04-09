@@ -1,8 +1,0 @@
-.wrap {
-  touch-action: none;
-  cursor: grab;
-}
-
-.wrap:active {
-  cursor: grabbing;
-}

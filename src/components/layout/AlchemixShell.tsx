@@ -24,7 +24,7 @@ import { resolveFusionProduct } from '../../lib/fusion'
 import type { DrinkSpellResult } from '../../lib/drinkSpell'
 import { tierFromDiscoveryCount } from '../../lib/progression'
 import { useAlchemixStore, selectDiscoveryCount } from '../../store/useAlchemixStore'
-import styles from './AlchemixShell.module.css'
+import '../lab/alchemixLab.css'
 
 const labCollision: CollisionDetection = (args) => {
   const hits = pointerWithin(args)
@@ -284,7 +284,7 @@ export function AlchemixShell() {
   }
 
   return (
-    <div className={styles.viewport}>
+    <div className="alchemix-lab flex h-full min-h-0 min-w-0 flex-1 flex-col">
       <DndContext
         sensors={sensors}
         collisionDetection={labCollision}
@@ -292,9 +292,12 @@ export function AlchemixShell() {
         onDragCancel={onDragCancel}
         onDragEnd={onDragEnd}
       >
-        <div className={styles.shell}>
-          <div className={styles.main}>
-            <section className={styles.gameZone} aria-label="Zone de jeu">
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(200px,17rem)] gap-0 text-left max-[560px]:grid-cols-[minmax(0,1fr)_minmax(128px,32vw)]">
+          <div className="flex min-h-0 min-w-0 flex-col border-r border-[color:var(--border)]">
+            <section
+              className="flex min-h-0 flex-1 flex-col overflow-hidden border-b border-[color:var(--border)] px-[0.85rem] py-[0.65rem]"
+              aria-label="Zone de jeu"
+            >
               <LabCanvas
                 placed={placed}
                 vialsById={vialsById}
@@ -303,21 +306,30 @@ export function AlchemixShell() {
                 onDuplicatePlaced={duplicatePlaced}
               />
             </section>
-            <section className={styles.characterZone} aria-label="Personnage">
+            <section
+              className="flex shrink-0 items-center overflow-hidden border-b border-[color:var(--border)] px-[0.85rem] py-[0.45rem] [height:clamp(56px,10dvh,88px)]"
+              aria-label="Personnage"
+            >
               <CharacterSipZone hint={sipHint} />
             </section>
-            <aside className={styles.quickStats} aria-label="Statistiques rapides">
-              <p className={styles.statsLine}>Découvertes : {discoveryCount}</p>
-              <p className={styles.statsLine}>Tier : {tier}/10</p>
+            <aside
+              className="flex shrink-0 flex-wrap gap-x-5 gap-y-[0.65rem] px-[0.85rem] py-[0.45rem] text-[0.78rem] text-[color:var(--text)]"
+              aria-label="Statistiques rapides"
+            >
+              <p className="m-0">Découvertes : {discoveryCount}</p>
+              <p className="m-0">Tier : {tier}/10</p>
             </aside>
           </div>
-          <aside className={styles.inventory} aria-label="Inventaire">
-            <header className={styles.inventoryHeader}>
-              <h2 className={styles.inventoryTitle}>Inventaire</h2>
-              <div className={styles.inventoryHeaderActions}>
+          <aside
+            className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[color:var(--panel-bg,var(--code-bg))]"
+            aria-label="Inventaire"
+          >
+            <header className="flex shrink-0 items-center justify-between gap-2 border-b border-[color:var(--border)] px-[0.65rem] py-2">
+              <h2 className="lab-inventoryTitle">Inventaire</h2>
+              <div className="flex shrink-0 items-center gap-[0.35rem]">
                 <button
                   type="button"
-                  className={styles.resetBtn}
+                  className="lab-resetBtn"
                   onClick={handleReset}
                   title="Réinitialiser la progression"
                   aria-label="Réinitialiser : inventaire de départ et laboratoire vide"
