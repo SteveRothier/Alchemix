@@ -1,56 +1,60 @@
 # Alchemix
 
+Jeu d’alchimie en React : tu combines des fioles (éléments, sorts, créatures), tu découvres de nouvelles recettes, et tu fais progresser ton inventaire.
 
-
-## Stack technique
-
-- **React 19** + **TypeScript**
-- **Vite 8** (build & dev server)
-- **Zustand** avec persistance (`localStorage`) pour l’inventaire et les compteurs
-- **@dnd-kit** pour le drag & drop (inventaire → labo, fusions sur le plateau)
-- **GSAP** (animations côté effets / UI si utilisés)
-- **Vitest** pour quelques tests sur la logique de fusion
-
-## Lancer le projet
+## Démarrage rapide
 
 ```bash
 npm install
 npm run dev
 ```
 
-Autres commandes utiles :
+Application disponible ensuite sur l’URL affichée par Vite (souvent `http://localhost:5173`).
+
+## Scripts utiles
 
 ```bash
-npm run build   # TypeScript + build Vite
-npm run lint
-npm run test    # Vitest (fusions dynamiques, noms d’éléments)
+npm run dev     # lancement local
+npm run build   # vérification TypeScript + build production Vite
+npm run lint    # ESLint
+npm run test    # Vitest
 ```
+
+## Stack technique
+
+- React 19 + TypeScript
+- Vite 8
+- Zustand (persistance `localStorage`)
+- `@dnd-kit` (drag & drop)
+- Vitest (tests unitaires)
+- Tailwind CSS + CSS custom ciblée pour le rendu visuel du laboratoire
 
 ## Boucle de jeu
 
-1. **Inventaire** (colonne de droite) : éléments, sorts et créatures découverts.
-2. **Laboratoire** : tu poses des fioles sur le plateau, tu les déplaces, tu en superposes une sur une pour **fusionner**.
-3. **Personnage** : certaines fioles de type **sort** peuvent être données à boire au personnage ; cela peut faire apparaître une **créature** (liée au sort dans la config).
-4. **Reset** : réinitialise la progression et repart des éléments de départ (voir ci‑dessous).
+1. **Inventaire** : colonne de droite avec les fioles découvertes.
+2. **Laboratoire** : glisser-déposer les fioles sur le canvas.
+3. **Fusion** : superposer une fiole sur une autre pour créer un nouveau résultat.
+4. **Atelier des recettes** : consulter les recettes déjà découvertes.
+5. **Personnage** : certains sorts peuvent être donnés à boire et déclencher des effets/manifestations.
+6. **Progression** : les découvertes sont conservées automatiquement.
 
-## Système de fusion
+## Interactions utiles
 
-## UX laboratoire & inventaire
+- Glisser une fiole inventaire vers le labo pour la poser.
+- Déplacer une fiole déjà posée dans le labo.
+- Déposer une fiole sur une autre pour tenter une fusion.
+- Double-clic sur une fiole du labo : duplication sur le plateau.
+- Clic droit sur une fiole du labo : retrait du plateau.
+- Bouton `Reset` : réinitialisation de la progression locale.
 
-- **Double-clic** sur une fiole déjà posée dans le labo : **duplication** sur le plateau (léger décalage).
-- **Clic droit** sur une fiole du labo : retirer du plateau.
+## Atelier des recettes
 
-## Structure utile du code
+L’atelier des recettes est la vue de consultation des combinaisons connues.
 
+- Accès depuis le laboratoire via le bouton/lien `Recettes`.
+- Affiche les recettes déjà débloquées pendant la partie.
+- Permet de retrouver rapidement quoi fusionner pour obtenir une fiole cible.
+- Complète le laboratoire : test dans le canvas, consultation dans l’atelier.
 
-| Zone                        | Fichiers / dossiers                                                                                   |
-| --------------------------- | ----------------------------------------------------------------------------------------------------- |
-| Shell UI, DnD, état plateau | `src/components/layout/AlchemixShell.tsx`                                                             |
-| Zone labo                   | `src/components/game/LabCanvas.tsx`, `CanvasVialItem.tsx`                                             |
-| Inventaire                  | `src/components/inventory/`                                                                           |
-| Données fioles & recettes   | `src/data/craftedVials.ts`, `src/data/starterVials.ts`                                                |
-| Fusion & dynamique          | `src/lib/fusion.ts`, `src/lib/dynamicVial.ts`, `src/lib/dynamicElement.ts`, `src/lib/dynamicSpell.ts` |
-| Persistance                 | `src/store/useAlchemixStore.ts`                                                                       |
-| Types                       | `src/types/index.ts`                                                                                  |
 
 
