@@ -7,13 +7,13 @@ type VialChipProps = {
   compact?: boolean
   /** Grille inventaire : marges serrées, style type « pastille » */
   inventory?: boolean
-  /** Plateau labo : noms lisibles (2 lignes), fusion au survol */
+  /** Plateau labo : même carte qu’inventaire, nom jusqu’à 2 lignes */
   lab?: boolean
 }
 
 export function VialChip({ vial, compact, inventory, lab }: VialChipProps) {
   const chipClass = lab
-    ? 'lab-chipLab'
+    ? 'lab-chipInventory lab-chipInventory--lab'
     : inventory
       ? 'lab-chipInventory'
       : compact

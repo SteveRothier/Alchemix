@@ -213,7 +213,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 14px;
+  padding: 8px;
   box-sizing: content-box;
   min-width: 0;
   min-height: 0;
@@ -236,6 +236,9 @@
 }
 
 .alchemix-lab .lab-invItemWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   touch-action: none;
   cursor: grab;
 }
@@ -263,29 +266,29 @@
   gap: 0.35rem;
 }
 
-.lab-chipLab {
+.lab-chipInventory {
   display: flex;
-  align-items: flex-start;
-  gap: 0.35rem;
-  padding: 0.3rem 0.45rem;
-  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 4px;
   border: 1px solid var(--border);
   background: var(--bg);
-  min-width: 5.5rem;
+  min-width: 0;
+  flex: 0 0 auto;
+}
+
+/* Même pastille qu’inventaire ; noms longs sur le plateau (2 lignes max) */
+.lab-chipInventory--lab {
   max-width: 11rem;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-.lab-chipLab .lab-flaskSvg {
-  flex-shrink: 0;
-  margin-top: 0.05rem;
+.lab-chipInventory--lab .lab-meta {
+  text-align: center;
 }
 
-.lab-chipLab .lab-name {
-  font-size: 0.68rem;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--text-h);
+.lab-chipInventory--lab .lab-name {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -293,18 +296,6 @@
   word-break: break-word;
   hyphens: auto;
   white-space: normal;
-}
-
-.lab-chipInventory {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  min-width: 0;
-  flex: 0 0 auto;
 }
 
 /* viewBox 48×56 — tailles type « icône » (hauteur pilotante) */
@@ -321,8 +312,7 @@
 }
 
 /* Inventaire + plateau laboratoire : même taille de fiole */
-.lab-chipInventory .lab-flaskSvg,
-.lab-chipLab .lab-flaskSvg {
+.lab-chipInventory .lab-flaskSvg {
   width: 20px;
   height: 23px;
 }
@@ -333,8 +323,7 @@
   height: 25px;
 }
 
-.lab-chipInventory .lab-flaskSvg--spell,
-.lab-chipLab .lab-flaskSvg--spell {
+.lab-chipInventory .lab-flaskSvg--spell {
   width: 18px;
   height: 20px;
 }
@@ -378,18 +367,6 @@
 }
 
 .lab-chipInventory[data-vial-type='element'] {
-  border-color: color-mix(in srgb, #94d2bd 40%, var(--border));
-}
-
-.lab-chipLab[data-vial-type='creature'] {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
-}
-
-.lab-chipLab[data-vial-type='spell'] {
-  border-color: color-mix(in srgb, #4cc9f0 45%, var(--border));
-}
-
-.lab-chipLab[data-vial-type='element'] {
   border-color: color-mix(in srgb, #94d2bd 40%, var(--border));
 }
 

@@ -24,7 +24,7 @@ function InventorySection({
         <p className="lab-invEmpty">—</p>
       ) : (
         <div
-          className="flex flex-wrap content-start items-start justify-start gap-[5px]"
+          className="flex flex-wrap content-start items-center justify-start gap-[6px]"
           role="list"
         >
           {vials.map((vial) => (
@@ -38,7 +38,7 @@ function InventorySection({
 
 export function InventoryPanel({ elements, spells, creatures }: InventoryPanelProps) {
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-[0.45rem] overflow-hidden">
+    <div className="flex min-h-0 flex-1 flex-col gap-[0.45rem] overflow-hidden px-[0.65rem] pb-2 pt-1">
       <InventorySection title="Éléments" vials={elements} />
       <InventorySection title="Sorts" vials={spells} />
       <InventorySection title="Créatures" vials={creatures} />
