@@ -307,41 +307,41 @@
   flex: 0 0 auto;
 }
 
-/* viewBox 48×56 — hauteur pilotante pour garder le ratio */
+/* viewBox 48×56 — tailles type « icône » (hauteur pilotante) */
 .lab-flaskSvg {
   display: block;
-  width: 40px;
-  height: 47px;
+  width: 24px;
+  height: 28px;
   flex-shrink: 0;
 }
 
 .lab-chipCompact .lab-flaskSvg {
-  width: 34px;
-  height: 40px;
+  width: 18px;
+  height: 21px;
 }
 
 /* Inventaire + plateau laboratoire : même taille de fiole */
 .lab-chipInventory .lab-flaskSvg,
 .lab-chipLab .lab-flaskSvg {
-  width: 32px;
-  height: 37px;
+  width: 20px;
+  height: 23px;
 }
 
 /* Sorts : un peu moins large (même viewBox / paths). */
 .lab-flaskSvg--spell {
-  width: 35px;
-  height: 41px;
+  width: 21px;
+  height: 25px;
 }
 
 .lab-chipInventory .lab-flaskSvg--spell,
 .lab-chipLab .lab-flaskSvg--spell {
-  width: 28px;
-  height: 32px;
+  width: 18px;
+  height: 20px;
 }
 
 .lab-chipCompact .lab-flaskSvg--spell {
-  width: 30px;
-  height: 35px;
+  width: 16px;
+  height: 19px;
 }
 
 .lab-meta {
