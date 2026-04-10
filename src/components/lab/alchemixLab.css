@@ -277,8 +277,6 @@
 }
 
 .lab-chipLab .lab-flaskSvg {
-  width: 36px;
-  height: 42px;
   flex-shrink: 0;
   margin-top: 0.05rem;
 }
@@ -322,7 +320,9 @@
   height: 40px;
 }
 
-.lab-chipInventory .lab-flaskSvg {
+/* Inventaire + plateau laboratoire : même taille de fiole */
+.lab-chipInventory .lab-flaskSvg,
+.lab-chipLab .lab-flaskSvg {
   width: 32px;
   height: 37px;
 }
@@ -333,19 +333,15 @@
   height: 41px;
 }
 
+.lab-chipInventory .lab-flaskSvg--spell,
 .lab-chipLab .lab-flaskSvg--spell {
-  width: 31px;
-  height: 37px;
+  width: 28px;
+  height: 32px;
 }
 
 .lab-chipCompact .lab-flaskSvg--spell {
   width: 30px;
   height: 35px;
-}
-
-.lab-chipInventory .lab-flaskSvg--spell {
-  width: 28px;
-  height: 32px;
 }
 
 .lab-meta {
