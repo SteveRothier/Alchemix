@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { Vial } from '../../types'
+import { VialFlaskGraphic } from './flask/VialFlaskGraphic'
 
 type VialChipProps = {
   vial: Vial
@@ -32,7 +33,7 @@ export function VialChip({ vial, compact, inventory, lab }: VialChipProps) {
         } as CSSProperties
       }
     >
-      <div className="lab-flask" aria-hidden />
+      <VialFlaskGraphic vial={vial} />
       <div className="lab-meta">
         <span className="lab-name">{vial.name}</span>
         {!compact && !inventory && !lab && (

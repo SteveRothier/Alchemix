@@ -276,11 +276,11 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-.lab-chipLab .lab-flask {
-  width: 18px;
-  height: 22px;
+.lab-chipLab .lab-flaskSvg {
+  width: 36px;
+  height: 42px;
   flex-shrink: 0;
-  margin-top: 0.1rem;
+  margin-top: 0.05rem;
 }
 
 .lab-chipLab .lab-name {
@@ -309,30 +309,43 @@
   flex: 0 0 auto;
 }
 
-.lab-flask {
-  width: 22px;
-  height: 28px;
+/* viewBox 48×56 — hauteur pilotante pour garder le ratio */
+.lab-flaskSvg {
+  display: block;
+  width: 40px;
+  height: 47px;
   flex-shrink: 0;
-  border-radius: 4px 4px 6px 6px;
-  border: 2px solid color-mix(in srgb, var(--vial-a) 70%, #000 30%);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--vial-b) 80%, transparent) 0%,
-    var(--vial-a) 55%,
-    color-mix(in srgb, var(--vial-a) 60%, #000) 100%
-  );
-  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.lab-chipCompact .lab-flask {
-  width: 18px;
-  height: 22px;
+.lab-chipCompact .lab-flaskSvg {
+  width: 34px;
+  height: 40px;
 }
 
-.lab-chipInventory .lab-flask {
-  width: 16px;
-  height: 20px;
-  border-width: 1px;
+.lab-chipInventory .lab-flaskSvg {
+  width: 32px;
+  height: 37px;
+}
+
+/* Sorts : un peu moins large (même viewBox / paths). */
+.lab-flaskSvg--spell {
+  width: 35px;
+  height: 41px;
+}
+
+.lab-chipLab .lab-flaskSvg--spell {
+  width: 31px;
+  height: 37px;
+}
+
+.lab-chipCompact .lab-flaskSvg--spell {
+  width: 30px;
+  height: 35px;
+}
+
+.lab-chipInventory .lab-flaskSvg--spell {
+  width: 28px;
+  height: 32px;
 }
 
 .lab-meta {
