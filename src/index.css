@@ -6,6 +6,11 @@ html {
 }
 
 :root {
+  --font-lab-heading: 'Montserrat', system-ui, sans-serif;
+  --font-lab-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-lab-number: 'Space Grotesk', system-ui, sans-serif;
+  --font-lab-name: 'Merriweather', Georgia, 'Times New Roman', serif;
+
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
@@ -15,6 +20,11 @@ html {
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
+
+  /* Colonne inventaire : fond uni « laboratoire » (vert celadon / verre à fioles), pas le gris grille Infinite Craft. */
+  --lab-inventory-bg: #c2d4c9;
+  --lab-inventory-divider: color-mix(in srgb, var(--lab-inventory-bg) 78%, var(--text-h) 14%);
+  --lab-inventory-title: #1a2e24;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -42,6 +52,10 @@ html {
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);
     --accent-border: rgba(192, 132, 252, 0.5);
+
+    --lab-inventory-bg: #121c18;
+    --lab-inventory-divider: color-mix(in srgb, var(--lab-inventory-bg) 82%, #e2e8f0 18%);
+    --lab-inventory-title: #e8f0eb;
   }
 }
 

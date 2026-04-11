@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { remapSvgIdsInClonedSubtree } from '../../lib/remapSvgIdsForDomClone'
 import type { Vial } from '../../types'
 import { useLabDrag, type LabDragContextValue } from '../game/LabDragContext'
 import { VialChip } from '../vial/VialChip'
@@ -10,12 +11,11 @@ type InventoryVialItemProps = {
 }
 
 /**
- * Drag inventaire : Pointer Events + left/top en pixels (flottants), sans GSAP.
- * Évite l’effet « grille » des transforms / calques sur la colonne inventaire.
+ * Drag inventaire : clone en position fixed (la carte liste reste en place),
+ * Pointer Events + left/top, sans GSAP.
  */
 export function InventoryVialItem({ vial }: InventoryVialItemProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
-  const placeholderRef = useRef<HTMLDivElement | null>(null)
   const labDrag = useLabDrag()
 
   useEffect(() => {
@@ -29,11 +29,12 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
     let startY = 0
     let grabDx = 0
     let grabDy = 0
+    let ghostEl: HTMLDivElement | null = null
 
-    const removePlaceholder = () => {
-      const ph = placeholderRef.current
-      if (ph?.isConnected) ph.remove()
-      placeholderRef.current = null
+    const removeGhost = () => {
+      if (ghostEl?.isConnected) ghostEl.remove()
+      ghostEl = null
+      ctx.grabOffsetRef.current = null
     }
 
     const detachDocument = () => {
@@ -42,59 +43,49 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
       document.removeEventListener('pointercancel', onPointerEnd)
     }
 
-    const resetInlineStyles = () => {
-      removePlaceholder()
-      if (el.isConnected) el.removeAttribute('style')
-      ctx.grabOffsetRef.current = null
-    }
-
     function clampToLab(clientX: number, clientY: number) {
+      const g = ghostEl
+      if (!g) return
       const labEl = document.querySelector('.alchemix-lab')
       if (!(labEl instanceof HTMLElement)) return
       const lab = labEl.getBoundingClientRect()
-      const br = el.getBoundingClientRect()
+      const br = g.getBoundingClientRect()
       const w = br.width
       const h = br.height
       let left = clientX - grabDx
       let top = clientY - grabDy
       left = Math.min(Math.max(lab.left, left), lab.right - w)
       top = Math.min(Math.max(lab.top, top), lab.bottom - h)
-      el.style.left = `${left}px`
-      el.style.top = `${top}px`
+      g.style.left = `${left}px`
+      g.style.top = `${top}px`
     }
 
     function onPointerMove(e: PointerEvent) {
       if (e.pointerId !== activePointerId) return
 
       if (!dragActive) {
-        if (Math.hypot(e.clientX - startX, e.clientY - startY) < MIN_MOVE_PX) return
+        if (Math.hypot(e.clientX - startX, e.clientY - startY) < MIN_MOVE_PX)
+          return
         dragActive = true
+
         const r = el.getBoundingClientRect()
-        const ph = document.createElement('div')
-        ph.className = 'lab-invDragPlaceholder'
-        ph.style.flexShrink = '0'
-        ph.style.width = `${r.width}px`
-        ph.style.height = `${r.height}px`
-        ph.style.boxSizing = 'border-box'
-        ph.setAttribute('aria-hidden', 'true')
-        el.parentElement?.insertBefore(ph, el)
-        placeholderRef.current = ph
+        ghostEl = el.cloneNode(true) as HTMLDivElement
+        ghostEl.classList.add('lab-invDragGhost')
+        ghostEl.setAttribute('aria-hidden', 'true')
+        ghostEl.style.position = 'fixed'
+        ghostEl.style.left = `${r.left}px`
+        ghostEl.style.top = `${r.top}px`
+        ghostEl.style.width = `${r.width}px`
+        ghostEl.style.height = `${r.height}px`
+        ghostEl.style.margin = '0'
+        ghostEl.style.boxSizing = 'border-box'
+        ghostEl.style.zIndex = '10050'
+        ghostEl.style.pointerEvents = 'none'
 
-        el.style.position = 'fixed'
-        el.style.left = `${r.left}px`
-        el.style.top = `${r.top}px`
-        el.style.width = `${r.width}px`
-        el.style.margin = '0'
-        el.style.boxSizing = 'border-box'
-        el.style.zIndex = '10050'
+        remapSvgIdsInClonedSubtree(ghostEl)
+        document.body.appendChild(ghostEl)
 
-        try {
-          el.setPointerCapture(e.pointerId)
-        } catch {
-          /* ignore */
-        }
-
-        const chip = el.querySelector('.lab-chipInventory')
+        const chip = ghostEl.querySelector('.lab-chipInventory')
         if (chip instanceof HTMLElement) {
           const cr = chip.getBoundingClientRect()
           ctx.grabOffsetRef.current = {
@@ -115,22 +106,17 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
       detachDocument()
       activePointerId = null
 
-      if (dragActive) {
-        try {
-          el.releasePointerCapture(e.pointerId)
-        } catch {
-          /* ignore */
-        }
+      if (dragActive && ghostEl) {
         const moved =
           Math.hypot(e.clientX - startX, e.clientY - startY) >= 2
         if (moved) {
           ctx.completeInventoryDrag(vial.id, {
-            target: el,
+            target: ghostEl,
             pointerX: e.clientX,
             pointerY: e.clientY,
           })
         }
-        resetInlineStyles()
+        removeGhost()
       }
       dragActive = false
     }
@@ -153,9 +139,7 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
     return () => {
       el.removeEventListener('pointerdown', onPointerDown)
       detachDocument()
-      removePlaceholder()
-      if (el.isConnected) el.removeAttribute('style')
-      ctx.grabOffsetRef.current = null
+      removeGhost()
     }
   }, [vial.id, labDrag])
 

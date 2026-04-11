@@ -12,8 +12,7 @@ import { InventoryPanel } from '../inventory/InventoryPanel'
 import { resolveFusionProduct } from '../../lib/fusion'
 import type { DrinkSpellResult } from '../../lib/drinkSpell'
 import { Draggable, registerGsapDraggable } from '../../lib/registerGsapDraggable'
-import { tierFromDiscoveryCount } from '../../lib/progression'
-import { useAlchemixStore, selectDiscoveryCount } from '../../store/useAlchemixStore'
+import { useAlchemixStore } from '../../store/useAlchemixStore'
 import '../lab/alchemixLab.css'
 
 registerGsapDraggable()
@@ -25,9 +24,6 @@ function chipFromDragTarget(target: HTMLElement): HTMLElement | null {
 export function AlchemixShell() {
   const vialsById = useAlchemixStore((s) => s.vials)
   const resetToStarters = useAlchemixStore((s) => s.resetToStarters)
-  const discoveryCount = useAlchemixStore(selectDiscoveryCount)
-  const tier = tierFromDiscoveryCount(discoveryCount)
-
   const sortName = (a: { name: string }, b: { name: string }) =>
     a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' })
 
@@ -268,10 +264,10 @@ export function AlchemixShell() {
   return (
     <div className="alchemix-lab flex h-full min-h-0 min-w-0 flex-1 flex-col">
       <LabDragContext.Provider value={labDragValue}>
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(200px,17rem)] gap-0 text-left max-[560px]:grid-cols-[minmax(0,1fr)_minmax(128px,32vw)]">
-          <div className="flex min-h-0 min-w-0 flex-col border-r border-[color:var(--border)]">
+        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(220px,19.5rem)] gap-0 text-left max-[560px]:grid-cols-[minmax(0,1fr)_minmax(140px,36vw)]">
+          <div className="relative h-full min-h-0 min-w-0 border-r border-[color:var(--border)] bg-[color:var(--panel-bg,var(--code-bg))]">
             <section
-              className="flex min-h-0 flex-1 flex-col overflow-hidden border-b border-[color:var(--border)] px-[0.85rem] py-[0.65rem]"
+              className="absolute inset-0 overflow-hidden"
               aria-label="Zone de jeu"
             >
               <LabCanvas
@@ -282,25 +278,20 @@ export function AlchemixShell() {
                 onDuplicatePlaced={duplicatePlaced}
               />
             </section>
-            <section
-              className="flex shrink-0 items-center overflow-hidden border-b border-[color:var(--border)] px-[0.85rem] py-[0.45rem] [height:clamp(56px,10dvh,88px)]"
+            <div
+              className="lab-leftHudCharacter pointer-events-none absolute inset-x-0 bottom-0 z-30 p-[0.85rem] pt-12"
               aria-label="Personnage"
             >
-              <CharacterSipZone ref={characterSipRef} hint={sipHint} />
-            </section>
-            <aside
-              className="flex shrink-0 flex-wrap gap-x-5 gap-y-[0.65rem] px-[0.85rem] py-[0.45rem] text-[0.78rem] text-[color:var(--text)]"
-              aria-label="Statistiques rapides"
-            >
-              <p className="m-0">Découvertes : {discoveryCount}</p>
-              <p className="m-0">Tier : {tier}/10</p>
-            </aside>
+              <div className="pointer-events-auto mx-auto w-full max-w-xl">
+                <CharacterSipZone ref={characterSipRef} hint={sipHint} />
+              </div>
+            </div>
           </div>
           <aside
-            className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[color:var(--panel-bg,var(--code-bg))]"
+            className="lab-inventoryColumn flex h-full min-h-0 min-w-0 flex-col overflow-hidden"
             aria-label="Inventaire"
           >
-            <header className="flex shrink-0 items-center justify-between gap-2 border-b border-[color:var(--border)] px-[0.65rem] py-2">
+            <header className="lab-inventoryColumn-header flex shrink-0 items-center justify-between gap-2 border-b px-[0.65rem] py-2">
               <h2 className="lab-inventoryTitle">Inventaire</h2>
               <div className="flex shrink-0 items-center gap-[0.35rem]">
                 <button

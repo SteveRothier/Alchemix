@@ -30,11 +30,17 @@ export function VialChip({ vial, compact, inventory }: VialChipProps) {
     >
       <VialFlaskGraphic vial={vial} />
       <div className="lab-meta">
-        <span className="lab-name">{vial.name}</span>
-        {!compact && !invStyle && (
-          <span className="lab-rarity" data-rarity={vial.rarity}>
-            {vial.rarity}
-          </span>
+        {invStyle ? (
+          <span className="lab-name">{vial.name}</span>
+        ) : (
+          <>
+            <span className="lab-name">{vial.name}</span>
+            {!compact && (
+              <span className="lab-rarity" data-rarity={vial.rarity}>
+                {vial.rarity}
+              </span>
+            )}
+          </>
         )}
       </div>
     </div>

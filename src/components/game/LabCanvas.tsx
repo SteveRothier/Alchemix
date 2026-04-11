@@ -20,11 +20,11 @@ export function LabCanvas({
   onDuplicatePlaced,
 }: LabCanvasProps) {
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[0.45rem]">
-      <div className="flex min-w-0 shrink-0 items-center justify-between gap-2">
-        <h2 className="lab-canvasTitle">Laboratoire</h2>
+    <div className="relative h-full min-h-0 min-w-0">
+      <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 flex min-w-0 items-start justify-between gap-2 px-[0.85rem] pt-[0.65rem]">
+        <h2 className="lab-canvasTitle pointer-events-auto">Laboratoire</h2>
         <Link
-          className="lab-recipesBtn"
+          className="lab-recipesBtn pointer-events-auto"
           to="/recipes"
           title="Gérer les combinaisons de fioles"
         >
@@ -33,7 +33,7 @@ export function LabCanvas({
       </div>
       <div
         ref={canvasRef}
-        className="lab-canvas"
+        className="lab-canvas lab-canvas--fill"
         aria-label="Zone de placement des fioles"
       >
         {placed.map((p, i) => {
@@ -50,13 +50,6 @@ export function LabCanvas({
             />
           )
         })}
-        {placed.length === 0 && (
-          <p className="lab-canvasHint">
-            Glisse des fioles depuis l’inventaire. Pose-les où tu veux, puis
-            glisse-en une sur une autre pour fusionner. Double-clic sur une
-            fiole du labo pour la dupliquer.
-          </p>
-        )}
       </div>
     </div>
   )
