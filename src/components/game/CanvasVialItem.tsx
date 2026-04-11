@@ -36,7 +36,7 @@ export function CanvasVialItem({
 
     const d = Draggable.create(dragLayer, {
       type: 'left,top',
-      bounds: '.lab-canvas',
+      bounds: '.alchemix-lab',
       inertia: false,
       minimumMovement: 6,
       zIndexBoost: false,

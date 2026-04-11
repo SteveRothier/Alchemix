@@ -21,6 +21,19 @@ function chipFromDragTarget(target: HTMLElement): HTMLElement | null {
   return (target.querySelector('.lab-chipInventory') as HTMLElement | null) ?? target
 }
 
+function chipOverlapsInventoryColumn(chip: HTMLElement): boolean {
+  const inv = document.querySelector('.lab-inventoryColumn')
+  if (!(inv instanceof HTMLElement)) return false
+  const ir = inv.getBoundingClientRect()
+  const cr = chip.getBoundingClientRect()
+  return (
+    cr.right > ir.left &&
+    cr.left < ir.right &&
+    cr.bottom > ir.top &&
+    cr.top < ir.bottom
+  )
+}
+
 export function AlchemixShell() {
   const vialsById = useAlchemixStore((s) => s.vials)
   const resetToStarters = useAlchemixStore((s) => s.resetToStarters)
@@ -210,6 +223,11 @@ export function AlchemixShell() {
 
       if (tryCharacterSip(vialId, instanceId, chip)) return
 
+      if (chipOverlapsInventoryColumn(chip)) {
+        setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
+        return
+      }
+
       const grab = grabOffsetRef.current
       const { cx, cy } = grabCenterClient(drag, grab, chip)
       if (clientPointInCanvasPlacement(canvasEl, cx, cy)) {
@@ -265,9 +283,9 @@ export function AlchemixShell() {
     <div className="alchemix-lab flex h-full min-h-0 min-w-0 flex-1 flex-col">
       <LabDragContext.Provider value={labDragValue}>
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(220px,19.5rem)] gap-0 text-left max-[560px]:grid-cols-[minmax(0,1fr)_minmax(140px,36vw)]">
-          <div className="relative h-full min-h-0 min-w-0 border-r border-[color:var(--border)] bg-[color:var(--panel-bg,var(--code-bg))]">
+          <div className="relative z-10 h-full min-h-0 min-w-0 border-r border-[color:var(--border)] bg-[color:var(--panel-bg,var(--code-bg))]">
             <section
-              className="absolute inset-0 overflow-hidden"
+              className="absolute inset-0 overflow-visible"
               aria-label="Zone de jeu"
             >
               <LabCanvas
@@ -288,7 +306,7 @@ export function AlchemixShell() {
             </div>
           </div>
           <aside
-            className="lab-inventoryColumn flex h-full min-h-0 min-w-0 flex-col overflow-hidden"
+            className="lab-inventoryColumn relative z-0 flex h-full min-h-0 min-w-0 flex-col overflow-hidden"
             aria-label="Inventaire"
           >
             <header className="lab-inventoryColumn-header flex shrink-0 items-center justify-between gap-2 border-b px-[0.65rem] py-2">

@@ -150,6 +150,8 @@
   border-radius: 0;
   border: none;
   box-sizing: border-box;
+  /* Permet de traîner une fiole jusqu’à la colonne inventaire (sans clip). */
+  overflow: visible;
 }
 
 /* Titre + compteur sur une ligne, le chiffre collé au texte (pas justify-between). */
