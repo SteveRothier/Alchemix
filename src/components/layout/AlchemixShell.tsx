@@ -1,39 +1,25 @@
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  pointerWithin,
-  rectIntersection,
-  useSensor,
-  useSensors,
-  type CollisionDetection,
-  type DragEndEvent,
-  type DragStartEvent,
-} from '@dnd-kit/core'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { CharacterSipZone } from '../character/CharacterSipZone'
+import { LabDragContext, type InventoryDragEndInfo } from '../game/LabDragContext'
 import {
-  CHARACTER_SIP_ID,
-  CharacterSipZone,
-} from '../character/CharacterSipZone'
-import { clientRectToCanvasPercent } from '../game/labGeometry'
-import type { LabDragData, LabPlacedVial } from '../game/labTypes'
-import { LAB_CANVAS_ID, LabCanvas } from '../game/LabCanvas'
+  clientPointInCanvasPlacement,
+  clientPointToCanvasPercent,
+  grabCenterClient,
+} from '../game/labGeometry'
+import type { LabPlacedVial } from '../game/labTypes'
+import { LabCanvas } from '../game/LabCanvas'
 import { InventoryPanel } from '../inventory/InventoryPanel'
-import { VialChip } from '../vial/VialChip'
 import { resolveFusionProduct } from '../../lib/fusion'
 import type { DrinkSpellResult } from '../../lib/drinkSpell'
+import { Draggable, registerGsapDraggable } from '../../lib/registerGsapDraggable'
 import { tierFromDiscoveryCount } from '../../lib/progression'
 import { useAlchemixStore, selectDiscoveryCount } from '../../store/useAlchemixStore'
 import '../lab/alchemixLab.css'
 
-const labCollision: CollisionDetection = (args) => {
-  const hits = pointerWithin(args)
-  const vialTargets = hits.filter((c) => String(c.id).startsWith('lab-target-'))
-  if (vialTargets.length > 0) return vialTargets
-  const characterHit = hits.filter((c) => String(c.id) === CHARACTER_SIP_ID)
-  if (characterHit.length > 0) return characterHit
-  if (hits.length > 0) return hits
-  return rectIntersection(args)
+registerGsapDraggable()
+
+function chipFromDragTarget(target: HTMLElement): HTMLElement | null {
+  return (target.querySelector('.lab-chipInventory') as HTMLElement | null) ?? target
 }
 
 export function AlchemixShell() {
@@ -55,12 +41,14 @@ export function AlchemixShell() {
   }, [vialsById])
 
   const [placed, setPlaced] = useState<LabPlacedVial[]>([])
-  const [activeDragVialId, setActiveDragVialId] = useState<string | null>(null)
-  const [dragSource, setDragSource] = useState<'inventory' | 'lab' | null>(
-    null,
-  )
   const [sipHint, setSipHint] = useState<string | null>(null)
   const sipTimerRef = useRef(0)
+
+  const canvasRef = useRef<HTMLDivElement>(null)
+  const characterSipRef = useRef<HTMLDivElement>(null)
+  const grabOffsetRef = useRef<{ dx: number; dy: number } | null>(null)
+  const placedRef = useRef(placed)
+  placedRef.current = placed
 
   const showSipHint = useCallback((msg: string) => {
     window.clearTimeout(sipTimerRef.current)
@@ -75,51 +63,38 @@ export function AlchemixShell() {
     [],
   )
 
-  const canvasRef = useRef<HTMLDivElement>(null)
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  const findHitPlacedVial = useCallback(
+    (chip: Element, excludeInstanceId?: string): LabPlacedVial | null => {
+      for (const p of placedRef.current) {
+        if (excludeInstanceId && p.instanceId === excludeInstanceId) continue
+        const el = document.querySelector(
+          `[data-lab-drop-target="${CSS.escape(p.instanceId)}"]`,
+        )
+        if (el instanceof HTMLElement && Draggable.hitTest(chip, el, '38%')) {
+          return p
+        }
+      }
+      return null
+    },
+    [],
   )
 
-  const activeDragVial = activeDragVialId
-    ? (vialsById[activeDragVialId] ?? null)
-    : null
+  const tryCharacterSip = useCallback(
+    (vialId: string, instanceId: string | undefined, chip: HTMLElement) => {
+      const sipEl = characterSipRef.current
+      const canvasEl = canvasRef.current
+      if (!sipEl || !canvasEl) return false
+      if (!Draggable.hitTest(chip, sipEl, '30%')) return false
 
-  const onDragStart = (event: DragStartEvent) => {
-    const d = event.active.data.current as LabDragData | undefined
-    setActiveDragVialId(d?.vialId ?? null)
-    setDragSource(d?.kind === 'lab' ? 'lab' : d?.kind === 'inventory' ? 'inventory' : null)
-  }
-
-  const onDragCancel = () => {
-    setActiveDragVialId(null)
-    setDragSource(null)
-  }
-
-  const onDragEnd = (event: DragEndEvent) => {
-    setActiveDragVialId(null)
-    setDragSource(null)
-    const { active, over } = event
-    const activeData = active.data.current as LabDragData | undefined
-    if (!activeData) return
-
-    if (!over) return
-
-    const overId = String(over.id)
-
-    if (overId === CHARACTER_SIP_ID) {
-      const vialId = activeData.vialId
       const store = useAlchemixStore.getState()
       const vial = store.vials[vialId]
       if (!vial || vial.type !== 'spell') {
         showSipHint('Seuls les sorts peuvent être bus.')
-        return
+        return true
       }
       const result: DrinkSpellResult = store.feedSpellToCharacter(vialId)
-      if (activeData.kind === 'lab') {
-        setPlaced((prev) =>
-          prev.filter((p) => p.instanceId !== activeData.instanceId),
-        )
+      if (instanceId) {
+        setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
       }
       switch (result.ok) {
         case true:
@@ -135,43 +110,26 @@ export function AlchemixShell() {
           break
         }
       }
-      return
-    }
+      return true
+    },
+    [showSipHint],
+  )
 
-    const canvasEl = canvasRef.current
-    if (!canvasEl) return
+  const completeInventoryDrag = useCallback(
+    (vialId: string, info: InventoryDragEndInfo) => {
+      const target = info.target
+      const chip = chipFromDragTarget(target)
+      const canvasEl = canvasRef.current
+      if (!chip || !canvasEl) return
 
-    const tr =
-      active.rect.current.translated ?? active.rect.current.initial
-    if (!tr) return
+      const grab = grabOffsetRef.current
 
-    const rectCanvas = canvasEl.getBoundingClientRect()
-    const pos = clientRectToCanvasPercent(tr, rectCanvas)
-
-    if (overId.startsWith('lab-target-')) {
-      const targetInstanceId = overId.slice('lab-target-'.length)
-
-      if (
-        activeData.kind === 'lab' &&
-        activeData.instanceId === targetInstanceId
-      ) {
-        setPlaced((prev) =>
-          prev.map((p) =>
-            p.instanceId === targetInstanceId ? { ...p, ...pos } : p,
-          ),
-        )
-        return
-      }
-
-      if (activeData.kind === 'inventory') {
+      const hitVial = findHitPlacedVial(chip)
+      if (hitVial) {
         setPlaced((prev) => {
-          const targetPlaced = prev.find(
-            (p) => p.instanceId === targetInstanceId,
-          )
-          if (!targetPlaced) return prev
           const { vials, addVial, recordFusion } = useAlchemixStore.getState()
-          const va = vials[targetPlaced.vialId]
-          const vb = vials[activeData.vialId]
+          const va = vials[hitVial.vialId]
+          const vb = vials[vialId]
           if (!va || !vb) return prev
           const outcome = resolveFusionProduct(va, vb, vials)
           if (!outcome.ok) {
@@ -182,7 +140,68 @@ export function AlchemixShell() {
           if (wasNew) addVial(result)
           recordFusion()
           return prev
-            .filter((p) => p.instanceId !== targetInstanceId)
+            .filter((p) => p.instanceId !== hitVial.instanceId)
+            .concat({
+              instanceId: crypto.randomUUID(),
+              vialId: result.id,
+              xPct: hitVial.xPct,
+              yPct: hitVial.yPct,
+            })
+        })
+        return
+      }
+
+      if (tryCharacterSip(vialId, undefined, chip)) return
+
+      const { cx, cy } = grabCenterClient(info, grab, chip)
+      if (clientPointInCanvasPlacement(canvasEl, cx, cy)) {
+        const pos = clientPointToCanvasPercent(canvasEl, cx, cy)
+        setPlaced((prev) => [
+          ...prev,
+          {
+            instanceId: crypto.randomUUID(),
+            vialId,
+            ...pos,
+          },
+        ])
+      }
+    },
+    [findHitPlacedVial, showSipHint, tryCharacterSip],
+  )
+
+  const completeLabDrag = useCallback(
+    (instanceId: string, vialId: string, drag: Draggable) => {
+      const target = drag.target as HTMLElement
+      const chip = chipFromDragTarget(target)
+      const canvasEl = canvasRef.current
+      if (!chip || !canvasEl) return
+
+      const hitVial = findHitPlacedVial(chip, instanceId)
+      if (hitVial) {
+        const targetInstanceId = hitVial.instanceId
+
+        setPlaced((prev) => {
+          const targetPlaced = prev.find((p) => p.instanceId === targetInstanceId)
+          const sourcePlaced = prev.find((p) => p.instanceId === instanceId)
+          if (!targetPlaced || !sourcePlaced) return prev
+          const { vials, addVial, recordFusion } = useAlchemixStore.getState()
+          const va = vials[targetPlaced.vialId]
+          const vb = vials[vialId]
+          if (!va || !vb) return prev
+          const outcome = resolveFusionProduct(va, vb, vials)
+          if (!outcome.ok) {
+            showSipHint('Ce mélange reste inerte.')
+            return prev
+          }
+          const { vial: result, wasNew } = outcome
+          if (wasNew) addVial(result)
+          recordFusion()
+          return prev
+            .filter(
+              (p) =>
+                p.instanceId !== targetInstanceId &&
+                p.instanceId !== instanceId,
+            )
             .concat({
               instanceId: crypto.randomUUID(),
               vialId: result.id,
@@ -193,67 +212,30 @@ export function AlchemixShell() {
         return
       }
 
-      if (activeData.kind === 'lab') {
-        setPlaced((prev) => {
-          const targetPlaced = prev.find(
-            (p) => p.instanceId === targetInstanceId,
-          )
-          const sourcePlaced = prev.find(
-            (p) => p.instanceId === activeData.instanceId,
-          )
-          if (!targetPlaced || !sourcePlaced) return prev
-          const { vials, addVial, recordFusion } = useAlchemixStore.getState()
-          const va = vials[targetPlaced.vialId]
-          const vb = vials[sourcePlaced.vialId]
-          if (!va || !vb) return prev
-          const outcome = resolveFusionProduct(va, vb, vials)
-          if (!outcome.ok) {
-            showSipHint('Ce mélange reste inerte.')
-            return prev
-          }
-          const { vial: result, wasNew } = outcome
-          if (wasNew) addVial(result)
-          recordFusion()
-          const xPct = (targetPlaced.xPct + sourcePlaced.xPct) / 2
-          const yPct = (targetPlaced.yPct + sourcePlaced.yPct) / 2
-          return prev
-            .filter(
-              (p) =>
-                p.instanceId !== targetInstanceId &&
-                p.instanceId !== activeData.instanceId,
-            )
-            .concat({
-              instanceId: crypto.randomUUID(),
-              vialId: result.id,
-              xPct,
-              yPct,
-            })
-        })
-      }
-      return
-    }
+      if (tryCharacterSip(vialId, instanceId, chip)) return
 
-    if (overId === LAB_CANVAS_ID) {
-      if (activeData.kind === 'inventory') {
-        setPlaced((prev) => [
-          ...prev,
-          {
-            instanceId: crypto.randomUUID(),
-            vialId: activeData.vialId,
-            ...pos,
-          },
-        ])
-        return
-      }
-      if (activeData.kind === 'lab') {
+      const grab = grabOffsetRef.current
+      const { cx, cy } = grabCenterClient(drag, grab, chip)
+      if (clientPointInCanvasPlacement(canvasEl, cx, cy)) {
+        const pos = clientPointToCanvasPercent(canvasEl, cx, cy)
         setPlaced((prev) =>
           prev.map((p) =>
-            p.instanceId === activeData.instanceId ? { ...p, ...pos } : p,
+            p.instanceId === instanceId ? { ...p, ...pos } : p,
           ),
         )
       }
-    }
-  }
+    },
+    [findHitPlacedVial, showSipHint, tryCharacterSip],
+  )
+
+  const labDragValue = useMemo(
+    () => ({
+      grabOffsetRef,
+      completeInventoryDrag,
+      completeLabDrag,
+    }),
+    [completeInventoryDrag, completeLabDrag],
+  )
 
   const removePlaced = (instanceId: string) => {
     setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
@@ -285,13 +267,7 @@ export function AlchemixShell() {
 
   return (
     <div className="alchemix-lab flex h-full min-h-0 min-w-0 flex-1 flex-col">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={labCollision}
-        onDragStart={onDragStart}
-        onDragCancel={onDragCancel}
-        onDragEnd={onDragEnd}
-      >
+      <LabDragContext.Provider value={labDragValue}>
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(200px,17rem)] gap-0 text-left max-[560px]:grid-cols-[minmax(0,1fr)_minmax(128px,32vw)]">
           <div className="flex min-h-0 min-w-0 flex-col border-r border-[color:var(--border)]">
             <section
@@ -310,7 +286,7 @@ export function AlchemixShell() {
               className="flex shrink-0 items-center overflow-hidden border-b border-[color:var(--border)] px-[0.85rem] py-[0.45rem] [height:clamp(56px,10dvh,88px)]"
               aria-label="Personnage"
             >
-              <CharacterSipZone hint={sipHint} />
+              <CharacterSipZone ref={characterSipRef} hint={sipHint} />
             </section>
             <aside
               className="flex shrink-0 flex-wrap gap-x-5 gap-y-[0.65rem] px-[0.85rem] py-[0.45rem] text-[0.78rem] text-[color:var(--text)]"
@@ -345,16 +321,7 @@ export function AlchemixShell() {
             />
           </aside>
         </div>
-        <DragOverlay dropAnimation={null} zIndex={12000}>
-          {activeDragVial ? (
-            dragSource === 'lab' ? (
-              <VialChip vial={activeDragVial} lab />
-            ) : (
-              <VialChip vial={activeDragVial} inventory />
-            )
-          ) : null}
-        </DragOverlay>
-      </DndContext>
+      </LabDragContext.Provider>
     </div>
   )
 }

@@ -1,11 +1,8 @@
-import { useDroppable } from '@dnd-kit/core'
 import type { RefObject } from 'react'
 import { Link } from 'react-router-dom'
 import type { Vial } from '../../types'
 import { CanvasVialItem } from './CanvasVialItem'
 import type { LabPlacedVial } from './labTypes'
-
-const LAB_CANVAS_ID = 'lab-canvas'
 
 type LabCanvasProps = {
   placed: LabPlacedVial[]
@@ -22,15 +19,6 @@ export function LabCanvas({
   onRemovePlaced,
   onDuplicatePlaced,
 }: LabCanvasProps) {
-  const { setNodeRef } = useDroppable({
-    id: LAB_CANVAS_ID,
-  })
-
-  const setCombinedRef = (node: HTMLDivElement | null) => {
-    setNodeRef(node)
-    canvasRef.current = node
-  }
-
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-[0.45rem]">
       <div className="flex min-w-0 shrink-0 items-center justify-between gap-2">
@@ -44,7 +32,7 @@ export function LabCanvas({
         </Link>
       </div>
       <div
-        ref={setCombinedRef}
+        ref={canvasRef}
         className="lab-canvas"
         aria-label="Zone de placement des fioles"
       >
@@ -73,5 +61,3 @@ export function LabCanvas({
     </div>
   )
 }
-
-export { LAB_CANVAS_ID }

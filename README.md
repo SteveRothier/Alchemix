@@ -25,7 +25,7 @@ npm run test    # Vitest
 - React 19 + TypeScript
 - Vite 8
 - Zustand (persistance `localStorage`)
-- `@dnd-kit` (drag & drop)
+- GSAP + plugin `Draggable` (drag & drop inventaire / laboratoire)
 - Vitest (tests unitaires)
 - Tailwind CSS + CSS custom ciblée pour le rendu visuel du laboratoire
 

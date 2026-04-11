@@ -138,10 +138,17 @@ export function VialFlaskGraphic({ vial, className = '' }: VialFlaskGraphicProps
     </>
   )
 
+  const flaskTypeClass =
+    vial.type === 'spell'
+      ? ' lab-flaskSvg--spell'
+      : vial.type === 'creature'
+        ? ' lab-flaskSvg--creature'
+        : ''
+
   return (
     <svg
       ref={svgRef}
-      className={`lab-flaskSvg${vial.type === 'spell' ? ' lab-flaskSvg--spell' : ''} ${className}`.trim()}
+      className={`lab-flaskSvg${flaskTypeClass} ${className}`.trim()}
       viewBox={
         vial.type === 'spell'
           ? SPELL_VIEWBOX
