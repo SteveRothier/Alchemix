@@ -485,6 +485,11 @@
   aspect-ratio: 28 / 48;
 }
 
+/* Éléments : moins d’air gauche/droite autour de l’icône (bulbe plus large que sort / créature). */
+.lab-chipInventory[data-vial-type='element'] .lab-flaskSvg {
+  margin-inline: -3px;
+}
+
 .lab-meta {
   display: flex;
   flex-direction: column;
