@@ -34,6 +34,41 @@ export function CanvasVialItem({
     const outer = outerRef.current
     if (!dragLayer || !outer || !labDrag) return
 
+    const hitTestOverlap = '38%'
+    let lastOverDropHit: HTMLElement | null = null
+
+    const clearFusionHover = () => {
+      if (lastOverDropHit) {
+        lastOverDropHit.removeAttribute('data-over-target')
+        lastOverDropHit = null
+      }
+    }
+
+    const updateFusionHover = () => {
+      const chip = dragLayer.querySelector('.lab-chipInventory')
+      if (!(chip instanceof HTMLElement)) return
+
+      const canvasRoot = dragLayer.closest('.lab-canvas')
+      if (!(canvasRoot instanceof HTMLElement)) return
+
+      let nextHit: HTMLElement | null = null
+      for (const node of canvasRoot.querySelectorAll('[data-lab-drop-target]')) {
+        if (!(node instanceof HTMLElement)) continue
+        if (node.getAttribute('data-lab-drop-target') === placed.instanceId)
+          continue
+        if (Draggable.hitTest(chip, node, hitTestOverlap)) {
+          nextHit = node
+          break
+        }
+      }
+
+      if (nextHit !== lastOverDropHit) {
+        if (lastOverDropHit) lastOverDropHit.removeAttribute('data-over-target')
+        if (nextHit) nextHit.setAttribute('data-over-target', '')
+        lastOverDropHit = nextHit
+      }
+    }
+
     const d = Draggable.create(dragLayer, {
       type: 'left,top',
       bounds: '.alchemix-lab',
@@ -57,7 +92,11 @@ export function CanvasVialItem({
         }
         if (outer) gsap.set(outer, { zIndex: 920 })
       },
+      onDrag() {
+        updateFusionHover()
+      },
       onRelease(this: DraggableInstance) {
+        clearFusionHover()
         if (outer) gsap.set(outer, { zIndex: zIndexRef.current })
         const moved = Math.hypot(this.x, this.y) >= 2
         const skipDragLayerReset =

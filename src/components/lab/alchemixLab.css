@@ -310,9 +310,18 @@
   min-height: 0;
 }
 
-/* Halo intérieur : un ring extérieur (0 0 0 2px) faisait paraître la carte plus haute/large. */
-.alchemix-lab .lab-dropHit[data-over-target] .lab-chipInventory {
-  box-shadow: inset 0 0 0 2px var(--lab-hover);
+/*
+ * Zoom fusion : transition sur l’état normal aussi, sinon au retrait de data-over-target
+ * il n’y a plus de transition et le retour à scale(1) est brutal.
+ */
+.alchemix-lab .lab-canvas .lab-dropHit .lab-chipInventory {
+  transform: scale(1);
+  transform-origin: 50% 50%;
+  transition: transform 0.14s ease-out;
+}
+
+.alchemix-lab .lab-canvas .lab-dropHit[data-over-target] .lab-chipInventory {
+  transform: scale(1.06);
 }
 
 .alchemix-lab .lab-dragSurface {
