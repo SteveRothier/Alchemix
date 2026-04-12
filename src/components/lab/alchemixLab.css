@@ -400,6 +400,43 @@
   box-sizing: border-box;
   line-height: 1.2;
   text-align: left;
+  position: relative;
+  isolation: isolate;
+}
+
+/* Dégradé de fond au survol (inventaire + laboratoire) : uniquement le fond, pas les bordures. */
+.lab-chipInventory::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    128deg,
+    color-mix(in srgb, var(--accent) 22%, transparent) 0%,
+    color-mix(in srgb, var(--accent) 8%, transparent) 40%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.36s ease;
+}
+
+.lab-chipInventory:hover::before,
+.alchemix-lab .lab-invItemWrap:hover .lab-chipInventory::before {
+  /* ~à mi-chemin entre le calque trop timide et opacité 1 */
+  opacity: 0.86;
+}
+
+.lab-chipInventory > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-chipInventory::before {
+    transition-duration: 0.01ms;
+  }
 }
 
 /*
