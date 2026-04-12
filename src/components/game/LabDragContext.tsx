@@ -13,7 +13,12 @@ export type InventoryDragEndInfo = {
 export type LabDragContextValue = {
   grabOffsetRef: MutableRefObject<GrabOffset | null>
   completeInventoryDrag: (vialId: string, info: InventoryDragEndInfo) => void
-  completeLabDrag: (instanceId: string, vialId: string, drag: DraggableInstance) => void
+  /** `true` = ne pas remettre le dragLayer à 0 (ex. animation à la position du dépôt inventaire). */
+  completeLabDrag: (
+    instanceId: string,
+    vialId: string,
+    drag: DraggableInstance,
+  ) => boolean
 }
 
 export const LabDragContext = createContext<LabDragContextValue | null>(null)

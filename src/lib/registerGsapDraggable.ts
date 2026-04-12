@@ -12,4 +12,4 @@ export function registerGsapDraggable(): void {
   registered = true
 }
 
-export { Draggable }
+export { Draggable, gsap }

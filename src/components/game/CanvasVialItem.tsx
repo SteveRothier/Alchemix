@@ -60,11 +60,12 @@ export function CanvasVialItem({
       onRelease(this: DraggableInstance) {
         if (outer) gsap.set(outer, { zIndex: zIndexRef.current })
         const moved = Math.hypot(this.x, this.y) >= 2
-        if (moved) {
-          labDrag.completeLabDrag(placed.instanceId, placed.vialId, this)
-        }
+        const skipDragLayerReset =
+          moved && labDrag.completeLabDrag(placed.instanceId, placed.vialId, this)
         labDrag.grabOffsetRef.current = null
-        gsap.set(dragLayer, { left: 0, top: 0, clearProps: 'transform' })
+        if (!skipDragLayerReset) {
+          gsap.set(dragLayer, { left: 0, top: 0, clearProps: 'transform' })
+        }
       },
     })[0]
 
@@ -83,6 +84,7 @@ export function CanvasVialItem({
     <div
       ref={outerRef}
       className="absolute touch-none"
+      data-lab-canvas-vial={placed.instanceId}
       style={{
         left: `${placed.xPct}%`,
         top: `${placed.yPct}%`,

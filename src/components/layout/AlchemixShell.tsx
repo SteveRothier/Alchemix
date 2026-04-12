@@ -11,7 +11,11 @@ import { LabCanvas } from '../game/LabCanvas'
 import { InventoryPanel } from '../inventory/InventoryPanel'
 import { resolveFusionProduct } from '../../lib/fusion'
 import type { DrinkSpellResult } from '../../lib/drinkSpell'
-import { Draggable, registerGsapDraggable } from '../../lib/registerGsapDraggable'
+import {
+  Draggable,
+  gsap,
+  registerGsapDraggable,
+} from '../../lib/registerGsapDraggable'
 import { useAlchemixStore } from '../../store/useAlchemixStore'
 import '../lab/alchemixLab.css'
 
@@ -32,6 +36,26 @@ function chipOverlapsInventoryColumn(chip: HTMLElement): boolean {
     cr.bottom > ir.top &&
     cr.top < ir.bottom
   )
+}
+
+/** Réduction + disparition avant retrait du state (clic droit, retour inventaire). */
+function shrinkRemoveLabVial(
+  el: HTMLElement | null | undefined,
+  onComplete: () => void,
+) {
+  if (!el) {
+    onComplete()
+    return
+  }
+  gsap.killTweensOf(el)
+  gsap.to(el, {
+    scale: 0,
+    opacity: 0,
+    duration: 0.3,
+    ease: 'power2.in',
+    transformOrigin: '50% 50%',
+    onComplete,
+  })
 }
 
 export function AlchemixShell() {
@@ -179,11 +203,11 @@ export function AlchemixShell() {
   )
 
   const completeLabDrag = useCallback(
-    (instanceId: string, vialId: string, drag: Draggable) => {
+    (instanceId: string, vialId: string, drag: Draggable): boolean => {
       const target = drag.target as HTMLElement
       const chip = chipFromDragTarget(target)
       const canvasEl = canvasRef.current
-      if (!chip || !canvasEl) return
+      if (!chip || !canvasEl) return false
 
       const hitVial = findHitPlacedVial(chip, instanceId)
       if (hitVial) {
@@ -218,14 +242,21 @@ export function AlchemixShell() {
               yPct: targetPlaced.yPct,
             })
         })
-        return
+        return false
       }
 
-      if (tryCharacterSip(vialId, instanceId, chip)) return
+      if (tryCharacterSip(vialId, instanceId, chip)) return false
 
       if (chipOverlapsInventoryColumn(chip)) {
+        const canvasRoot = canvasEl
+        if (chip instanceof HTMLElement && canvasRoot.contains(chip)) {
+          shrinkRemoveLabVial(chip, () => {
+            setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
+          })
+          return true
+        }
         setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
-        return
+        return false
       }
 
       const grab = grabOffsetRef.current
@@ -238,6 +269,7 @@ export function AlchemixShell() {
           ),
         )
       }
+      return false
     },
     [findHitPlacedVial, showSipHint, tryCharacterSip],
   )
@@ -251,9 +283,18 @@ export function AlchemixShell() {
     [completeInventoryDrag, completeLabDrag],
   )
 
-  const removePlaced = (instanceId: string) => {
-    setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
-  }
+  const removePlaced = useCallback((instanceId: string) => {
+    const root = canvasRef.current
+    const host = root?.querySelector(
+      `[data-lab-canvas-vial="${CSS.escape(instanceId)}"]`,
+    ) as HTMLElement | null
+    const chipEl = host?.querySelector(
+      '.lab-chipInventory',
+    ) as HTMLElement | null
+    shrinkRemoveLabVial(chipEl, () => {
+      setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
+    })
+  }, [])
 
   const duplicatePlaced = useCallback((source: LabPlacedVial) => {
     setPlaced((prev) => [
