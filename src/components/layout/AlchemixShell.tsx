@@ -297,13 +297,23 @@ export function AlchemixShell() {
   }, [])
 
   const duplicatePlaced = useCallback((source: LabPlacedVial) => {
+    /** Décalage centre → centre pour l’empilement visuel (bas-droite), en px CSS. */
+    const stepPx = 18
+    const canvasEl = canvasRef.current
+    const rect = canvasEl?.getBoundingClientRect()
+    let dxPct = 3.2
+    let dyPct = 2.8
+    if (rect && rect.width > 0 && rect.height > 0) {
+      dxPct = (stepPx / rect.width) * 100
+      dyPct = (stepPx / rect.height) * 100
+    }
     setPlaced((prev) => [
       ...prev,
       {
         instanceId: crypto.randomUUID(),
         vialId: source.vialId,
-        xPct: Math.min(94, Math.max(6, source.xPct + 7)),
-        yPct: Math.min(90, Math.max(10, source.yPct + 6)),
+        xPct: Math.min(94, Math.max(6, source.xPct + dxPct)),
+        yPct: Math.min(90, Math.max(10, source.yPct + dyPct)),
       },
     ])
   }, [])
