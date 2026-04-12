@@ -2,6 +2,7 @@ import type { RefObject } from 'react'
 import { Link } from 'react-router-dom'
 import type { Vial } from '../../types'
 import { CanvasVialItem } from './CanvasVialItem'
+import { LabConstellationBackground } from './LabConstellationBackground'
 import type { LabPlacedVial } from './labTypes'
 
 type LabCanvasProps = {
@@ -36,6 +37,7 @@ export function LabCanvas({
         className="lab-canvas lab-canvas--fill"
         aria-label="Zone de placement des fioles"
       >
+        <LabConstellationBackground />
         {placed.map((p, i) => {
           const v = vialsById[p.vialId]
           if (!v) return null

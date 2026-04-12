@@ -11,20 +11,27 @@ html {
   --font-lab-number: 'Space Grotesk', system-ui, sans-serif;
   --font-lab-name: 'Merriweather', Georgia, 'Times New Roman', serif;
 
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --panel-bg: #f0efe8;
+  /*
+   * Thème unique « laboratoire d’alchimie » : pierre / chaux, verre, herbes séchées.
+   * Pas de dark mode : une seule ambiance.
+   */
+  --text: #4d564f;
+  --text-h: #152019;
+  --text-muted: #667064;
+  --bg: #e9ede8;
+  --border: #a8b4a9;
+  --code-bg: #dfe6df;
+  --panel-bg: #cfd9ce;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
 
-  /* Colonne inventaire : fond uni « laboratoire » (vert celadon / verre à fioles), pas le gris grille Infinite Craft. */
-  --lab-inventory-bg: #c2d4c9;
-  --lab-inventory-divider: color-mix(in srgb, var(--lab-inventory-bg) 78%, var(--text-h) 14%);
-  --lab-inventory-title: #1a2e24;
+  /* Zone de placement (plan de travail, légèrement plus clair que la colonne). */
+  --lab-canvas-bg: #dce5db;
+  /* Armoire à fioles : même famille, un ton plus profond. */
+  --lab-inventory-bg: #b5c4b4;
+  --lab-inventory-divider: color-mix(in srgb, var(--lab-inventory-bg) 68%, var(--text-h) 22%);
+  --lab-inventory-title: #142218;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
@@ -32,31 +39,13 @@ html {
 
   font: 16px/145% var(--sans);
   letter-spacing: 0.02em;
-  color-scheme: light dark;
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --panel-bg: #1a1b22;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-
-    --lab-inventory-bg: #121c18;
-    --lab-inventory-divider: color-mix(in srgb, var(--lab-inventory-bg) 82%, #e2e8f0 18%);
-    --lab-inventory-title: #e8f0eb;
-  }
 }
 
 #root {
