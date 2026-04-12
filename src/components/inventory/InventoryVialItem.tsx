@@ -1,16 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { remapSvgIdsInClonedSubtree } from '../../lib/remapSvgIdsForDomClone'
-import {
-  chipCenterOverDropTarget,
-  elementsHitTestAreaOverlap,
-} from '../game/labGeometry'
+import { fusionCardsOverlap } from '../game/labGeometry'
 import type { Vial } from '../../types'
 import { useLabDrag, type LabDragContextValue } from '../game/LabDragContext'
 import { VialChip } from '../vial/VialChip'
 
 const MIN_MOVE_PX = 6
-/** Aligné sur findHitPlacedVial / Draggable.hitTest 38 % */
-const HIT_THRESHOLD_PCT = 38
 
 type InventoryVialItemProps = {
   vial: Vial
@@ -58,10 +53,7 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
       let nextHit: HTMLElement | null = null
       for (const node of canvasRoot.querySelectorAll('[data-lab-drop-target]')) {
         if (!(node instanceof HTMLElement)) continue
-        if (
-          elementsHitTestAreaOverlap(chip, node, HIT_THRESHOLD_PCT) ||
-          chipCenterOverDropTarget(chip, node)
-        ) {
+        if (fusionCardsOverlap(chip, node)) {
           nextHit = node
           break
         }

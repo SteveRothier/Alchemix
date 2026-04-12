@@ -3,10 +3,7 @@ import type { Draggable as DraggableInstance } from 'gsap/Draggable'
 import { useEffect, useRef } from 'react'
 import type { Vial } from '../../types'
 import { Draggable, registerGsapDraggable } from '../../lib/registerGsapDraggable'
-import {
-  chipCenterOverDropTarget,
-  elementsHitTestAreaOverlap,
-} from './labGeometry'
+import { fusionCardsOverlap } from './labGeometry'
 import { useLabDrag } from './LabDragContext'
 import type { LabPlacedVial } from './labTypes'
 import { VialChip } from '../vial/VialChip'
@@ -41,7 +38,6 @@ export function CanvasVialItem({
     const outer = outerRef.current
     if (!dragLayer || !outer || !labDrag) return
 
-    const hitThresholdPct = 38
     let lastOverDropHit: HTMLElement | null = null
 
     const clearFusionHover = () => {
@@ -65,10 +61,7 @@ export function CanvasVialItem({
         if (!(node instanceof HTMLElement)) continue
         if (node.getAttribute('data-lab-drop-target') === placed.instanceId)
           continue
-        if (
-          elementsHitTestAreaOverlap(chip, node, hitThresholdPct) ||
-          chipCenterOverDropTarget(chip, node)
-        ) {
+        if (fusionCardsOverlap(chip, node)) {
           nextHit = node
           break
         }

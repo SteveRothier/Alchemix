@@ -4,6 +4,7 @@ import { LabDragContext, type InventoryDragEndInfo } from '../game/LabDragContex
 import {
   clientPointInCanvasPlacement,
   clientPointToCanvasPercent,
+  fusionCardsOverlap,
   grabCenterClient,
 } from '../game/labGeometry'
 import type { LabPlacedVial } from '../game/labTypes'
@@ -157,7 +158,11 @@ export function AlchemixShell() {
         const el = document.querySelector(
           `[data-lab-drop-target="${CSS.escape(p.instanceId)}"]`,
         )
-        if (el instanceof HTMLElement && Draggable.hitTest(chip, el, '38%')) {
+        if (
+          chip instanceof HTMLElement &&
+          el instanceof HTMLElement &&
+          fusionCardsOverlap(chip, el)
+        ) {
           return p
         }
       }

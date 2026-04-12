@@ -108,15 +108,18 @@ export function elementsHitTestAreaOverlap(
   return inter / areaA >= t || inter / areaB >= t
 }
 
-/** Feedback hover fusion : centre de la carte draguée dans la boîte de la cible. */
-export function chipCenterOverDropTarget(
+/**
+ * Survol fusion + détection au lâcher : compare les **cartes** (.lab-chipInventory),
+ * pas le curseur ni seul le conteneur drop — chevauchement d’aire entre les deux boîtes.
+ */
+export const FUSION_CARDS_OVERLAP_PCT = 10
+
+export function fusionCardsOverlap(
   dragChip: HTMLElement,
-  dropTarget: HTMLElement,
+  dropTargetHost: HTMLElement,
+  thresholdPct: number = FUSION_CARDS_OVERLAP_PCT,
 ): boolean {
-  const cr = dragChip.getBoundingClientRect()
-  const tr = dropTarget.getBoundingClientRect()
-  if (cr.width < 1 || cr.height < 1) return false
-  const cx = cr.left + cr.width / 2
-  const cy = cr.top + cr.height / 2
-  return cx >= tr.left && cx <= tr.right && cy >= tr.top && cy <= tr.bottom
+  const targetChip = dropTargetHost.querySelector('.lab-chipInventory')
+  if (!(targetChip instanceof HTMLElement)) return false
+  return elementsHitTestAreaOverlap(dragChip, targetChip, thresholdPct)
 }
