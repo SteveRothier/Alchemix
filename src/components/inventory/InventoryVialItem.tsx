@@ -75,8 +75,7 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
         ghostEl.style.position = 'fixed'
         ghostEl.style.left = `${r.left}px`
         ghostEl.style.top = `${r.top}px`
-        ghostEl.style.width = `${r.width}px`
-        ghostEl.style.height = `${r.height}px`
+        /* Pas de largeur figée : en labo le style IC + police plus large que l’inventaire ; sinon ellipsis « Mag… ». */
         ghostEl.style.margin = '0'
         ghostEl.style.boxSizing = 'border-box'
         ghostEl.style.zIndex = '10050'
@@ -84,6 +83,7 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
 
         remapSvgIdsInClonedSubtree(ghostEl)
         document.body.appendChild(ghostEl)
+        void ghostEl.offsetWidth
 
         const chip = ghostEl.querySelector('.lab-chipInventory')
         if (chip instanceof HTMLElement) {

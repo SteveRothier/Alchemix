@@ -152,6 +152,26 @@
   box-sizing: border-box;
   /* Permet de traîner une fiole jusqu’à la colonne inventaire (sans clip). */
   overflow: visible;
+  /* Fond type Infinite Craft : clair + points discrets. */
+  background-color: #f5f5f3;
+  background-image: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--text-h) 7%, transparent) 0.55px,
+    transparent 0.65px
+  );
+  background-size: 20px 20px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .alchemix-lab .lab-canvas.lab-canvas--fill {
+    background-color: var(--panel-bg, var(--code-bg));
+    background-image: radial-gradient(
+      circle,
+      color-mix(in srgb, #fff 9%, transparent) 0.55px,
+      transparent 0.65px
+    );
+    background-size: 22px 22px;
+  }
 }
 
 /* Titre + compteur sur une ligne, le chiffre collé au texte (pas justify-between). */
@@ -336,6 +356,8 @@
 .lab-invDragGhost {
   pointer-events: none;
   box-sizing: border-box;
+  width: max-content;
+  max-width: none;
 }
 
 /* --- VialChip --- */
@@ -471,6 +493,53 @@
 
 .lab-chipInventory[data-vial-type='element'] {
   border-color: color-mix(in srgb, #94d2bd 40%, var(--border));
+}
+
+/*
+ * Laboratoire (plateau) + fantôme drag depuis l’inventaire : cartes type Infinite Craft
+ * (noir, texte blanc sans-serif gras, ombre légère, écart icône / nom).
+ * Pas de max-width inventaire ni ellipsis : le nom doit rester entier.
+ */
+.alchemix-lab .lab-canvas .lab-chipInventory,
+.lab-invDragGhost .lab-chipInventory {
+  background: #0d0d0d;
+  border: 1px solid #2c2c2c;
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.18),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  gap: 0.5rem;
+  max-width: none;
+  width: max-content;
+  min-width: min-content;
+}
+
+.alchemix-lab .lab-canvas .lab-chipInventory .lab-meta,
+.lab-invDragGhost .lab-chipInventory .lab-meta {
+  gap: 0.5rem;
+  flex-shrink: 0;
+  min-width: min-content;
+}
+
+.alchemix-lab .lab-canvas .lab-chipInventory .lab-name,
+.lab-invDragGhost .lab-chipInventory .lab-name {
+  color: #f5f5f5;
+  font-family: var(--font-lab-heading);
+  font-weight: 700;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.alchemix-lab .lab-dropHit:has(.lab-chipInventory) {
+  min-width: min-content;
+}
+
+@media (prefers-color-scheme: dark) {
+  .alchemix-lab .lab-canvas .lab-chipInventory,
+  .lab-invDragGhost .lab-chipInventory {
+    box-shadow:
+      0 2px 16px rgba(0, 0, 0, 0.55),
+      0 0 0 1px rgba(255, 255, 255, 0.07);
+  }
 }
 
 .lab-rarity {
