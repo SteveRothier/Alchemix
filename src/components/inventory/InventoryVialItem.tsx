@@ -110,13 +110,19 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
         const moved =
           Math.hypot(e.clientX - startX, e.clientY - startY) >= 2
         if (moved) {
-          ctx.completeInventoryDrag(vial.id, {
+          const pending = ctx.completeInventoryDrag(vial.id, {
             target: ghostEl,
             pointerX: e.clientX,
             pointerY: e.clientY,
           })
+          if (pending instanceof Promise) {
+            pending.finally(() => removeGhost())
+          } else {
+            removeGhost()
+          }
+        } else {
+          removeGhost()
         }
-        removeGhost()
       }
       dragActive = false
     }

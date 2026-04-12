@@ -58,6 +58,51 @@ function shrinkRemoveLabVial(
   })
 }
 
+/** Même principe que la suppression : les deux cartes rétrécissent puis disparition. */
+function animateFusionShrinkPair(
+  elA: HTMLElement | null | undefined,
+  elB: HTMLElement | null | undefined,
+  onComplete: () => void,
+) {
+  const nodes = [elA, elB].filter(
+    (n): n is HTMLElement => n instanceof HTMLElement,
+  )
+  if (nodes.length === 0) {
+    onComplete()
+    return
+  }
+  for (const el of nodes) {
+    gsap.killTweensOf(el)
+  }
+  const tl = gsap.timeline({ onComplete })
+  for (const el of nodes) {
+    tl.to(
+      el,
+      {
+        scale: 0,
+        opacity: 0,
+        duration: 0.16,
+        ease: 'power2.in',
+        transformOrigin: '50% 50%',
+      },
+      0,
+    )
+  }
+}
+
+function canvasChipForInstance(
+  canvasRoot: HTMLElement | null | undefined,
+  instanceId: string,
+): HTMLElement | null {
+  if (!canvasRoot) return null
+  const host = canvasRoot.querySelector(
+    `[data-lab-canvas-vial="${CSS.escape(instanceId)}"]`,
+  )
+  if (!(host instanceof HTMLElement)) return null
+  const chip = host.querySelector('.lab-chipInventory')
+  return chip instanceof HTMLElement ? chip : null
+}
+
 export function AlchemixShell() {
   const vialsById = useAlchemixStore((s) => s.vials)
   const resetToStarters = useAlchemixStore((s) => s.resetToStarters)
@@ -159,28 +204,44 @@ export function AlchemixShell() {
 
       const hitVial = findHitPlacedVial(chip)
       if (hitVial) {
-        setPlaced((prev) => {
-          const { vials, addVial, recordFusion } = useAlchemixStore.getState()
-          const va = vials[hitVial.vialId]
-          const vb = vials[vialId]
-          if (!va || !vb) return prev
-          const outcome = resolveFusionProduct(va, vb, vials)
-          if (!outcome.ok) {
-            showSipHint('Ce mélange reste inerte.')
-            return prev
-          }
-          const { vial: result, wasNew } = outcome
-          if (wasNew) addVial(result)
-          recordFusion()
-          return prev
-            .filter((p) => p.instanceId !== hitVial.instanceId)
-            .concat({
-              instanceId: crypto.randomUUID(),
-              vialId: result.id,
-              xPct: hitVial.xPct,
-              yPct: hitVial.yPct,
+        const { vials, addVial, recordFusion } = useAlchemixStore.getState()
+        const va = vials[hitVial.vialId]
+        const vb = vials[vialId]
+        if (!va || !vb) return
+        const outcome = resolveFusionProduct(va, vb, vials)
+        if (!outcome.ok) {
+          showSipHint('Ce mélange reste inerte.')
+          return
+        }
+        const { vial: result, wasNew } = outcome
+        if (wasNew) addVial(result)
+        recordFusion()
+        const targetInstanceId = hitVial.instanceId
+        const targetChip = canvasChipForInstance(canvasEl, targetInstanceId)
+        const newEntry: LabPlacedVial = {
+          instanceId: crypto.randomUUID(),
+          vialId: result.id,
+          xPct: hitVial.xPct,
+          yPct: hitVial.yPct,
+        }
+        const applyFusion = () =>
+          setPlaced((cur) => {
+            const hasTarget = cur.some((p) => p.instanceId === targetInstanceId)
+            if (!hasTarget) return cur
+            return cur
+              .filter((p) => p.instanceId !== targetInstanceId)
+              .concat(newEntry)
+          })
+
+        if (targetChip) {
+          return new Promise<void>((resolve) => {
+            animateFusionShrinkPair(chip, targetChip, () => {
+              applyFusion()
+              resolve()
             })
-        })
+          })
+        }
+        applyFusion()
         return
       }
 
@@ -212,36 +273,53 @@ export function AlchemixShell() {
       const hitVial = findHitPlacedVial(chip, instanceId)
       if (hitVial) {
         const targetInstanceId = hitVial.instanceId
+        const targetPlaced = placedRef.current.find(
+          (p) => p.instanceId === targetInstanceId,
+        )
+        const sourcePlaced = placedRef.current.find(
+          (p) => p.instanceId === instanceId,
+        )
+        if (!targetPlaced || !sourcePlaced) return false
+        const { vials, addVial, recordFusion } = useAlchemixStore.getState()
+        const va = vials[targetPlaced.vialId]
+        const vb = vials[vialId]
+        if (!va || !vb) return false
+        const outcome = resolveFusionProduct(va, vb, vials)
+        if (!outcome.ok) {
+          showSipHint('Ce mélange reste inerte.')
+          return false
+        }
+        const { vial: result, wasNew } = outcome
+        if (wasNew) addVial(result)
+        recordFusion()
+        const newEntry: LabPlacedVial = {
+          instanceId: crypto.randomUUID(),
+          vialId: result.id,
+          xPct: targetPlaced.xPct,
+          yPct: targetPlaced.yPct,
+        }
+        const sourceChip = chip
+        const targetChip = canvasChipForInstance(canvasEl, targetInstanceId)
+        const applyFusion = () =>
+          setPlaced((cur) => {
+            const hasBoth =
+              cur.some((p) => p.instanceId === targetInstanceId) &&
+              cur.some((p) => p.instanceId === instanceId)
+            if (!hasBoth) return cur
+            return cur
+              .filter(
+                (p) =>
+                  p.instanceId !== targetInstanceId &&
+                  p.instanceId !== instanceId,
+              )
+              .concat(newEntry)
+          })
 
-        setPlaced((prev) => {
-          const targetPlaced = prev.find((p) => p.instanceId === targetInstanceId)
-          const sourcePlaced = prev.find((p) => p.instanceId === instanceId)
-          if (!targetPlaced || !sourcePlaced) return prev
-          const { vials, addVial, recordFusion } = useAlchemixStore.getState()
-          const va = vials[targetPlaced.vialId]
-          const vb = vials[vialId]
-          if (!va || !vb) return prev
-          const outcome = resolveFusionProduct(va, vb, vials)
-          if (!outcome.ok) {
-            showSipHint('Ce mélange reste inerte.')
-            return prev
-          }
-          const { vial: result, wasNew } = outcome
-          if (wasNew) addVial(result)
-          recordFusion()
-          return prev
-            .filter(
-              (p) =>
-                p.instanceId !== targetInstanceId &&
-                p.instanceId !== instanceId,
-            )
-            .concat({
-              instanceId: crypto.randomUUID(),
-              vialId: result.id,
-              xPct: targetPlaced.xPct,
-              yPct: targetPlaced.yPct,
-            })
-        })
+        if (sourceChip && targetChip) {
+          animateFusionShrinkPair(sourceChip, targetChip, applyFusion)
+          return true
+        }
+        applyFusion()
         return false
       }
 

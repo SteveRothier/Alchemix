@@ -12,7 +12,11 @@ export type InventoryDragEndInfo = {
 
 export type LabDragContextValue = {
   grabOffsetRef: MutableRefObject<GrabOffset | null>
-  completeInventoryDrag: (vialId: string, info: InventoryDragEndInfo) => void
+  /** Retourne une promesse si une fusion animée retarde le retrait du clone inventaire. */
+  completeInventoryDrag: (
+    vialId: string,
+    info: InventoryDragEndInfo,
+  ) => void | Promise<void>
   /** `true` = ne pas remettre le dragLayer à 0 (ex. animation à la position du dépôt inventaire). */
   completeLabDrag: (
     instanceId: string,
