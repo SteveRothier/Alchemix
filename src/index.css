@@ -32,6 +32,12 @@ html {
   --lab-inventory-bg: #b5c4b4;
   --lab-inventory-divider: color-mix(in srgb, var(--lab-inventory-bg) 68%, var(--text-h) 22%);
   --lab-inventory-title: #142218;
+  /* Survols dans le labo (cartes, pastilles, fusion, personnage) : même famille que pierre / mousse. */
+  --lab-hover: #3a5544;
+  --lab-hover-soft: color-mix(in srgb, var(--lab-hover) 14%, transparent);
+  /* Survol cartes sur fond noir : verts plus sourds, moins « blanc / lait ». */
+  --lab-canvas-chip-hover-a: #7a9c86;
+  --lab-canvas-chip-hover-b: #4a6b58;
 
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;

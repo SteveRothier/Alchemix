@@ -78,12 +78,12 @@
 }
 
 .alchemix-lab .lab-recipesLink:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--lab-hover);
+  color: var(--lab-hover);
 }
 
 .alchemix-lab .lab-recipesLink:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--lab-hover);
   outline-offset: 2px;
 }
 
@@ -98,7 +98,7 @@
   min-width: 0;
 }
 
-/* Même pastille que Recettes (lien) : bordure, fond, texte atténué, survol accent. */
+/* Même pastille que Recettes (lien) : bordure, fond, texte atténué, survol --lab-hover. */
 .alchemix-lab .lab-recipesBtn,
 .alchemix-lab .lab-resetBtn {
   flex-shrink: 0;
@@ -120,13 +120,13 @@
 
 .alchemix-lab .lab-recipesBtn:hover,
 .alchemix-lab .lab-resetBtn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--lab-hover);
+  color: var(--lab-hover);
 }
 
 .alchemix-lab .lab-recipesBtn:focus-visible,
 .alchemix-lab .lab-resetBtn:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--lab-hover);
   outline-offset: 2px;
 }
 
@@ -236,8 +236,8 @@
 }
 
 .alchemix-lab .lab-characterZone[data-over] {
-  border-color: var(--accent);
-  background: var(--accent-bg);
+  border-color: var(--lab-hover);
+  background: var(--lab-hover-soft);
 }
 
 .alchemix-lab .lab-characterAvatar {
@@ -283,7 +283,7 @@
   margin: 0.35rem 0 0;
   font-size: 0.68rem;
   line-height: 1.25;
-  color: var(--accent);
+  color: var(--lab-hover);
   font-weight: 600;
 }
 
@@ -312,7 +312,7 @@
 
 /* Halo intérieur : un ring extérieur (0 0 0 2px) faisait paraître la carte plus haute/large. */
 .alchemix-lab .lab-dropHit[data-over-target] .lab-chipInventory {
-  box-shadow: inset 0 0 0 2px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--lab-hover);
 }
 
 .alchemix-lab .lab-dragSurface {
@@ -410,10 +410,10 @@
   z-index: 0;
   pointer-events: none;
   background: linear-gradient(
-    128deg,
-    color-mix(in srgb, var(--accent) 22%, transparent) 0%,
-    color-mix(in srgb, var(--accent) 8%, transparent) 40%,
-    transparent 70%
+    to top,
+    color-mix(in srgb, var(--lab-hover) 22%, transparent) 0%,
+    color-mix(in srgb, var(--lab-hover) 8%, transparent) 40%,
+    transparent 72%
   );
   opacity: 0;
   transition: opacity 0.36s ease;
@@ -522,18 +522,6 @@
   text-align: left;
 }
 
-.lab-chipInventory[data-vial-type='creature'] {
-  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
-}
-
-.lab-chipInventory[data-vial-type='spell'] {
-  border-color: color-mix(in srgb, #4cc9f0 45%, var(--border));
-}
-
-.lab-chipInventory[data-vial-type='element'] {
-  border-color: color-mix(in srgb, #94d2bd 40%, var(--border));
-}
-
 /*
  * Laboratoire (plateau) + fantôme drag depuis l’inventaire : cartes type Infinite Craft
  * (noir, texte blanc sans-serif gras, ombre légère, écart icône / nom).
@@ -564,6 +552,22 @@
   font-weight: 700;
   overflow: visible;
   text-overflow: clip;
+}
+
+/* Sur fond noir, --lab-hover est invisible : dégradé clair (même famille verte que le thème). */
+.alchemix-lab .lab-canvas .lab-chipInventory::before,
+.lab-invDragGhost .lab-chipInventory::before {
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--lab-canvas-chip-hover-a) 44%, transparent) 0%,
+    color-mix(in srgb, var(--lab-canvas-chip-hover-b) 28%, transparent) 40%,
+    transparent 76%
+  );
+}
+
+.alchemix-lab .lab-canvas .lab-chipInventory:hover::before,
+.alchemix-lab .lab-canvas .lab-invItemWrap:hover .lab-chipInventory::before {
+  opacity: 0.94;
 }
 
 .alchemix-lab .lab-dropHit:has(.lab-chipInventory) {
