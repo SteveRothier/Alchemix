@@ -3,9 +3,16 @@ import type { Draggable as DraggableInstance } from 'gsap/Draggable'
 import { useEffect, useRef } from 'react'
 import type { Vial } from '../../types'
 import { Draggable, registerGsapDraggable } from '../../lib/registerGsapDraggable'
+import {
+  chipCenterOverDropTarget,
+  elementsHitTestAreaOverlap,
+} from './labGeometry'
 import { useLabDrag } from './LabDragContext'
 import type { LabPlacedVial } from './labTypes'
 import { VialChip } from '../vial/VialChip'
+
+/** Désactive le dégradé ::before au survol pendant le drag plateau (carte déplacée + cibles). */
+const HTML_ATTR_CANVAS_CHIP_DRAG = 'data-lab-canvas-chip-drag'
 
 type CanvasVialItemProps = {
   placed: LabPlacedVial
@@ -34,7 +41,7 @@ export function CanvasVialItem({
     const outer = outerRef.current
     if (!dragLayer || !outer || !labDrag) return
 
-    const hitTestOverlap = '38%'
+    const hitThresholdPct = 38
     let lastOverDropHit: HTMLElement | null = null
 
     const clearFusionHover = () => {
@@ -48,7 +55,9 @@ export function CanvasVialItem({
       const chip = dragLayer.querySelector('.lab-chipInventory')
       if (!(chip instanceof HTMLElement)) return
 
-      const canvasRoot = dragLayer.closest('.lab-canvas')
+      const canvasRoot =
+        labDrag.labCanvasRef.current ??
+        (dragLayer.closest('.lab-canvas') as HTMLElement | null)
       if (!(canvasRoot instanceof HTMLElement)) return
 
       let nextHit: HTMLElement | null = null
@@ -56,7 +65,10 @@ export function CanvasVialItem({
         if (!(node instanceof HTMLElement)) continue
         if (node.getAttribute('data-lab-drop-target') === placed.instanceId)
           continue
-        if (Draggable.hitTest(chip, node, hitTestOverlap)) {
+        if (
+          elementsHitTestAreaOverlap(chip, node, hitThresholdPct) ||
+          chipCenterOverDropTarget(chip, node)
+        ) {
           nextHit = node
           break
         }
@@ -80,6 +92,7 @@ export function CanvasVialItem({
       autoRound: false,
       edgeResistance: 0,
       onPress(this: DraggableInstance) {
+        document.documentElement.setAttribute(HTML_ATTR_CANVAS_CHIP_DRAG, '')
         const chip = dragLayer.querySelector('.lab-chipInventory')
         if (chip instanceof HTMLElement) {
           const r = chip.getBoundingClientRect()
@@ -97,6 +110,7 @@ export function CanvasVialItem({
       },
       onRelease(this: DraggableInstance) {
         clearFusionHover()
+        document.documentElement.removeAttribute(HTML_ATTR_CANVAS_CHIP_DRAG)
         if (outer) gsap.set(outer, { zIndex: zIndexRef.current })
         const moved = Math.hypot(this.x, this.y) >= 2
         const skipDragLayerReset =
@@ -109,6 +123,7 @@ export function CanvasVialItem({
     })[0]
 
     return () => {
+      document.documentElement.removeAttribute(HTML_ATTR_CANVAS_CHIP_DRAG)
       d.kill()
     }
   }, [

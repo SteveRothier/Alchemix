@@ -80,3 +80,43 @@ export function clientPointInCanvasPlacement(
     clientY <= p.top + p.height
   )
 }
+
+/**
+ * Équivalent pratique de Draggable.hitTest(a, b, "38%") pour tout DOM
+ * (clone inventaire sous body, pointer-events: none, etc.) : au moins
+ * `thresholdPct` % de la surface de l’un ou l’autre rectangle doit chevaucher.
+ */
+export function elementsHitTestAreaOverlap(
+  a: Element,
+  b: Element,
+  thresholdPct: number = 38,
+): boolean {
+  if (!(a instanceof HTMLElement) || !(b instanceof HTMLElement)) return false
+  const ra = a.getBoundingClientRect()
+  const rb = b.getBoundingClientRect()
+  const x1 = Math.max(ra.left, rb.left)
+  const y1 = Math.max(ra.top, rb.top)
+  const x2 = Math.min(ra.right, rb.right)
+  const y2 = Math.min(ra.bottom, rb.bottom)
+  const iw = Math.max(0, x2 - x1)
+  const ih = Math.max(0, y2 - y1)
+  const inter = iw * ih
+  const areaA = ra.width * ra.height
+  const areaB = rb.width * rb.height
+  if (areaA <= 0 || areaB <= 0) return false
+  const t = thresholdPct / 100
+  return inter / areaA >= t || inter / areaB >= t
+}
+
+/** Feedback hover fusion : centre de la carte draguée dans la boîte de la cible. */
+export function chipCenterOverDropTarget(
+  dragChip: HTMLElement,
+  dropTarget: HTMLElement,
+): boolean {
+  const cr = dragChip.getBoundingClientRect()
+  const tr = dropTarget.getBoundingClientRect()
+  if (cr.width < 1 || cr.height < 1) return false
+  const cx = cr.left + cr.width / 2
+  const cy = cr.top + cr.height / 2
+  return cx >= tr.left && cx <= tr.right && cy >= tr.top && cy <= tr.bottom
+}

@@ -579,6 +579,50 @@
   opacity: 0.94;
 }
 
+/*
+ * Drag inventaire : classe sur <body> (AlchemixShell + InventoryVialItem).
+ * Le fantôme est sous body : body.lab-invGhostDrag le joint au labo dans la cascade.
+ * Curseur grabbing partout (le fantôme a pointer-events: none → le sous-jacent fixait l’arrow).
+ */
+body.lab-invGhostDrag,
+body.lab-invGhostDrag * {
+  cursor: grabbing !important;
+}
+
+body.lab-invGhostDrag .alchemix-lab .lab-canvas .lab-chipInventory::before,
+body.lab-invGhostDrag .lab-invDragGhost .lab-chipInventory::before {
+  opacity: 0 !important;
+  background: none !important;
+  transition: none !important;
+}
+
+body.lab-invGhostDrag .alchemix-lab .lab-canvas .lab-chipInventory:hover::before,
+body.lab-invGhostDrag .alchemix-lab .lab-canvas .lab-invItemWrap:hover .lab-chipInventory::before,
+body.lab-invGhostDrag .alchemix-lab .lab-inventoryColumn .lab-chipInventory:hover::before,
+body.lab-invGhostDrag
+  .alchemix-lab
+  .lab-inventoryColumn
+  .lab-invItemWrap:hover
+  .lab-chipInventory::before {
+  opacity: 0 !important;
+  transition: none !important;
+}
+
+/*
+ * Drag fiole sur le plateau (GSAP) — attribut <html> posé par CanvasVialItem.
+ */
+html[data-lab-canvas-chip-drag] .alchemix-lab .lab-canvas .lab-chipInventory:hover::before,
+html[data-lab-canvas-chip-drag] .alchemix-lab .lab-canvas .lab-invItemWrap:hover .lab-chipInventory::before,
+html[data-lab-canvas-chip-drag] .alchemix-lab .lab-inventoryColumn .lab-chipInventory:hover::before,
+html[data-lab-canvas-chip-drag]
+  .alchemix-lab
+  .lab-inventoryColumn
+  .lab-invItemWrap:hover
+  .lab-chipInventory::before {
+  opacity: 0 !important;
+  transition: none !important;
+}
+
 .alchemix-lab .lab-dropHit:has(.lab-chipInventory) {
   min-width: min-content;
 }

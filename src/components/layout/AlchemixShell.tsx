@@ -120,6 +120,7 @@ export function AlchemixShell() {
 
   const [placed, setPlaced] = useState<LabPlacedVial[]>([])
   const [sipHint, setSipHint] = useState<string | null>(null)
+  const [inventoryGhostActive, setInventoryGhostActive] = useState(false)
   const sipTimerRef = useRef(0)
 
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -140,6 +141,14 @@ export function AlchemixShell() {
     },
     [],
   )
+
+  useEffect(() => {
+    if (!inventoryGhostActive) return
+    document.body.classList.add('lab-invGhostDrag')
+    return () => {
+      document.body.classList.remove('lab-invGhostDrag')
+    }
+  }, [inventoryGhostActive])
 
   const findHitPlacedVial = useCallback(
     (chip: Element, excludeInstanceId?: string): LabPlacedVial | null => {
@@ -355,8 +364,10 @@ export function AlchemixShell() {
   const labDragValue = useMemo(
     () => ({
       grabOffsetRef,
+      labCanvasRef: canvasRef,
       completeInventoryDrag,
       completeLabDrag,
+      setInventoryGhostDragging: setInventoryGhostActive,
     }),
     [completeInventoryDrag, completeLabDrag],
   )

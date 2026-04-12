@@ -1,4 +1,9 @@
-import { createContext, useContext, type MutableRefObject } from 'react'
+import {
+  createContext,
+  useContext,
+  type MutableRefObject,
+  type RefObject,
+} from 'react'
 import type { Draggable as DraggableInstance } from 'gsap/Draggable'
 
 export type GrabOffset = { dx: number; dy: number }
@@ -12,6 +17,8 @@ export type InventoryDragEndInfo = {
 
 export type LabDragContextValue = {
   grabOffsetRef: MutableRefObject<GrabOffset | null>
+  /** Canvas laboratoire (fioles posées) — pour hit-test sans querySelector fragile. */
+  labCanvasRef: RefObject<HTMLDivElement | null>
   /** Retourne une promesse si une fusion animée retarde le retrait du clone inventaire. */
   completeInventoryDrag: (
     vialId: string,
@@ -23,6 +30,8 @@ export type LabDragContextValue = {
     vialId: string,
     drag: DraggableInstance,
   ) => boolean
+  /** Fantôme inventaire actif : styles globaux (curseur, pas de dégradé hover). */
+  setInventoryGhostDragging: (active: boolean) => void
 }
 
 export const LabDragContext = createContext<LabDragContextValue | null>(null)
