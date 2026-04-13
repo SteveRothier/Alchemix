@@ -606,7 +606,10 @@ export function AlchemixShell() {
   }
 
   return (
-    <div className="alchemix-lab flex h-full min-h-0 min-w-0 flex-1 flex-col">
+    <div
+      className="alchemix-lab flex h-full min-h-0 min-w-0 flex-1 flex-col"
+      onContextMenu={(e) => e.preventDefault()}
+    >
       <LabDragContext.Provider value={labDragValue}>
         <LabSelectionContext.Provider value={labSelectionValue}>
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(220px,19.5rem)] gap-0 text-left max-[560px]:grid-cols-[minmax(0,1fr)_minmax(140px,36vw)]">
