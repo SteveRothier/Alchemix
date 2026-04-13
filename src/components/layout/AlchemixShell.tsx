@@ -21,6 +21,7 @@ import {
 } from '../../lib/registerGsapDraggable'
 import type { Vial } from '../../types'
 import { useAlchemixStore } from '../../store/useAlchemixStore'
+import { LabControlsFloating } from '../lab/LabControlsFloating'
 import '../lab/alchemixLab.css'
 
 registerGsapDraggable()
@@ -699,6 +700,12 @@ export function AlchemixShell() {
     [pushLabUndoHistory],
   )
 
+  const clearLabCanvas = useCallback(() => {
+    pushLabUndoHistory()
+    setPlaced([])
+    setSelectedIdsArr([])
+  }, [pushLabUndoHistory])
+
   const handleReset = () => {
     if (
       !window.confirm(
@@ -742,6 +749,10 @@ export function AlchemixShell() {
                 <CharacterSipZone ref={characterSipRef} hint={sipHint} />
               </div>
             </div>
+            <LabControlsFloating
+              onClearCanvas={clearLabCanvas}
+              canClearCanvas={placed.length > 0}
+            />
           </div>
           <aside
             className="lab-inventoryColumn relative z-0 flex h-full min-h-0 min-w-0 flex-col overflow-hidden"

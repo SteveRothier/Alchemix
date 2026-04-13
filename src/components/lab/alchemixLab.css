@@ -720,3 +720,182 @@ html[data-lab-canvas-chip-drag]
 .lab-rarity[data-rarity='rare'] {
   color: #4cc9f0;
 }
+
+/* ——— Aide contrôles (bouton + modale, portail sur body) ——— */
+
+.alchemix-lab .lab-controls-fab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0.25rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--text-h) 55%, var(--text-muted));
+  box-shadow: none;
+  cursor: pointer;
+  line-height: 0;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.alchemix-lab .lab-controls-fab:hover {
+  color: var(--text-h);
+}
+
+.alchemix-lab .lab-controls-fab:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lab-hover) 55%, transparent);
+  outline-offset: 3px;
+}
+
+.alchemix-lab .lab-controls-fab:active {
+  opacity: 0.75;
+}
+
+/* Voile (opacité animée par GSAP, séparé de la boîte pour ne pas la faire disparaître deux fois). */
+.lab-controls-dim {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: color-mix(in srgb, var(--text-h) 28%, transparent);
+  /* Flou final plus léger ; montée en puissance animée par GSAP sur cette variable. */
+  --lab-controls-dim-blur: 0px;
+  backdrop-filter: blur(var(--lab-controls-dim-blur));
+  -webkit-backdrop-filter: blur(var(--lab-controls-dim-blur));
+}
+
+.lab-controls-dialog-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 401;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.lab-controls-dialog-layer .lab-controls-dialog {
+  pointer-events: auto;
+}
+
+.lab-controls-dialog {
+  user-select: text;
+  -webkit-user-select: text;
+  width: min(22.5rem, 100%);
+  max-height: min(72dvh, 26rem);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, var(--lab-hover) 15%);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--panel-bg) 96%, #fff) 0%,
+    var(--panel-bg) 48%,
+    color-mix(in srgb, var(--lab-inventory-bg) 22%, var(--panel-bg)) 100%
+  );
+  box-shadow:
+    0 2px 4px color-mix(in srgb, var(--text-h) 6%, transparent),
+    0 18px 48px color-mix(in srgb, var(--text-h) 14%, transparent);
+}
+
+.lab-controls-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.32rem 0.55rem 0.32rem 0.8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, var(--lab-hover) 18%);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--lab-hover) 12%, transparent) 0,
+    transparent 0.35rem
+  );
+}
+
+.lab-controls-title {
+  margin: 0;
+  font-family: var(--font-lab-heading);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  color: var(--text-h);
+}
+
+.lab-controls-lede {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.lab-controls-close {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  margin: 0;
+  border: none;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease;
+}
+
+.lab-controls-close:hover {
+  color: var(--text-h);
+  background: color-mix(in srgb, var(--lab-hover) 10%, transparent);
+}
+
+.lab-controls-close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lab-hover) 50%, transparent);
+  outline-offset: 2px;
+}
+
+.lab-controls-list {
+  margin: 0;
+  padding: 0.28rem 0.7rem 0.75rem 0.9rem;
+  list-style: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-h) 18%, transparent) transparent;
+}
+
+.lab-controls-row {
+  display: grid;
+  gap: 0.25rem 0.85rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.lab-controls-row:last-child {
+  border-bottom: none;
+}
+
+@media (min-width: 480px) {
+  .lab-controls-row {
+    grid-template-columns: minmax(0, 9.25rem) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.lab-controls-keys {
+  font-family: var(--font-lab-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--lab-hover);
+  letter-spacing: 0.02em;
+}
+
+.lab-controls-detail {
+  color: var(--text);
+}
