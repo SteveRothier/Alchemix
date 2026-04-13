@@ -19,10 +19,30 @@ import {
   gsap,
   registerGsapDraggable,
 } from '../../lib/registerGsapDraggable'
+import type { Vial } from '../../types'
 import { useAlchemixStore } from '../../store/useAlchemixStore'
 import '../lab/alchemixLab.css'
 
 registerGsapDraggable()
+
+const LAB_UNDO_MAX = 80
+
+type LabHistorySnapshot = {
+  placed: LabPlacedVial[]
+  vials: Record<string, Vial>
+  fusionCount: number
+  spellUseCount: Record<string, number>
+}
+
+function takeLabSnapshot(placed: LabPlacedVial[]): LabHistorySnapshot {
+  const s = useAlchemixStore.getState()
+  return {
+    placed: placed.map((p) => ({ ...p })),
+    fusionCount: s.fusionCount,
+    spellUseCount: { ...s.spellUseCount },
+    vials: structuredClone(s.vials),
+  }
+}
 
 function chipFromDragTarget(target: HTMLElement): HTMLElement | null {
   return (target.querySelector('.lab-chipInventory') as HTMLElement | null) ?? target
@@ -137,6 +157,59 @@ export function AlchemixShell() {
   const placedRef = useRef(placed)
   placedRef.current = placed
 
+  const labUndoPastRef = useRef<LabHistorySnapshot[]>([])
+  const labUndoFutureRef = useRef<LabHistorySnapshot[]>([])
+  const labApplyingHistoryRef = useRef(false)
+
+  const snapshotLabNow = useCallback(
+    () => takeLabSnapshot(placedRef.current),
+    [],
+  )
+
+  const pushLabUndoHistory = useCallback(() => {
+    if (labApplyingHistoryRef.current) return
+    labUndoPastRef.current.push(snapshotLabNow())
+    if (labUndoPastRef.current.length > LAB_UNDO_MAX) {
+      labUndoPastRef.current.shift()
+    }
+    labUndoFutureRef.current = []
+  }, [snapshotLabNow])
+
+  const applyLabHistorySnapshot = useCallback((snap: LabHistorySnapshot) => {
+    useAlchemixStore.setState({
+      vials: snap.vials,
+      fusionCount: snap.fusionCount,
+      spellUseCount: snap.spellUseCount,
+    })
+    setPlaced(snap.placed)
+    setSelectedIdsArr([])
+  }, [])
+
+  const undoLab = useCallback(() => {
+    if (labUndoPastRef.current.length === 0) return
+    const cur = snapshotLabNow()
+    const prev = labUndoPastRef.current.pop()!
+    labUndoFutureRef.current.push(cur)
+    labApplyingHistoryRef.current = true
+    applyLabHistorySnapshot(prev)
+    labApplyingHistoryRef.current = false
+  }, [applyLabHistorySnapshot, snapshotLabNow])
+
+  const redoLab = useCallback(() => {
+    if (labUndoFutureRef.current.length === 0) return
+    const cur = snapshotLabNow()
+    const next = labUndoFutureRef.current.pop()!
+    labUndoPastRef.current.push(cur)
+    labApplyingHistoryRef.current = true
+    applyLabHistorySnapshot(next)
+    labApplyingHistoryRef.current = false
+  }, [applyLabHistorySnapshot, snapshotLabNow])
+
+  const clearLabUndoHistory = useCallback(() => {
+    labUndoPastRef.current = []
+    labUndoFutureRef.current = []
+  }, [])
+
   useEffect(() => {
     const valid = new Set(placed.map((p) => p.instanceId))
     setSelectedIdsArr((prev) => prev.filter((id) => valid.has(id)))
@@ -181,6 +254,7 @@ export function AlchemixShell() {
   const removeSelectedPlaced = useCallback(() => {
     const ids = [...selectedIdsRef.current]
     if (ids.length === 0) return
+    pushLabUndoHistory()
     const root = canvasRef.current
     if (!root) {
       setPlaced((prev) => prev.filter((p) => !ids.includes(p.instanceId)))
@@ -204,21 +278,36 @@ export function AlchemixShell() {
       }
     }
     for (const ch of chips) shrinkRemoveLabVial(ch, onOneDone)
-  }, [])
+  }, [pushLabUndoHistory])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Delete' && e.key !== 'Backspace') return
       const t = e.target as HTMLElement | null
       if (t?.closest('input, textarea, select, [contenteditable="true"]'))
         return
+
+      const mod = e.ctrlKey || e.metaKey
+      const key = e.key.toLowerCase()
+      if (mod && key === 'z' && !e.altKey) {
+        e.preventDefault()
+        if (e.shiftKey) redoLab()
+        else undoLab()
+        return
+      }
+      if (mod && key === 'y' && !e.altKey) {
+        e.preventDefault()
+        redoLab()
+        return
+      }
+
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return
       if (selectedIdsRef.current.size === 0) return
       e.preventDefault()
       removeSelectedPlaced()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [removeSelectedPlaced])
+  }, [redoLab, removeSelectedPlaced, undoLab])
 
   const labSelectionValue = useMemo(
     () => ({
@@ -296,6 +385,7 @@ export function AlchemixShell() {
         showSipHint('Seuls les sorts peuvent être bus.')
         return true
       }
+      pushLabUndoHistory()
       const result: DrinkSpellResult = store.feedSpellToCharacter(vialId)
       if (instanceId) {
         setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
@@ -316,7 +406,7 @@ export function AlchemixShell() {
       }
       return true
     },
-    [showSipHint],
+    [pushLabUndoHistory, showSipHint],
   )
 
   const completeInventoryDrag = useCallback(
@@ -337,6 +427,7 @@ export function AlchemixShell() {
           showSipHint('Ce mélange reste inerte.')
           return
         }
+        pushLabUndoHistory()
         const { vial: result, wasNew } = outcome
         if (wasNew) addVial(result)
         recordFusion()
@@ -385,6 +476,7 @@ export function AlchemixShell() {
         const cy = cr.top + cr.height / 2
         if (clientPointInCanvasPlacement(canvasEl, cx, cy)) {
           const pos = clientPointToCanvasPercent(canvasEl, cx, cy)
+          pushLabUndoHistory()
           setPlaced((prev) => [
             ...prev,
             {
@@ -396,7 +488,7 @@ export function AlchemixShell() {
         }
       }
     },
-    [findHitPlacedVial, showSipHint, tryCharacterSip],
+    [findHitPlacedVial, pushLabUndoHistory, showSipHint, tryCharacterSip],
   )
 
   const completeLabDrag = useCallback(
@@ -432,6 +524,7 @@ export function AlchemixShell() {
           showSipHint('Ce mélange reste inerte.')
           return false
         }
+        pushLabUndoHistory()
         const { vial: result, wasNew } = outcome
         if (wasNew) addVial(result)
         recordFusion()
@@ -470,6 +563,7 @@ export function AlchemixShell() {
         return false
 
       if (chipOverlapsInventoryColumn(chip)) {
+        pushLabUndoHistory()
         const canvasRoot = canvasEl
         if (chip instanceof HTMLElement && canvasRoot.contains(chip)) {
           if (isGroupDrag) {
@@ -517,17 +611,20 @@ export function AlchemixShell() {
         if (!leaderOld) return false
         const dx = pos.xPct - leaderOld.xPct
         const dy = pos.yPct - leaderOld.yPct
-        setPlaced((prev) =>
-          prev.map((p) => {
-            if (!groupIds.includes(p.instanceId)) return p
-            const np = clampLabPlacementPercent(p.xPct + dx, p.yPct + dy)
-            return { ...p, ...np }
-          }),
-        )
+        if (dx !== 0 || dy !== 0) {
+          pushLabUndoHistory()
+          setPlaced((prev) =>
+            prev.map((p) => {
+              if (!groupIds.includes(p.instanceId)) return p
+              const np = clampLabPlacementPercent(p.xPct + dx, p.yPct + dy)
+              return { ...p, ...np }
+            }),
+          )
+        }
       }
       return false
     },
-    [findHitPlacedVial, showSipHint, tryCharacterSip],
+    [findHitPlacedVial, pushLabUndoHistory, showSipHint, tryCharacterSip],
   )
 
   const placeInventoryVialNearLabCenter = useCallback((vialId: string) => {
@@ -540,11 +637,12 @@ export function AlchemixShell() {
     const rawX = 50 + Math.cos(angle) * r
     const rawY = 50 + Math.sin(angle) * r
     const { xPct, yPct } = clampLabPlacementPercent(rawX, rawY)
+    pushLabUndoHistory()
     setPlaced((prev) => [
       ...prev,
       { instanceId: crypto.randomUUID(), vialId, xPct, yPct },
     ])
-  }, [])
+  }, [pushLabUndoHistory])
 
   const labDragValue = useMemo(
     () => ({
@@ -558,40 +656,48 @@ export function AlchemixShell() {
     [completeInventoryDrag, completeLabDrag, placeInventoryVialNearLabCenter],
   )
 
-  const removePlaced = useCallback((instanceId: string) => {
-    const root = canvasRef.current
-    const host = root?.querySelector(
-      `[data-lab-canvas-vial="${CSS.escape(instanceId)}"]`,
-    ) as HTMLElement | null
-    const chipEl = host?.querySelector(
-      '.lab-chipInventory',
-    ) as HTMLElement | null
-    shrinkRemoveLabVial(chipEl, () => {
-      setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
-    })
-  }, [])
+  const removePlaced = useCallback(
+    (instanceId: string) => {
+      pushLabUndoHistory()
+      const root = canvasRef.current
+      const host = root?.querySelector(
+        `[data-lab-canvas-vial="${CSS.escape(instanceId)}"]`,
+      ) as HTMLElement | null
+      const chipEl = host?.querySelector(
+        '.lab-chipInventory',
+      ) as HTMLElement | null
+      shrinkRemoveLabVial(chipEl, () => {
+        setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
+      })
+    },
+    [pushLabUndoHistory],
+  )
 
-  const duplicatePlaced = useCallback((source: LabPlacedVial) => {
-    /** Décalage centre → centre pour l’empilement visuel (bas-droite), en px CSS. */
-    const stepPx = 18
-    const canvasEl = canvasRef.current
-    const rect = canvasEl?.getBoundingClientRect()
-    let dxPct = 3.2
-    let dyPct = 2.8
-    if (rect && rect.width > 0 && rect.height > 0) {
-      dxPct = (stepPx / rect.width) * 100
-      dyPct = (stepPx / rect.height) * 100
-    }
-    setPlaced((prev) => [
-      ...prev,
-      {
-        instanceId: crypto.randomUUID(),
-        vialId: source.vialId,
-        xPct: Math.min(94, Math.max(6, source.xPct + dxPct)),
-        yPct: Math.min(90, Math.max(10, source.yPct + dyPct)),
-      },
-    ])
-  }, [])
+  const duplicatePlaced = useCallback(
+    (source: LabPlacedVial) => {
+      /** Décalage centre → centre pour l’empilement visuel (bas-droite), en px CSS. */
+      const stepPx = 18
+      const canvasEl = canvasRef.current
+      const rect = canvasEl?.getBoundingClientRect()
+      let dxPct = 3.2
+      let dyPct = 2.8
+      if (rect && rect.width > 0 && rect.height > 0) {
+        dxPct = (stepPx / rect.width) * 100
+        dyPct = (stepPx / rect.height) * 100
+      }
+      pushLabUndoHistory()
+      setPlaced((prev) => [
+        ...prev,
+        {
+          instanceId: crypto.randomUUID(),
+          vialId: source.vialId,
+          xPct: Math.min(94, Math.max(6, source.xPct + dxPct)),
+          yPct: Math.min(90, Math.max(10, source.yPct + dyPct)),
+        },
+      ])
+    },
+    [pushLabUndoHistory],
+  )
 
   const handleReset = () => {
     if (
@@ -601,6 +707,7 @@ export function AlchemixShell() {
     ) {
       return
     }
+    clearLabUndoHistory()
     resetToStarters()
     setPlaced([])
   }
