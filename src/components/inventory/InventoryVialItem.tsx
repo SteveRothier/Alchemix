@@ -233,6 +233,12 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
         } else {
           removeGhost()
         }
+      } else if (
+        e.button === 0 &&
+        Math.hypot(e.clientX - startX, e.clientY - startY) < MIN_MOVE_PX
+      ) {
+        /* Clic gauche sans drag : une instance sur le plateau, aléatoire autour du centre. */
+        ctx.placeInventoryVialNearLabCenter(vial.id)
       }
       dragActive = false
     }

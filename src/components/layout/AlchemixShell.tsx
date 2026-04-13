@@ -530,6 +530,22 @@ export function AlchemixShell() {
     [findHitPlacedVial, showSipHint, tryCharacterSip],
   )
 
+  const placeInventoryVialNearLabCenter = useCallback((vialId: string) => {
+    const v = useAlchemixStore.getState().vials[vialId]
+    if (!v) return
+    /** Rayon max en % du centre (50,50) — répartition uniforme dans le disque, puis clamp labo. */
+    const maxRadiusPct = 30
+    const angle = Math.random() * Math.PI * 2
+    const r = Math.sqrt(Math.random()) * maxRadiusPct
+    const rawX = 50 + Math.cos(angle) * r
+    const rawY = 50 + Math.sin(angle) * r
+    const { xPct, yPct } = clampLabPlacementPercent(rawX, rawY)
+    setPlaced((prev) => [
+      ...prev,
+      { instanceId: crypto.randomUUID(), vialId, xPct, yPct },
+    ])
+  }, [])
+
   const labDragValue = useMemo(
     () => ({
       grabOffsetRef,
@@ -537,8 +553,9 @@ export function AlchemixShell() {
       completeInventoryDrag,
       completeLabDrag,
       setInventoryGhostDragging: setInventoryGhostActive,
+      placeInventoryVialNearLabCenter,
     }),
-    [completeInventoryDrag, completeLabDrag],
+    [completeInventoryDrag, completeLabDrag, placeInventoryVialNearLabCenter],
   )
 
   const removePlaced = useCallback((instanceId: string) => {

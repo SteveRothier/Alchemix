@@ -32,6 +32,8 @@ export type LabDragContextValue = {
   ) => boolean
   /** Fantôme inventaire actif : styles globaux (curseur, pas de dégradé hover). */
   setInventoryGhostDragging: (active: boolean) => void
+  /** Clic sur une fiole inventaire (sans drag) : ajoute une instance près du centre du labo. */
+  placeInventoryVialNearLabCenter: (vialId: string) => void
 }
 
 export const LabDragContext = createContext<LabDragContextValue | null>(null)
