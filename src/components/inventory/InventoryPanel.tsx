@@ -28,7 +28,7 @@ function InventorySection({
         <p className="lab-invEmpty pr-[0.65rem]">—</p>
       ) : (
         <div
-          className="flex flex-wrap content-start items-center justify-start gap-[6px] pr-[0.65rem]"
+          className="flex flex-wrap content-start items-center justify-start gap-[3px] pr-[0.65rem]"
           role="list"
         >
           {vials.map((vial) => (
