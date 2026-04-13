@@ -34,6 +34,7 @@ export function resolveDrinkSpell(
 
   const creature: Vial = {
     ...template,
+    rarity: template.rarity ?? 'common',
     discoveredAt: new Date().toISOString(),
   }
   return { ok: true, creature }

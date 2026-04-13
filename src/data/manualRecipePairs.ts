@@ -37,7 +37,6 @@ export const MANUAL_RECIPE_PAIRS: { a: string; b: string; resultId: string }[] =
   { a: "craft-mist", b: "el-shadow", resultId: "craft-venom" },
   { a: "craft-tempest", b: "craft-lava", resultId: "craft-lightning" },
   { a: "craft-steam", b: "el-earth", resultId: "craft-geyser" },
-  { a: "sp-infernal-cyclone", b: "craft-venom", resultId: "leg-hellstorm" },
   { a: "", b: "", resultId: "creature-minotaur" },
   { a: "", b: "", resultId: "creature-kobold" },
   { a: "", b: "", resultId: "creature-goblin" },
@@ -64,4 +63,6 @@ export const MANUAL_RECIPE_PAIRS: { a: string; b: string; resultId: string }[] =
   { a: "", b: "", resultId: "creature-fenrir" },
   { a: "", b: "", resultId: "creature-kappa" },
   { a: "", b: "", resultId: "creature-brownies" },
+  { a: "", b: "", resultId: "creature-yeti" },
+  { a: "craft-abyss", b: "craft-soil", resultId: "feur" },
 ]

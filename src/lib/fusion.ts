@@ -48,6 +48,7 @@ export function resolveFusionProduct(
     }
     const vial: Vial = {
       ...template,
+      rarity: template.rarity ?? 'common',
       discoveredAt: new Date().toISOString(),
     }
     return { ok: true, vial, wasNew: true }

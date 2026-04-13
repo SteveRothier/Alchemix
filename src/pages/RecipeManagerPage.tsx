@@ -288,7 +288,7 @@ function loadPairs(): EditablePair[] {
     const raw = localStorage.getItem(STORAGE_KEY_PAIRS)
     if (!raw) return seedPairs()
     const parsed = JSON.parse(raw) as EditablePair[]
-    if (!Array.isArray(parsed) || parsed.length === 0) return seedPairs()
+    if (!Array.isArray(parsed)) return seedPairs()
     return parsed.map((row, i) => ({
       clientId: typeof row.clientId === 'number' ? row.clientId : i + 1,
       a: String(row.a),
@@ -623,6 +623,12 @@ export function RecipeManagerPage() {
   const [hiddenCatalogSoloIds, setHiddenCatalogSoloIds] = useState<string[]>(
     () => loadHiddenCatalogSoloIds(),
   )
+  const pairsRef = useRef<EditablePair[]>(pairs)
+  pairsRef.current = pairs
+  const soloRowsRef = useRef<EditableSolo[]>(soloRows)
+  soloRowsRef.current = soloRows
+  const hiddenCatalogSoloIdsRef = useRef<string[]>(hiddenCatalogSoloIds)
+  hiddenCatalogSoloIdsRef.current = hiddenCatalogSoloIds
 
   const [createMode, setCreateMode] = useState<CreateMode>('element')
   const [elA, setElA] = useState('')
@@ -651,6 +657,16 @@ export function RecipeManagerPage() {
   useEffect(() => {
     saveHiddenCatalogSoloIds(hiddenCatalogSoloIds)
   }, [hiddenCatalogSoloIds])
+
+  useEffect(() => {
+    const flushNow = () => {
+      savePairs(pairsRef.current)
+      saveSolo(soloRowsRef.current)
+      saveHiddenCatalogSoloIds(hiddenCatalogSoloIdsRef.current)
+    }
+    window.addEventListener('beforeunload', flushNow)
+    return () => window.removeEventListener('beforeunload', flushNow)
+  }, [])
 
   const displayName = useCallback(
     (id: string) =>
