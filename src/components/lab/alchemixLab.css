@@ -292,12 +292,15 @@
   transform-origin: 50% 50%;
 }
 
-/* left/top (Draggable) plutôt que transform : évite l’arrondi « grille » sur calques GPU. */
+/* Draggable GSAP type x,y : translation GPU sous le pivot translate(-50%,-50%). */
 .alchemix-lab .lab-canvasVialDragLayer {
   position: relative;
   left: 0;
   top: 0;
   transform-origin: 50% 50%;
+  touch-action: none;
+  /* Calque dédié pour les translations GSAP (évite arrondis de composition intermittents). */
+  will-change: transform;
 }
 
 .alchemix-lab .lab-dropHit {
@@ -358,12 +361,13 @@
   cursor: grabbing;
 }
 
-/* Clone sous body pendant le drag inventaire (l’item liste reste visible). */
+/* Clone sous body : translate3d (JS) + calque GPU pour un déplacement plus fluide. */
 .lab-invDragGhost {
   pointer-events: none;
   box-sizing: border-box;
   width: max-content;
   max-width: none;
+  will-change: transform;
 }
 
 /* --- VialChip --- */

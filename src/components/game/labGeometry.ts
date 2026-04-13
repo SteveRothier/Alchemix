@@ -82,18 +82,13 @@ export function clientPointInCanvasPlacement(
 }
 
 /**
- * Équivalent pratique de Draggable.hitTest(a, b, "38%") pour tout DOM
- * (clone inventaire sous body, pointer-events: none, etc.) : au moins
- * `thresholdPct` % de la surface de l’un ou l’autre rectangle doit chevaucher.
+ * Au moins `thresholdPct` % de la surface de l’un ou l’autre rectangle doit chevaucher.
  */
-export function elementsHitTestAreaOverlap(
-  a: Element,
-  b: Element,
+export function rectsHitTestAreaOverlap(
+  ra: DOMRectReadOnly,
+  rb: DOMRectReadOnly,
   thresholdPct: number = 38,
 ): boolean {
-  if (!(a instanceof HTMLElement) || !(b instanceof HTMLElement)) return false
-  const ra = a.getBoundingClientRect()
-  const rb = b.getBoundingClientRect()
   const x1 = Math.max(ra.left, rb.left)
   const y1 = Math.max(ra.top, rb.top)
   const x2 = Math.min(ra.right, rb.right)
@@ -109,17 +104,83 @@ export function elementsHitTestAreaOverlap(
 }
 
 /**
+ * Équivalent pratique de Draggable.hitTest(a, b, "38%") pour tout DOM
+ * (clone inventaire sous body, pointer-events: none, etc.).
+ */
+export function elementsHitTestAreaOverlap(
+  a: Element,
+  b: Element,
+  thresholdPct: number = 38,
+): boolean {
+  if (!(a instanceof HTMLElement) || !(b instanceof HTMLElement)) return false
+  const ra = a.getBoundingClientRect()
+  const rb = b.getBoundingClientRect()
+  return rectsHitTestAreaOverlap(ra, rb, thresholdPct)
+}
+
+/**
  * Survol fusion + détection au lâcher : compare les **cartes** (.lab-chipInventory),
  * pas le curseur ni seul le conteneur drop — chevauchement d’aire entre les deux boîtes.
  */
 export const FUSION_CARDS_OVERLAP_PCT = 10
+
+/** Hit-test fusion sans `querySelector` sur l’hôte (liste pré-collectée au press). */
+export function fusionDragRectOverlapsTargetChip(
+  dragChipRect: DOMRectReadOnly,
+  targetChip: HTMLElement,
+  thresholdPct: number = FUSION_CARDS_OVERLAP_PCT,
+): boolean {
+  return rectsHitTestAreaOverlap(
+    dragChipRect,
+    targetChip.getBoundingClientRect(),
+    thresholdPct,
+  )
+}
+
+export type LabFusionDropTarget = {
+  instanceId: string
+  host: HTMLElement
+  chip: HTMLElement
+}
+
+/** Une passe `querySelectorAll` + `.lab-chipInventory` par cible, à appeler au début du drag. */
+export function collectLabFusionDropTargets(
+  canvasRoot: HTMLElement,
+): LabFusionDropTarget[] {
+  const out: LabFusionDropTarget[] = []
+  for (const node of canvasRoot.querySelectorAll('[data-lab-drop-target]')) {
+    if (!(node instanceof HTMLElement)) continue
+    const id = node.getAttribute('data-lab-drop-target')
+    if (!id) continue
+    const chip = node.querySelector('.lab-chipInventory')
+    if (chip instanceof HTMLElement) out.push({ instanceId: id, host: node, chip })
+  }
+  return out
+}
+
+/** Une seule lecture du rect de la carte draguée (boucle hit-test plus légère à chaque frame). */
+export function fusionCardsOverlapFromDragRect(
+  dragChipRect: DOMRectReadOnly,
+  dropTargetHost: HTMLElement,
+  thresholdPct: number = FUSION_CARDS_OVERLAP_PCT,
+): boolean {
+  const targetChip = dropTargetHost.querySelector('.lab-chipInventory')
+  if (!(targetChip instanceof HTMLElement)) return false
+  return fusionDragRectOverlapsTargetChip(
+    dragChipRect,
+    targetChip,
+    thresholdPct,
+  )
+}
 
 export function fusionCardsOverlap(
   dragChip: HTMLElement,
   dropTargetHost: HTMLElement,
   thresholdPct: number = FUSION_CARDS_OVERLAP_PCT,
 ): boolean {
-  const targetChip = dropTargetHost.querySelector('.lab-chipInventory')
-  if (!(targetChip instanceof HTMLElement)) return false
-  return elementsHitTestAreaOverlap(dragChip, targetChip, thresholdPct)
+  return fusionCardsOverlapFromDragRect(
+    dragChip.getBoundingClientRect(),
+    dropTargetHost,
+    thresholdPct,
+  )
 }

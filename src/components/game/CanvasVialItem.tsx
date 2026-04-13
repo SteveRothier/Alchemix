@@ -3,7 +3,11 @@ import type { Draggable as DraggableInstance } from 'gsap/Draggable'
 import { useEffect, useRef } from 'react'
 import type { Vial } from '../../types'
 import { Draggable, registerGsapDraggable } from '../../lib/registerGsapDraggable'
-import { fusionCardsOverlap } from './labGeometry'
+import {
+  collectLabFusionDropTargets,
+  fusionDragRectOverlapsTargetChip,
+  type LabFusionDropTarget,
+} from './labGeometry'
 import { useLabDrag } from './LabDragContext'
 import type { LabPlacedVial } from './labTypes'
 import { VialChip } from '../vial/VialChip'
@@ -39,8 +43,30 @@ export function CanvasVialItem({
     if (!dragLayer || !outer || !labDrag) return
 
     let lastOverDropHit: HTMLElement | null = null
+    let fusionHoverRaf = 0
+    let fusionDropTargets: LabFusionDropTarget[] = []
+    const chipFound = dragLayer.querySelector('.lab-chipInventory')
+    const dragChipEl = chipFound instanceof HTMLElement ? chipFound : null
+
+    const refreshFusionDropTargets = () => {
+      const canvasRoot =
+        labDrag.labCanvasRef.current ??
+        (dragLayer.closest('.lab-canvas') as HTMLElement | null)
+      fusionDropTargets =
+        canvasRoot instanceof HTMLElement
+          ? collectLabFusionDropTargets(canvasRoot)
+          : []
+    }
+
+    const cancelFusionHoverRaf = () => {
+      if (fusionHoverRaf) {
+        cancelAnimationFrame(fusionHoverRaf)
+        fusionHoverRaf = 0
+      }
+    }
 
     const clearFusionHover = () => {
+      cancelFusionHoverRaf()
       if (lastOverDropHit) {
         lastOverDropHit.removeAttribute('data-over-target')
         lastOverDropHit = null
@@ -48,21 +74,14 @@ export function CanvasVialItem({
     }
 
     const updateFusionHover = () => {
-      const chip = dragLayer.querySelector('.lab-chipInventory')
-      if (!(chip instanceof HTMLElement)) return
+      if (!dragChipEl) return
 
-      const canvasRoot =
-        labDrag.labCanvasRef.current ??
-        (dragLayer.closest('.lab-canvas') as HTMLElement | null)
-      if (!(canvasRoot instanceof HTMLElement)) return
-
+      const dragRect = dragChipEl.getBoundingClientRect()
       let nextHit: HTMLElement | null = null
-      for (const node of canvasRoot.querySelectorAll('[data-lab-drop-target]')) {
-        if (!(node instanceof HTMLElement)) continue
-        if (node.getAttribute('data-lab-drop-target') === placed.instanceId)
-          continue
-        if (fusionCardsOverlap(chip, node)) {
-          nextHit = node
+      for (const t of fusionDropTargets) {
+        if (t.instanceId === placed.instanceId) continue
+        if (fusionDragRectOverlapsTargetChip(dragRect, t.chip)) {
+          nextHit = t.host
           break
         }
       }
@@ -74,20 +93,34 @@ export function CanvasVialItem({
       }
     }
 
+    const scheduleFusionHover = () => {
+      if (fusionHoverRaf) return
+      fusionHoverRaf = requestAnimationFrame(() => {
+        fusionHoverRaf = 0
+        updateFusionHover()
+      })
+    }
+
+    gsap.set(dragLayer, { x: 0, y: 0 })
+
     const d = Draggable.create(dragLayer, {
-      type: 'left,top',
+      type: 'x,y',
       bounds: '.alchemix-lab',
       inertia: false,
-      minimumMovement: 6,
+      /* 0 : le défaut GSAP (2) met à zéro xChange/yChange tant que |delta| < 2px depuis le press,
+       * ce qui donne une zone morte par axe et une sensation de « grille » / pas collants. */
+      minimumMovement: 0,
       zIndexBoost: false,
       allowContextMenu: true,
       allowNativeTouchScrolling: false,
       autoRound: false,
+      dragResistance: 0,
       edgeResistance: 0,
       onPress(this: DraggableInstance) {
+        refreshFusionDropTargets()
         document.documentElement.setAttribute(HTML_ATTR_CANVAS_CHIP_DRAG, '')
-        const chip = dragLayer.querySelector('.lab-chipInventory')
-        if (chip instanceof HTMLElement) {
+        const chip = dragChipEl
+        if (chip) {
           const r = chip.getBoundingClientRect()
           labDrag.grabOffsetRef.current = {
             dx: r.left + r.width / 2 - this.pointerX,
@@ -98,8 +131,12 @@ export function CanvasVialItem({
         }
         if (outer) gsap.set(outer, { zIndex: 920 })
       },
+      /* Draggable ne pousse le rendu transform qu’au tick GSAP : on applique x/y tout de suite pour coller au curseur. */
+      onMove(this: DraggableInstance) {
+        gsap.set(dragLayer, { x: this.x, y: this.y })
+      },
       onDrag() {
-        updateFusionHover()
+        scheduleFusionHover()
       },
       onRelease(this: DraggableInstance) {
         clearFusionHover()
@@ -110,12 +147,13 @@ export function CanvasVialItem({
           moved && labDrag.completeLabDrag(placed.instanceId, placed.vialId, this)
         labDrag.grabOffsetRef.current = null
         if (!skipDragLayerReset) {
-          gsap.set(dragLayer, { left: 0, top: 0, clearProps: 'transform' })
+          gsap.set(dragLayer, { x: 0, y: 0 })
         }
       },
     })[0]
 
     return () => {
+      cancelFusionHoverRaf()
       document.documentElement.removeAttribute(HTML_ATTR_CANVAS_CHIP_DRAG)
       d.kill()
     }

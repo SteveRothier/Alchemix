@@ -1,6 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { remapSvgIdsInClonedSubtree } from '../../lib/remapSvgIdsForDomClone'
-import { fusionCardsOverlap } from '../game/labGeometry'
+import {
+  collectLabFusionDropTargets,
+  fusionDragRectOverlapsTargetChip,
+  type LabFusionDropTarget,
+} from '../game/labGeometry'
 import type { Vial } from '../../types'
 import { useLabDrag, type LabDragContextValue } from '../game/LabDragContext'
 import { VialChip } from '../vial/VialChip'
@@ -12,8 +16,7 @@ type InventoryVialItemProps = {
 }
 
 /**
- * Drag inventaire : clone en position fixed (la carte liste reste en place),
- * Pointer Events + left/top, sans GSAP.
+ * Drag inventaire : clone fixed + translate3d, pointer events natifs (sans GSAP).
  */
 export function InventoryVialItem({ vial }: InventoryVialItemProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -32,8 +35,32 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
     let grabDy = 0
     let ghostEl: HTMLDivElement | null = null
     let lastOverDropHit: HTMLElement | null = null
+    let ghostW = 0
+    let ghostH = 0
+    let fusionHoverRaf = 0
+    let fusionDropTargets: LabFusionDropTarget[] = []
+    let labElCached: HTMLElement | null = null
+    let ghostChipEl: HTMLElement | null = null
+
+    const refreshFusionTargets = () => {
+      const canvasRoot =
+        ctx.labCanvasRef.current ??
+        (document.querySelector('.alchemix-lab .lab-canvas') as HTMLElement | null)
+      fusionDropTargets =
+        canvasRoot instanceof HTMLElement
+          ? collectLabFusionDropTargets(canvasRoot)
+          : []
+    }
+
+    const cancelFusionHoverRaf = () => {
+      if (fusionHoverRaf) {
+        cancelAnimationFrame(fusionHoverRaf)
+        fusionHoverRaf = 0
+      }
+    }
 
     const clearFusionHover = () => {
+      cancelFusionHoverRaf()
       if (lastOverDropHit) {
         lastOverDropHit.removeAttribute('data-over-target')
         lastOverDropHit = null
@@ -43,18 +70,17 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
     const updateFusionHoverFromGhost = () => {
       const g = ghostEl
       if (!g) return
-      const chip = g.querySelector('.lab-chipInventory')
+      const chip =
+        ghostChipEl?.isConnected === true
+          ? ghostChipEl
+          : (g.querySelector('.lab-chipInventory') as HTMLElement | null)
       if (!(chip instanceof HTMLElement)) return
-      const canvasRoot =
-        ctx.labCanvasRef.current ??
-        (document.querySelector('.alchemix-lab .lab-canvas') as HTMLElement | null)
-      if (!(canvasRoot instanceof HTMLElement)) return
 
+      const dragRect = chip.getBoundingClientRect()
       let nextHit: HTMLElement | null = null
-      for (const node of canvasRoot.querySelectorAll('[data-lab-drop-target]')) {
-        if (!(node instanceof HTMLElement)) continue
-        if (fusionCardsOverlap(chip, node)) {
-          nextHit = node
+      for (const t of fusionDropTargets) {
+        if (fusionDragRectOverlapsTargetChip(dragRect, t.chip)) {
+          nextHit = t.host
           break
         }
       }
@@ -66,11 +92,23 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
       }
     }
 
+    const scheduleFusionHoverFromGhost = () => {
+      if (fusionHoverRaf) return
+      fusionHoverRaf = requestAnimationFrame(() => {
+        fusionHoverRaf = 0
+        updateFusionHoverFromGhost()
+      })
+    }
+
     const removeGhost = () => {
       clearFusionHover()
+      labElCached = null
       ctx.setInventoryGhostDragging(false)
       if (ghostEl?.isConnected) ghostEl.remove()
       ghostEl = null
+      ghostChipEl = null
+      ghostW = 0
+      ghostH = 0
       ctx.grabOffsetRef.current = null
     }
 
@@ -83,18 +121,17 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
     function clampToLab(clientX: number, clientY: number) {
       const g = ghostEl
       if (!g) return
-      const labEl = document.querySelector('.alchemix-lab')
+      const labEl =
+        labElCached ?? (document.querySelector('.alchemix-lab') as HTMLElement | null)
       if (!(labEl instanceof HTMLElement)) return
       const lab = labEl.getBoundingClientRect()
-      const br = g.getBoundingClientRect()
-      const w = br.width
-      const h = br.height
+      const w = ghostW > 0 ? ghostW : g.getBoundingClientRect().width
+      const h = ghostH > 0 ? ghostH : g.getBoundingClientRect().height
       let left = clientX - grabDx
       let top = clientY - grabDy
       left = Math.min(Math.max(lab.left, left), lab.right - w)
       top = Math.min(Math.max(lab.top, top), lab.bottom - h)
-      g.style.left = `${left}px`
-      g.style.top = `${top}px`
+      g.style.transform = `translate3d(${left}px, ${top}px, 0)`
     }
 
     function onPointerMove(e: PointerEvent) {
@@ -104,14 +141,16 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
         if (Math.hypot(e.clientX - startX, e.clientY - startY) < MIN_MOVE_PX)
           return
         dragActive = true
+        e.preventDefault()
 
         const r = el.getBoundingClientRect()
         ghostEl = el.cloneNode(true) as HTMLDivElement
         ghostEl.classList.add('lab-invDragGhost')
         ghostEl.setAttribute('aria-hidden', 'true')
         ghostEl.style.position = 'fixed'
-        ghostEl.style.left = `${r.left}px`
-        ghostEl.style.top = `${r.top}px`
+        ghostEl.style.left = '0'
+        ghostEl.style.top = '0'
+        ghostEl.style.transform = `translate3d(${r.left}px, ${r.top}px, 0)`
         /* Pas de largeur figée : en labo le style IC + police plus large que l’inventaire ; sinon ellipsis « Mag… ». */
         ghostEl.style.margin = '0'
         ghostEl.style.boxSizing = 'border-box'
@@ -121,23 +160,53 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
         remapSvgIdsInClonedSubtree(ghostEl)
         document.body.appendChild(ghostEl)
         ctx.setInventoryGhostDragging(true)
+        labElCached = document.querySelector(
+          '.alchemix-lab',
+        ) as HTMLElement | null
+        refreshFusionTargets()
         void ghostEl.offsetWidth
+        const ghostBox = ghostEl.getBoundingClientRect()
+        ghostW = ghostBox.width
+        ghostH = ghostBox.height
+        /* Placer sous le pointeur avant grabOffsetRef : sinon le centre puce / souris est faux. */
+        const firstMoves =
+          typeof e.getCoalescedEvents === 'function' &&
+          e.getCoalescedEvents().length > 0
+            ? e.getCoalescedEvents()
+            : [e]
+        const firstLast = firstMoves[firstMoves.length - 1]!
+        const px = firstLast.clientX
+        const py = firstLast.clientY
+        clampToLab(px, py)
+        scheduleFusionHoverFromGhost()
 
-        const chip = ghostEl.querySelector('.lab-chipInventory')
-        if (chip instanceof HTMLElement) {
+        ghostChipEl = ghostEl.querySelector(
+          '.lab-chipInventory',
+        ) as HTMLElement | null
+        const chip = ghostChipEl
+        if (chip) {
           const cr = chip.getBoundingClientRect()
           ctx.grabOffsetRef.current = {
-            dx: cr.left + cr.width / 2 - e.clientX,
-            dy: cr.top + cr.height / 2 - e.clientY,
+            dx: cr.left + cr.width / 2 - px,
+            dy: cr.top + cr.height / 2 - py,
           }
         } else {
           ctx.grabOffsetRef.current = null
         }
+        return
       }
 
       e.preventDefault()
-      clampToLab(e.clientX, e.clientY)
-      if (dragActive && ghostEl) updateFusionHoverFromGhost()
+      const moves =
+        typeof e.getCoalescedEvents === 'function' && e.getCoalescedEvents().length > 0
+          ? e.getCoalescedEvents()
+          : [e]
+      /* Une mise à jour synchrone par lot coalescé : la carte suit le tracé du pointeur sans attendre la rAF. */
+      for (const ev of moves) {
+        clampToLab(ev.clientX, ev.clientY)
+      }
+      /* Un seul hit-test fusion par événement pointer (scheduleFusionHover déduplique déjà par rAF). */
+      scheduleFusionHoverFromGhost()
     }
 
     function onPointerEnd(e: PointerEvent) {
@@ -146,6 +215,7 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
       activePointerId = null
 
       if (dragActive && ghostEl) {
+        clampToLab(e.clientX, e.clientY)
         clearFusionHover()
         const moved =
           Math.hypot(e.clientX - startX, e.clientY - startY) >= 2
@@ -185,6 +255,7 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
     return () => {
       el.removeEventListener('pointerdown', onPointerDown)
       detachDocument()
+      cancelFusionHoverRaf()
       removeGhost()
     }
   }, [vial.id, labDrag])

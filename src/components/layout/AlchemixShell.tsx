@@ -214,8 +214,6 @@ export function AlchemixShell() {
       const canvasEl = canvasRef.current
       if (!chip || !canvasEl) return
 
-      const grab = grabOffsetRef.current
-
       const hitVial = findHitPlacedVial(chip)
       if (hitVial) {
         const { vials, addVial, recordFusion } = useAlchemixStore.getState()
@@ -261,17 +259,29 @@ export function AlchemixShell() {
 
       if (tryCharacterSip(vialId, undefined, chip)) return
 
-      const { cx, cy } = grabCenterClient(info, grab, chip)
-      if (clientPointInCanvasPlacement(canvasEl, cx, cy)) {
-        const pos = clientPointToCanvasPercent(canvasEl, cx, cy)
-        setPlaced((prev) => [
-          ...prev,
-          {
-            instanceId: crypto.randomUUID(),
-            vialId,
-            ...pos,
-          },
-        ])
+      /* Retour sur la colonne inventaire (drag annulé) : même animation que retirer une fiole du labo. */
+      if (chipOverlapsInventoryColumn(chip)) {
+        return new Promise<void>((resolve) => {
+          shrinkRemoveLabVial(chip, resolve)
+        })
+      }
+
+      /* Centre réel de la carte (fantôme) au lâcher — évite tout décalage si grabOffsetRef était pris avant le 1er clamp. */
+      const cr = chip.getBoundingClientRect()
+      if (cr.width >= 1 && cr.height >= 1) {
+        const cx = cr.left + cr.width / 2
+        const cy = cr.top + cr.height / 2
+        if (clientPointInCanvasPlacement(canvasEl, cx, cy)) {
+          const pos = clientPointToCanvasPercent(canvasEl, cx, cy)
+          setPlaced((prev) => [
+            ...prev,
+            {
+              instanceId: crypto.randomUUID(),
+              vialId,
+              ...pos,
+            },
+          ])
+        }
       }
     },
     [findHitPlacedVial, showSipHint, tryCharacterSip],
