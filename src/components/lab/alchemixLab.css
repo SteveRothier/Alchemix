@@ -18,7 +18,11 @@
   background-color: transparent;
 }
 
-/* Scroll inventaire : piste quasi invisible, curseur fin, collé au bord droit de la colonne. */
+/*
+ * Scroll inventaire : Firefox = thin + couleur.
+ * Chrome/Edge Windows : `scrollbar-width: thin` + propriétés standard peut produire une barre
+ * hybride avec flèches système — on désactive alors le style standard et on ne garde que ::-webkit-*.
+ */
 .alchemix-lab .lab-inventoryColumn .lab-invSectionScroll {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--text-h) 12%, transparent) transparent;
@@ -28,8 +32,54 @@
   scrollbar-color: color-mix(in srgb, var(--text-h) 22%, transparent) transparent;
 }
 
+@supports selector(::-webkit-scrollbar) {
+  .alchemix-lab .lab-inventoryColumn .lab-invSectionScroll {
+    scrollbar-width: auto;
+    scrollbar-color: unset;
+  }
+
+  .alchemix-lab .lab-inventoryColumn .lab-invSectionScroll:hover {
+    scrollbar-color: unset;
+  }
+}
+
 .alchemix-lab .lab-inventoryColumn .lab-invSectionScroll::-webkit-scrollbar {
   width: 4px;
+}
+
+/* Flèches : sur Windows, display:none est souvent ignoré — hauteur/largeur 0 + block + variantes. */
+.alchemix-lab .lab-inventoryColumn .lab-invSectionScroll::-webkit-scrollbar-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  border: none;
+  background: transparent;
+}
+
+.alchemix-lab .lab-inventoryColumn .lab-invSectionScroll::-webkit-scrollbar-button:vertical:start:decrement,
+.alchemix-lab .lab-inventoryColumn .lab-invSectionScroll::-webkit-scrollbar-button:vertical:end:increment,
+.alchemix-lab .lab-inventoryColumn .lab-invSectionScroll::-webkit-scrollbar-button:horizontal:start:decrement,
+.alchemix-lab .lab-inventoryColumn .lab-invSectionScroll::-webkit-scrollbar-button:horizontal:end:increment {
+  display: block;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.alchemix-lab .lab-inventoryColumn .lab-invSectionScroll::-webkit-scrollbar-button:single-button,
+.alchemix-lab .lab-inventoryColumn .lab-invSectionScroll::-webkit-scrollbar-button:double-button {
+  display: block;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.alchemix-lab .lab-inventoryColumn .lab-invSectionScroll::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .alchemix-lab .lab-inventoryColumn .lab-invSectionScroll::-webkit-scrollbar-track {
