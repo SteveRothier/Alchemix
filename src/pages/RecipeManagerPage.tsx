@@ -74,7 +74,7 @@ function VialOptionCombo({
   value,
   onChange,
   options,
-  placeholder = 'Tape pour filtrer ou choisir…',
+  placeholder = 'Type to filter or pick…',
   autoComplete = 'on',
 }: {
   inputId: string
@@ -120,7 +120,7 @@ function VialOptionCombo({
         return
       }
       const byName = options.find(
-        (o) => o.name.localeCompare(t, 'fr', { sensitivity: 'base' }) === 0,
+        (o) => o.name.localeCompare(t, 'en', { sensitivity: 'base' }) === 0,
       )
       if (byName) {
         onChange(byName.id)
@@ -239,7 +239,7 @@ function VialOptionCombo({
               const cur = options.find((o) => o.id === value)
               if (
                 cur &&
-                v.localeCompare(cur.name, 'fr', { sensitivity: 'base' }) !==
+                v.localeCompare(cur.name, 'en', { sensitivity: 'base' }) !==
                   0
               ) {
                 onChange('')
@@ -370,7 +370,7 @@ function resolveRefFromDisplayInput(
   const candidates: string[] = []
   for (const id of allIds) {
     const lab = displayName(id)
-    if (lab.localeCompare(t, 'fr', { sensitivity: 'base' }) === 0) {
+    if (lab.localeCompare(t, 'en', { sensitivity: 'base' }) === 0) {
       candidates.push(id)
     }
   }
@@ -400,7 +400,7 @@ function buildVialOptions(): { id: string; name: string; type: VialType }[] {
     map.set(id, { id, name: t.name, type: t.type })
   }
   return [...map.values()].sort((x, y) =>
-    x.name.localeCompare(y.name, 'fr', { sensitivity: 'base' }),
+    x.name.localeCompare(y.name, 'en', { sensitivity: 'base' }),
   )
 }
 
@@ -496,7 +496,7 @@ function compareRegistreRowsByResult(
     y.kind === 'solo'
       ? displayName(y.data.id)
       : displayName(y.data.resultId)
-  return nx.localeCompare(ny, 'fr', { sensitivity: 'base' })
+  return nx.localeCompare(ny, 'en', { sensitivity: 'base' })
 }
 
 /** Paire (nom1, nom2) des libellés des ingrédients, ordre A/B indifférent. Élément seul : (nom, nom). */
@@ -510,7 +510,7 @@ function comboDisplaySortTuple(
   }
   const na = displayName(row.data.a)
   const nb = displayName(row.data.b)
-  if (na.localeCompare(nb, 'fr', { sensitivity: 'base' }) <= 0) {
+  if (na.localeCompare(nb, 'en', { sensitivity: 'base' }) <= 0) {
     return [na, nb]
   }
   return [nb, na]
@@ -524,9 +524,9 @@ function compareRegistreRowsByPair(
 ): number {
   const [ax, ay] = comboDisplaySortTuple(x, displayName)
   const [bx, by] = comboDisplaySortTuple(y, displayName)
-  const c1 = ax.localeCompare(bx, 'fr', { sensitivity: 'base' })
+  const c1 = ax.localeCompare(bx, 'en', { sensitivity: 'base' })
   if (c1 !== 0) return c1
-  return ay.localeCompare(by, 'fr', { sensitivity: 'base' })
+  return ay.localeCompare(by, 'en', { sensitivity: 'base' })
 }
 
 function compareRegistreRowsByType(
@@ -549,7 +549,7 @@ function compareRegistreRowsByType(
     y.kind === 'solo'
       ? displayName(y.data.id)
       : displayName(y.data.resultId)
-  return nx.localeCompare(ny, 'fr', { sensitivity: 'base' })
+  return nx.localeCompare(ny, 'en', { sensitivity: 'base' })
 }
 
 /** Plusieurs critères : appliqués dans l’ordre du tableau (priorité décroissante). */
@@ -588,13 +588,13 @@ function buildManualPairsTs(pairs: EditablePair[]): string {
         `  { a: ${JSON.stringify(p.a)}, b: ${JSON.stringify(p.b)}, resultId: ${JSON.stringify(p.resultId)} },`,
     )
     .join('\n')
-  return `/**\n * Recettes catalogue (symétriques côté jeu : ordre a/b indifférent).\n * Mis à jour depuis l’atelier recettes (/#/recipes) — bouton Enregistrer.\n */\nexport const MANUAL_RECIPE_PAIRS: { a: string; b: string; resultId: string }[] = [\n${body}\n]\n`
+  return `/**\n * Catalog recipes (symmetric in-game: a/b order does not matter).\n * Updated from the recipe workshop (/#/recipes) — Save button.\n */\nexport const MANUAL_RECIPE_PAIRS: { a: string; b: string; resultId: string }[] = [\n${body}\n]\n`
 }
 
 function buildManualSoloTs(ids: string[]): string {
   const sorted = [...new Set(ids.map((x) => x.trim()).filter(Boolean))].sort()
   const json = JSON.stringify(sorted, null, 2)
-  return `/**\n * Références de fioles déclarées seules (sans recette de paire).\n * Mis à jour depuis l’atelier recettes (/#/recipes) — bouton Enregistrer.\n */\nexport const MANUAL_SOLO_ELEMENT_IDS: string[] = ${json}\n`
+  return `/**\n * Vial references declared alone (no pair recipe).\n * Updated from the recipe workshop (/#/recipes) — Save button.\n */\nexport const MANUAL_SOLO_ELEMENT_IDS: string[] = ${json}\n`
 }
 
 type AlertItem = { id: number; message: string; kind: 'success' | 'error' }
@@ -623,7 +623,7 @@ export function RecipeManagerPage() {
         vialOptions.find((o) => o.id === a)?.name ?? inferLabelFromRef(a)
       const nb =
         vialOptions.find((o) => o.id === b)?.name ?? inferLabelFromRef(b)
-      return na.localeCompare(nb, 'fr', { sensitivity: 'base' })
+      return na.localeCompare(nb, 'en', { sensitivity: 'base' })
     })
   }, [vialOptions])
 
@@ -847,8 +847,8 @@ export function RecipeManagerPage() {
       if (!tr) {
         pushAlert(
           allowEmpty
-            ? 'Renseigne au moins le résultat.'
-            : 'Renseigne les deux ingrédients et le résultat.',
+            ? 'Enter at least the result.'
+            : 'Enter both ingredients and the result.',
           'error',
         )
         return false
@@ -856,12 +856,12 @@ export function RecipeManagerPage() {
 
       if (!allowEmpty) {
         if (!ta || !tb) {
-          pushAlert('Renseigne les deux ingrédients et le résultat.', 'error')
+          pushAlert('Enter both ingredients and the result.', 'error')
           return false
         }
       } else if ((ta && !tb) || (!ta && tb)) {
         pushAlert(
-          'Les deux ingrédients doivent être renseignés, ou aucun (pas un seul seul).',
+          'Either fill both ingredients or leave both empty (not just one).',
           'error',
         )
         return false
@@ -882,8 +882,8 @@ export function RecipeManagerPage() {
       if (dup) {
         pushAlert(
           ta === '' && tb === ''
-            ? 'Cette entrée existe déjà : même résultat sans combinaison.'
-            : 'Cette combinaison existe déjà : même paire d’ingrédients (ordre indifférent).',
+            ? 'This entry already exists: same result with no combination.'
+            : 'This combination already exists: same ingredient pair (order does not matter).',
           'error',
         )
         return false
@@ -901,19 +901,19 @@ export function RecipeManagerPage() {
   const tryAddSolo = useCallback(() => {
     const id = soloIdInput.trim()
     if (!id) {
-      pushAlert('Saisis une référence.', 'error')
+      pushAlert('Enter a reference.', 'error')
       return
     }
     const norm = id
     if (catalogElementIdSet.has(norm)) {
       pushAlert(
-        'Cette référence est déjà couverte : toutes les recettes du catalogue y figurent.',
+        'This reference is already covered: all catalog recipes are listed for it.',
         'error',
       )
       return
     }
     if (soloRows.some((s) => s.id === norm)) {
-      pushAlert('Cette référence est déjà dans tes entrées « élément ».', 'error')
+      pushAlert('This reference is already in your element entries.', 'error')
       return
     }
     setSoloRows((prev) => [
@@ -921,7 +921,7 @@ export function RecipeManagerPage() {
       { clientId: nextClientId(), id: norm },
     ])
     setSoloIdInput('')
-    pushAlert('Élément ajouté.', 'success')
+    pushAlert('Element added.', 'success')
   }, [
     soloIdInput,
     soloRows,
@@ -936,10 +936,10 @@ export function RecipeManagerPage() {
       switch (createMode) {
         case 'element':
           if (!knownVialIdSet.has(elA.trim()) || !knownVialIdSet.has(elB.trim())) {
-            pushAlert('Choisis des ingrédients existants dans la liste.', 'error')
+            pushAlert('Pick ingredients that exist in the list.', 'error')
             return
           }
-          if (tryAddPair(elA, elB, elRes, 'Recette ajoutée.')) {
+          if (tryAddPair(elA, elB, elRes, 'Recipe added.')) {
             setElA('')
             setElB('')
             setElRes('')
@@ -947,25 +947,25 @@ export function RecipeManagerPage() {
           break
         case 'spell': {
           if (!spRes.trim()) {
-            pushAlert('Saisis la référence du sort produit (résultat).', 'error')
+            pushAlert('Enter the produced spell reference (result).', 'error')
             return
           }
           const sA = spA.trim()
           const sB = spB.trim()
           if ((sA && !sB) || (!sA && sB)) {
             pushAlert(
-              'Choisis les deux ingrédients ou laisse les deux vides (pas un seul).',
+              'Pick both ingredients or leave both empty (not just one).',
               'error',
             )
             return
           }
           if ((sA && !knownVialIdSet.has(sA)) || (sB && !knownVialIdSet.has(sB))) {
-            pushAlert('Choisis des ingrédients existants dans la liste.', 'error')
+            pushAlert('Pick ingredients that exist in the list.', 'error')
             return
           }
           const spellResultId = normalizeAtelierSpellResultId(spRes)
           if (
-            tryAddPair(spA, spB, spellResultId, 'Combinaison ajoutée.', {
+            tryAddPair(spA, spB, spellResultId, 'Combination added.', {
               allowEmptyIngredients: true,
             })
           ) {
@@ -978,12 +978,12 @@ export function RecipeManagerPage() {
         case 'creature': {
           const slug = slugifyCreatureName(crName)
           if (!slug) {
-            pushAlert('Saisis un nom de créature.', 'error')
+            pushAlert('Enter a creature name.', 'error')
             return
           }
           const spell = crSpell.trim()
           if (spell && !knownSpellIdSet.has(spell)) {
-            pushAlert('Choisis un sort existant dans la liste.', 'error')
+            pushAlert('Pick a spell that exists in the list.', 'error')
             return
           }
           const resultId = `creature-${slug}`
@@ -992,7 +992,7 @@ export function RecipeManagerPage() {
               spell,
               spell,
               resultId,
-              'Créature ajoutée.',
+              'Creature added.',
               { allowEmptyIngredients: true },
             )
           ) {
@@ -1027,7 +1027,7 @@ export function RecipeManagerPage() {
   const removeRegistrePair = useCallback(
     (clientId: number) => {
       setPairs((prev) => prev.filter((row) => row.clientId !== clientId))
-      pushAlert('Combinaison supprimée.', 'success')
+      pushAlert('Combination removed.', 'success')
     },
     [pushAlert],
   )
@@ -1038,11 +1038,14 @@ export function RecipeManagerPage() {
         setHiddenCatalogSoloIds((prev) =>
           prev.includes(s.id) ? prev : [...prev, s.id],
         )
-        pushAlert('Élément retiré du registre (tu peux réinitialiser le dépôt pour tout revoir).', 'success')
+        pushAlert(
+          'Element removed from the register (reload the store to see everything again).',
+          'success',
+        )
         return
       }
       setSoloRows((prev) => prev.filter((r) => r.clientId !== s.clientId))
-      pushAlert('Entrée supprimée.', 'success')
+      pushAlert('Entry removed.', 'success')
     },
     [pushAlert],
   )
@@ -1050,7 +1053,7 @@ export function RecipeManagerPage() {
   const resetDefaults = useCallback(() => {
     if (
       !window.confirm(
-        'Recharger les données depuis le dépôt ? Les modifications locales seront perdues.',
+        'Reload data from the store? Local changes will be lost.',
       )
     ) {
       return
@@ -1058,7 +1061,7 @@ export function RecipeManagerPage() {
     setPairs(seedPairs())
     setSoloRows(seedSolo())
     setHiddenCatalogSoloIds([])
-    pushAlert('Données réinitialisées depuis le code source.', 'success')
+    pushAlert('Data reset from source code.', 'success')
   }, [pushAlert])
 
   const saveToSourceFiles = useCallback(async () => {
@@ -1073,7 +1076,7 @@ export function RecipeManagerPage() {
       })
       if (res.ok) {
         pushAlert(
-          'Fichiers mis a jour directement dans src/data. Relance le serveur de dev si besoin.',
+          'Files updated directly in src/data. Restart the dev server if needed.',
           'success',
         )
         return
@@ -1117,7 +1120,7 @@ export function RecipeManagerPage() {
         await wr1.write(pairsTs)
         await wr1.close()
         pushAlert(
-          'Paires enregistrées. Choisis maintenant manualSoloElements.ts dans src/data/.',
+          'Pairs saved. Now choose manualSoloElements.ts in src/data/.',
           'success',
         )
         const h2 = await w.showSaveFilePicker({
@@ -1133,7 +1136,7 @@ export function RecipeManagerPage() {
         await wr2.write(soloTs)
         await wr2.close()
         pushAlert(
-          'Les deux fichiers sont à jour. Relance le serveur de dev si besoin.',
+          'Both files are up to date. Restart the dev server if needed.',
           'success',
         )
       } catch (err) {
@@ -1141,7 +1144,7 @@ export function RecipeManagerPage() {
         download('manualRecipePairs.ts', pairsTs)
         download('manualSoloElements.ts', soloTs)
         pushAlert(
-          'Enregistrement direct impossible : les deux fichiers ont été téléchargés.',
+          'Could not save in place: both files were downloaded.',
           'success',
         )
       }
@@ -1149,7 +1152,7 @@ export function RecipeManagerPage() {
       download('manualRecipePairs.ts', pairsTs)
       download('manualSoloElements.ts', soloTs)
       pushAlert(
-        'Télécharge les fichiers et remplace src/data/manualRecipePairs.ts et manualSoloElements.ts.',
+        'Download the files and replace src/data/manualRecipePairs.ts and manualSoloElements.ts.',
         'success',
       )
     }
@@ -1163,7 +1166,7 @@ export function RecipeManagerPage() {
     if (creatureEdit) {
       const raw = pairEditDraft.resultId.trim()
       if (!raw) {
-        pushAlert('Le nom de la créature est obligatoire.', 'error')
+        pushAlert('Creature name is required.', 'error')
         return
       }
       const lower = raw.toLowerCase()
@@ -1172,7 +1175,7 @@ export function RecipeManagerPage() {
         : raw
       const slug = slugifyCreatureName(base)
       if (!slug) {
-        pushAlert('Le nom de la créature est invalide.', 'error')
+        pushAlert('Creature name is invalid.', 'error')
         return
       }
       tr = `creature-${slug}`
@@ -1183,12 +1186,12 @@ export function RecipeManagerPage() {
         allKnownVialIds,
       )
       if (rr.error === 'empty' || !rr.ref.trim()) {
-        pushAlert('Le résultat est obligatoire.', 'error')
+        pushAlert('Result is required.', 'error')
         return
       }
       if (rr.error === 'ambiguous') {
         pushAlert(
-          'Plusieurs fioles correspondent à un même nom : précise la référence technique ou un nom unique.',
+          'Several vials share the same name: use the technical reference or a unique name.',
           'error',
         )
         return
@@ -1206,14 +1209,14 @@ export function RecipeManagerPage() {
       )
       if (rs.error === 'ambiguous') {
         pushAlert(
-          'Plusieurs fioles correspondent à un même nom : précise la référence technique ou un nom unique.',
+          'Several vials share the same name: use the technical reference or a unique name.',
           'error',
         )
         return
       }
       const spellRef = rs.ref.trim()
       if (spellRef && !knownSpellIdSet.has(spellRef)) {
-        pushAlert('Choisis un sort existant dans la liste.', 'error')
+        pushAlert('Pick a spell that exists in the list.', 'error')
         return
       }
       ta = spellRef
@@ -1231,7 +1234,7 @@ export function RecipeManagerPage() {
       )
       if (ra.error === 'ambiguous' || rb.error === 'ambiguous') {
         pushAlert(
-          'Plusieurs fioles correspondent à un même nom : précise la référence technique ou un nom unique.',
+          'Several vials share the same name: use the technical reference or a unique name.',
           'error',
         )
         return
@@ -1239,12 +1242,12 @@ export function RecipeManagerPage() {
       ta = ra.ref.trim()
       tb = rb.ref.trim()
       if ((ta && !knownVialIdSet.has(ta)) || (tb && !knownVialIdSet.has(tb))) {
-        pushAlert('Choisis des ingrédients existants dans la liste.', 'error')
+        pushAlert('Pick ingredients that exist in the list.', 'error')
         return
       }
       if ((ta && !tb) || (!ta && tb)) {
         pushAlert(
-          'Les deux ingrédients doivent être renseignés, ou aucun (pas un seul seul).',
+          'Either fill both ingredients or leave both empty (not just one).',
           'error',
         )
         return
@@ -1269,8 +1272,8 @@ export function RecipeManagerPage() {
     if (clash) {
       pushAlert(
         ta === '' && tb === ''
-          ? 'Une autre ligne a déjà ce résultat sans combinaison.'
-          : 'Une autre ligne utilise déjà cette paire d’ingrédients.',
+          ? 'Another row already has this result with no combination.'
+          : 'Another row already uses this ingredient pair.',
         'error',
       )
       return
@@ -1281,7 +1284,7 @@ export function RecipeManagerPage() {
       ),
     )
     setEditingPair(null)
-    pushAlert('Combinaison mise à jour.', 'success')
+    pushAlert('Combination updated.', 'success')
   }, [
     editingPair,
     pairEditDraft,
@@ -1301,12 +1304,12 @@ export function RecipeManagerPage() {
       allKnownVialIds,
     )
     if (resolved.error === 'empty' || !resolved.ref.trim()) {
-      pushAlert('Le nom ou la référence est vide.', 'error')
+      pushAlert('Name or reference is empty.', 'error')
       return
     }
     if (resolved.error === 'ambiguous') {
       pushAlert(
-        'Plusieurs fioles correspondent à un même nom : précise la référence technique ou un nom unique.',
+        'Several vials share the same name: use the technical reference or a unique name.',
         'error',
       )
       return
@@ -1316,7 +1319,7 @@ export function RecipeManagerPage() {
 
     if (src) {
       if (soloRows.some((r) => r.id === newId)) {
-        pushAlert('Cette référence existe déjà dans tes entrées « élément ».', 'error')
+        pushAlert('This reference already exists in your element entries.', 'error')
         return
       }
       setHiddenCatalogSoloIds((prev) =>
@@ -1327,7 +1330,7 @@ export function RecipeManagerPage() {
         { clientId: nextClientId(), id: newId },
       ])
       setEditingSolo(null)
-      pushAlert('Élément enregistré.', 'success')
+      pushAlert('Element saved.', 'success')
       return
     }
 
@@ -1335,7 +1338,7 @@ export function RecipeManagerPage() {
       (s) => s.clientId !== editingSolo.clientId && s.id === newId,
     )
     if (clash) {
-      pushAlert('Cette référence existe déjà comme élément.', 'error')
+      pushAlert('This reference already exists as an element.', 'error')
       return
     }
     setSoloRows((prev) =>
@@ -1344,7 +1347,7 @@ export function RecipeManagerPage() {
       ),
     )
     setEditingSolo(null)
-    pushAlert('Référence mise à jour.', 'success')
+    pushAlert('Reference updated.', 'success')
   }, [
     editingSolo,
     soloEditDraft,
@@ -1364,11 +1367,11 @@ export function RecipeManagerPage() {
   }
 
   const typeLabel = (t: VialType | 'unknown' | 'fioleSeule') => {
-    if (t === 'fioleSeule') return 'Élément'
-    if (t === 'element') return 'Recette'
-    if (t === 'spell') return 'Sort'
-    if (t === 'creature') return 'Créature'
-    return 'Inconnu'
+    if (t === 'fioleSeule') return 'Element'
+    if (t === 'element') return 'Recipe'
+    if (t === 'spell') return 'Spell'
+    if (t === 'creature') return 'Creature'
+    return 'Unknown'
   }
 
   return (
@@ -1383,7 +1386,7 @@ export function RecipeManagerPage() {
             <button
               type="button"
               className="ra-alertClose"
-              aria-label="Fermer"
+              aria-label="Close"
               onClick={() =>
                 setAlerts((prev) => prev.filter((x) => x.id !== a.id))
               }
@@ -1396,32 +1399,32 @@ export function RecipeManagerPage() {
 
       <div className="mx-auto flex min-h-0 w-full max-w-7xl flex-1 flex-col gap-1.5">
         <header className="flex shrink-0 flex-nowrap items-center justify-between gap-3 border-b border-[color:var(--lab-border)] pb-1.5">
-          <h1 className="ra-pageTitle">Alchemix — Atelier des recettes</h1>
+          <h1 className="ra-pageTitle">Alchemix — Recipe workshop</h1>
           <div className="ra-topActions flex shrink-0 items-center gap-2">
             <button
               type="button"
               className="ra-btn ra-btnSecondary"
               onClick={saveToSourceFiles}
             >
-              Enregistrer
+              Save
             </button>
             <Link className="ra-navLink" to="/">
-              Retour au laboratoire
+              Back to laboratory
             </Link>
           </div>
         </header>
 
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-[0.65rem] overflow-hidden min-[901px]:grid-cols-[minmax(240px,0.95fr)_minmax(0,2fr)] min-[901px]:grid-rows-1 max-[900px]:grid-rows-[auto_minmax(0,1fr)]">
           <section className="ra-panel ra-panelForm flex min-h-0 min-w-0 flex-1 flex-col">
-            <h2 className="ra-panelTitle">Nouvelle entrée</h2>
+            <h2 className="ra-panelTitle">New entry</h2>
 
-            <div className="ra-modeTabs" role="tablist" aria-label="Type de création">
+            <div className="ra-modeTabs" role="tablist" aria-label="Creation type">
               {(
                 [
-                  ['element', 'Recette'],
-                  ['spell', 'Sort'],
-                  ['creature', 'Créature'],
-                  ['solo', 'Élément'],
+                  ['element', 'Recipe'],
+                  ['spell', 'Spell'],
+                  ['creature', 'Creature'],
+                  ['solo', 'Element'],
                 ] as const
               ).map(([key, lab]) => (
                 <button
@@ -1445,36 +1448,36 @@ export function RecipeManagerPage() {
                       inputId="elA"
                       label={
                         <>
-                          Ingrédient A<span className="ra-required">*</span>
+                          Ingredient A<span className="ra-required">*</span>
                         </>
                       }
                       value={elA}
                       onChange={setElA}
                       options={vialOptions}
-                      placeholder="Tape pour chercher un ingrédient…"
+                      placeholder="Type to search for an ingredient…"
                     />
                     <VialOptionCombo
                       inputId="elB"
                       label={
                         <>
-                          Ingrédient B<span className="ra-required">*</span>
+                          Ingredient B<span className="ra-required">*</span>
                         </>
                       }
                       value={elB}
                       onChange={setElB}
                       options={vialOptions}
-                      placeholder="Tape pour chercher un ingrédient…"
+                      placeholder="Type to search for an ingredient…"
                     />
                     <div className="ra-formGroup">
                       <label htmlFor="elRes">
-                        Résultat<span className="ra-required">*</span>
+                        Result<span className="ra-required">*</span>
                       </label>
                       <input
                         id="elRes"
                         className="ra-input"
                         value={elRes}
                         onChange={(e) => setElRes(e.target.value)}
-                        placeholder="Référence produite"
+                        placeholder="Produced reference"
                         autoComplete="off"
                       />
                     </div>
@@ -1486,31 +1489,31 @@ export function RecipeManagerPage() {
                     <div className="grid max-[520px]:grid-cols-1 grid-cols-2 gap-[0.45rem]">
                       <VialOptionCombo
                         inputId="spA"
-                        label="Ingrédient A"
+                        label="Ingredient A"
                         value={spA}
                         onChange={setSpA}
                         options={vialOptions}
-                        placeholder="Tape pour chercher un ingrédient…"
+                        placeholder="Type to search for an ingredient…"
                       />
                       <VialOptionCombo
                         inputId="spB"
-                        label="Ingrédient B"
+                        label="Ingredient B"
                         value={spB}
                         onChange={setSpB}
                         options={vialOptions}
-                        placeholder="Tape pour chercher un ingrédient…"
+                        placeholder="Type to search for an ingredient…"
                       />
                     </div>
                     <div className="ra-formGroup">
                       <label htmlFor="spRes">
-                        Résultat produit<span className="ra-required">*</span>
+                        Produced result<span className="ra-required">*</span>
                       </label>
                       <input
                         id="spRes"
                         className="ra-input"
                         value={spRes}
                         onChange={(e) => setSpRes(e.target.value)}
-                        placeholder="Référence du sort créé (résultat)"
+                        placeholder="Created spell reference (result)"
                         autoComplete="off"
                       />
                     </div>
@@ -1525,18 +1528,18 @@ export function RecipeManagerPage() {
                       value={crSpell}
                       onChange={setCrSpell}
                       options={spellOptions}
-                      placeholder="Tape pour chercher un sort…"
+                      placeholder="Type to search for a spell…"
                     />
                     <div className="ra-formGroup">
                       <label htmlFor="crName">
-                        Nom de la créature<span className="ra-required">*</span>
+                        Creature name<span className="ra-required">*</span>
                       </label>
                       <input
                         id="crName"
                         className="ra-input"
                         value={crName}
                         onChange={(e) => setCrName(e.target.value)}
-                        placeholder="Nom de la fiole créature"
+                        placeholder="Creature vial name"
                         autoComplete="off"
                       />
                     </div>
@@ -1547,20 +1550,20 @@ export function RecipeManagerPage() {
                   <>
                     <div className="ra-formGroup">
                       <label htmlFor="soloId">
-                        Référence fiole<span className="ra-required">*</span>
+                        Vial reference<span className="ra-required">*</span>
                       </label>
                       <input
                         id="soloId"
                         className="ra-input"
                         value={soloIdInput}
                         onChange={(e) => setSoloIdInput(e.target.value)}
-                        placeholder="Hors recettes déjà listées du catalogue"
+                        placeholder="Outside catalog recipes already listed"
                         autoComplete="off"
                       />
                     </div>
                     <p className="ra-hint">
-                      Les recettes du catalogue sont déjà listées. Ici, ajoute un élément
-                      hors catalogue (sort, craft, etc.).
+                      Catalog recipes are already listed. Here, add an element outside
+                      the catalog (spell, craft, etc.).
                     </p>
                   </>
                 )}
@@ -1568,7 +1571,7 @@ export function RecipeManagerPage() {
 
               <div className="ra-formSubmitBar">
                 <button type="submit" className="ra-btn ra-btnPrimary">
-                  Ajouter
+                  Add
                 </button>
               </div>
             </form>
@@ -1578,14 +1581,14 @@ export function RecipeManagerPage() {
           <section className="ra-panel ra-panelTable flex min-h-0 min-w-0 flex-1 flex-col">
             <div className="ra-tableHeader">
               <div className="ra-tableHeaderLeft">
-                <h2>Registre ({stats.totalRows})</h2>
+                <h2>Register ({stats.totalRows})</h2>
                 <div className="ra-searchWrap">
                   <input
                     className="ra-input ra-searchField"
-                    placeholder="Filtrer…"
+                    placeholder="Filter…"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    aria-label="Filtrer"
+                    aria-label="Filter"
                   />
                 </div>
               </div>
@@ -1594,8 +1597,8 @@ export function RecipeManagerPage() {
                   type="button"
                   className="ra-btn ra-btnSecondary ra-headerToolbarBtn ra-iconHeaderBtn"
                   onClick={resetDefaults}
-                  title="Recharger le dépôt"
-                  aria-label="Recharger le dépôt"
+                  title="Reload store"
+                  aria-label="Reload store"
                 >
                   <RefreshCcw size={16} strokeWidth={2.25} aria-hidden />
                 </button>
@@ -1610,16 +1613,16 @@ export function RecipeManagerPage() {
                       <th>#</th>
                       <th>
                         <div className="ra-thWithSort">
-                          <span>Combinaison</span>
+                          <span>Combination</span>
                           <button
                             type="button"
                             className={`ra-sortHeaderBtn${activeSortKeys.includes('pair') ? ' ra-sortHeaderBtnActive' : ''}`}
                             title={
                               activeSortKeys.length > 1
-                                ? `Tri combinaison (noms des ingrédients) — priorité ${activeSortKeys.indexOf('pair') + 1} sur ${activeSortKeys.length} (cliquer pour retirer)`
-                                : 'Trier par les noms des deux ingrédients (A–Z, ordre A/B indifférent ; cumulable)'
+                                ? `Sort by combination (ingredient names) — priority ${activeSortKeys.indexOf('pair') + 1} of ${activeSortKeys.length} (click to remove)`
+                                : 'Sort by both ingredient names (A–Z, A/B order ignored; stackable)'
                             }
-                            aria-label="Trier par noms des ingrédients de la combinaison"
+                            aria-label="Sort by combination ingredient names"
                             aria-pressed={activeSortKeys.includes('pair')}
                             onClick={() => toggleSortKey('pair')}
                           >
@@ -1642,16 +1645,16 @@ export function RecipeManagerPage() {
                       </th>
                       <th>
                         <div className="ra-thWithSort">
-                          <span>Résultat</span>
+                          <span>Result</span>
                           <button
                             type="button"
                             className={`ra-sortHeaderBtn${activeSortKeys.includes('result') ? ' ra-sortHeaderBtnActive' : ''}`}
                             title={
                               activeSortKeys.length > 1
-                                ? `Tri résultat A–Z — priorité ${activeSortKeys.indexOf('result') + 1} sur ${activeSortKeys.length} (cliquer pour retirer)`
-                                : 'Activer le tri par nom du résultat (cumulable avec les autres ; ordre = priorité)'
+                                ? `Sort result A–Z — priority ${activeSortKeys.indexOf('result') + 1} of ${activeSortKeys.length} (click to remove)`
+                                : 'Enable sort by result name (stackable with others; order = priority)'
                             }
-                            aria-label="Trier par nom du résultat"
+                            aria-label="Sort by result name"
                             aria-pressed={activeSortKeys.includes('result')}
                             onClick={() => toggleSortKey('result')}
                           >
@@ -1680,10 +1683,10 @@ export function RecipeManagerPage() {
                             className={`ra-sortHeaderBtn${activeSortKeys.includes('type') ? ' ra-sortHeaderBtnActive' : ''}`}
                             title={
                               activeSortKeys.length > 1
-                                ? `Tri par type — priorité ${activeSortKeys.indexOf('type') + 1} sur ${activeSortKeys.length} (cliquer pour retirer)`
-                                : 'Activer le tri par type (cumulable avec les autres ; ordre = priorité)'
+                                ? `Sort by type — priority ${activeSortKeys.indexOf('type') + 1} of ${activeSortKeys.length} (click to remove)`
+                                : 'Enable sort by type (stackable with others; order = priority)'
                             }
-                            aria-label="Trier par type"
+                            aria-label="Sort by type"
                             aria-pressed={activeSortKeys.includes('type')}
                             onClick={() => toggleSortKey('type')}
                           >
@@ -1713,8 +1716,8 @@ export function RecipeManagerPage() {
                         <td colSpan={5}>
                           <div className="ra-empty">
                             {stats.totalRows === 0
-                              ? 'Aucune ligne.'
-                              : 'Aucun résultat pour ce filtre.'}
+                              ? 'No rows.'
+                              : 'No results for this filter.'}
                           </div>
                         </td>
                       </tr>
@@ -1743,8 +1746,8 @@ export function RecipeManagerPage() {
                                   <button
                                     type="button"
                                     className="ra-iconBtn"
-                                    title="Modifier"
-                                    aria-label="Modifier"
+                                    title="Edit"
+                                    aria-label="Edit"
                                     onClick={() => {
                                       setSoloEditDraft(toSoloEditDraft(s))
                                       setEditingSolo(
@@ -1759,8 +1762,8 @@ export function RecipeManagerPage() {
                                   <button
                                     type="button"
                                     className="ra-iconBtn ra-iconBtnDanger"
-                                    title="Supprimer"
-                                    aria-label="Supprimer"
+                                    title="Delete"
+                                    aria-label="Delete"
                                     onClick={() =>
                                       setRegistreDeletePrompt({
                                         kind: 'solo',
@@ -1816,8 +1819,8 @@ export function RecipeManagerPage() {
                                 <button
                                   type="button"
                                   className="ra-iconBtn"
-                                  title="Modifier"
-                                  aria-label="Modifier"
+                                  title="Edit"
+                                  aria-label="Edit"
                                   onClick={() => {
                                     setPairEditDraft(toPairEditDraft(p))
                                     setEditingPair({ ...p })
@@ -1828,8 +1831,8 @@ export function RecipeManagerPage() {
                                 <button
                                   type="button"
                                   className="ra-iconBtn ra-iconBtnDanger"
-                                  title="Supprimer"
-                                  aria-label="Supprimer"
+                                  title="Delete"
+                                  aria-label="Delete"
                                   onClick={() =>
                                     setRegistreDeletePrompt({
                                       kind: 'pair',
@@ -1854,19 +1857,19 @@ export function RecipeManagerPage() {
 
         <div className="ra-stats">
           <span className="ra-statInline">
-            <strong>{stats.pairs}</strong> paires
+            <strong>{stats.pairs}</strong> pairs
           </span>
           <span className="ra-statInline">
-            <strong>{stats.fiolesSeules}</strong> éléments
+            <strong>{stats.fiolesSeules}</strong> elements
           </span>
           <span className="ra-statInline">
-            <strong>{stats.elements}</strong> → recette
+            <strong>{stats.elements}</strong> → recipe
           </span>
           <span className="ra-statInline">
-            <strong>{stats.spells}</strong> → sort
+            <strong>{stats.spells}</strong> → spell
           </span>
           <span className="ra-statInline">
-            <strong>{stats.creatures}</strong> → créature
+            <strong>{stats.creatures}</strong> → creature
           </span>
         </div>
       </div>
@@ -1882,7 +1885,7 @@ export function RecipeManagerPage() {
           }}
         >
           <div className="ra-modal">
-            <h3 id="registre-delete-title">Supprimer du registre</h3>
+            <h3 id="registre-delete-title">Remove from register</h3>
             <p className="ra-modalBody">
               {registreDeletePrompt.kind === 'pair'
                 ? (() => {
@@ -1897,11 +1900,11 @@ export function RecipeManagerPage() {
                             : isCreatureRecipePair(row)
                               ? displayName(row.a)
                               : `${displayName(row.a)} + ${displayName(row.b)}`
-                          return `Supprimer la recette « ${combo} → ${displayName(row.resultId)} » ?`
+                          return `Delete recipe “${combo} → ${displayName(row.resultId)}”?`
                         })()
-                      : 'Supprimer cette ligne du registre ?'
+                      : 'Delete this register row?'
                   })()
-                : `Supprimer l’élément « ${displayName(registreDeletePrompt.solo.id)} » ?`}
+                : `Delete element “${displayName(registreDeletePrompt.solo.id)}”?`}
             </p>
             <div className="ra-modalActions">
               <button
@@ -1909,7 +1912,7 @@ export function RecipeManagerPage() {
                 className="ra-btn ra-btnSecondary"
                 onClick={() => setRegistreDeletePrompt(null)}
               >
-                Annuler
+                Cancel
               </button>
               <button
                 type="button"
@@ -1925,7 +1928,7 @@ export function RecipeManagerPage() {
                   }
                 }}
               >
-                Supprimer
+                Delete
               </button>
             </div>
           </div>
@@ -1945,8 +1948,8 @@ export function RecipeManagerPage() {
           <div className="ra-modal">
             <h3 id="edit-pair-title">
               {isCreatureResultId(editingPair.resultId)
-                ? 'Modifier la créature'
-                : 'Modifier la combinaison'}
+                ? 'Edit creature'
+                : 'Edit combination'}
             </h3>
             {isCreatureResultId(editingPair.resultId) ? (
               <VialOptionCombo
@@ -1961,35 +1964,35 @@ export function RecipeManagerPage() {
                   }))
                 }
                 options={spellOptions}
-                placeholder="Tape pour chercher un sort…"
+                placeholder="Type to search for a spell…"
                 autoComplete="on"
               />
             ) : (
               <>
                 <VialOptionCombo
                   inputId="edA"
-                  label="Ingrédient A"
+                  label="Ingredient A"
                   value={pairEditDraft.a}
                   onChange={(id) =>
                     setPairEditDraft((d) => ({ ...d, a: id }))
                   }
                   options={vialOptions}
-                  placeholder="Tape pour chercher un ingrédient…"
+                  placeholder="Type to search for an ingredient…"
                 />
                 <VialOptionCombo
                   inputId="edB"
-                  label="Ingrédient B"
+                  label="Ingredient B"
                   value={pairEditDraft.b}
                   onChange={(id) =>
                     setPairEditDraft((d) => ({ ...d, b: id }))
                   }
                   options={vialOptions}
-                  placeholder="Tape pour chercher un ingrédient…"
+                  placeholder="Type to search for an ingredient…"
                 />
               </>
             )}
             <div className="ra-formGroup">
-              <label htmlFor="edR">Résultat</label>
+              <label htmlFor="edR">Result</label>
               <input
                 id="edR"
                 className="ra-input"
@@ -2006,14 +2009,14 @@ export function RecipeManagerPage() {
                 className="ra-btn ra-btnPrimary"
                 onClick={saveEditPair}
               >
-                Enregistrer
+                Save
               </button>
               <button
                 type="button"
                 className="ra-btn ra-btnSecondary"
                 onClick={() => setEditingPair(null)}
               >
-                Annuler
+                Cancel
               </button>
             </div>
           </div>
@@ -2033,11 +2036,11 @@ export function RecipeManagerPage() {
           <div className="ra-modal">
             <h3 id="edit-solo-title">
               {editingSolo.catalogSourceId
-                ? 'Enregistrer cet élément'
-                : 'Modifier l’élément'}
+                ? 'Save this element'
+                : 'Edit element'}
             </h3>
             <div className="ra-formGroup">
-              <label htmlFor="edSolo">Nom de l’élément</label>
+              <label htmlFor="edSolo">Element name</label>
               <input
                 id="edSolo"
                 className="ra-input"
@@ -2052,14 +2055,14 @@ export function RecipeManagerPage() {
                 className="ra-btn ra-btnPrimary"
                 onClick={saveEditSolo}
               >
-                Enregistrer
+                Save
               </button>
               <button
                 type="button"
                 className="ra-btn ra-btnSecondary"
                 onClick={() => setEditingSolo(null)}
               >
-                Annuler
+                Cancel
               </button>
             </div>
           </div>

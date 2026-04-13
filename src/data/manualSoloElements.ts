@@ -1,6 +1,6 @@
 /**
- * Références de fioles déclarées seules (sans recette de paire).
- * Mis à jour depuis l’atelier recettes (/#/recipes) — bouton Enregistrer.
+ * Vial references declared alone (no pair recipe).
+ * Updated from the recipe workshop (/#/recipes) — Save button.
  */
 export const MANUAL_SOLO_ELEMENT_IDS: string[] = [
   "craft-abyss"

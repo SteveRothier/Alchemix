@@ -18,7 +18,7 @@ function InventorySection({
   return (
     <section
       className="lab-invSectionScroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden"
-      aria-label={`${title}, ${n} fiole${n > 1 ? 's' : ''}`}
+      aria-label={`${title}, ${n} ${n === 1 ? 'vial' : 'vials'}`}
     >
       <h3 className="lab-invSectionHeading m-0 pr-[0.65rem]">
         <span className="lab-invSectionTitle">{title}</span>
@@ -47,9 +47,9 @@ export function InventoryPanel({
 }: InventoryPanelProps) {
   return (
     <div className="lab-invPanelRoot flex min-h-0 flex-1 flex-col gap-[0.45rem] overflow-hidden pl-[0.65rem] pr-0 pb-2 pt-1">
-      <InventorySection title="Éléments" vials={elements} />
-      <InventorySection title="Sorts" vials={spells} />
-      <InventorySection title="Créatures" vials={creatures} />
+      <InventorySection title="Elements" vials={elements} />
+      <InventorySection title="Spells" vials={spells} />
+      <InventorySection title="Creatures" vials={creatures} />
     </div>
   )
 }

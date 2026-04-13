@@ -131,7 +131,7 @@ export function AlchemixShell() {
   const vialsById = useAlchemixStore((s) => s.vials)
   const resetToStarters = useAlchemixStore((s) => s.resetToStarters)
   const sortName = (a: { name: string }, b: { name: string }) =>
-    a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' })
+    a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })
 
   const inventoryGroups = useMemo(() => {
     const list = Object.values(vialsById)
@@ -383,7 +383,7 @@ export function AlchemixShell() {
       const store = useAlchemixStore.getState()
       const vial = store.vials[vialId]
       if (!vial || vial.type !== 'spell') {
-        showSipHint('Seuls les sorts peuvent être bus.')
+        showSipHint('Only spells can be drunk.')
         return true
       }
       pushLabUndoHistory()
@@ -393,14 +393,14 @@ export function AlchemixShell() {
       }
       switch (result.ok) {
         case true:
-          showSipHint(`${result.creature.name} apparaît !`)
+          showSipHint(`${result.creature.name} appears!`)
           break
         case false: {
           const { reason } = result
           if (reason === 'no_creature') {
-            showSipHint('Aucune créature ne répond à ce sort.')
+            showSipHint('No creature responds to this spell.')
           } else if (reason === 'already_owned') {
-            showSipHint('Créature déjà manifestée.')
+            showSipHint('Creature already manifested.')
           }
           break
         }
@@ -425,7 +425,7 @@ export function AlchemixShell() {
         if (!va || !vb) return
         const outcome = resolveFusionProduct(va, vb, vials)
         if (!outcome.ok) {
-          showSipHint('Ce mélange reste inerte.')
+          showSipHint('This mix stays inert.')
           return
         }
         pushLabUndoHistory()
@@ -522,7 +522,7 @@ export function AlchemixShell() {
         if (!va || !vb) return false
         const outcome = resolveFusionProduct(va, vb, vials)
         if (!outcome.ok) {
-          showSipHint('Ce mélange reste inerte.')
+          showSipHint('This mix stays inert.')
           return false
         }
         pushLabUndoHistory()
@@ -727,7 +727,7 @@ export function AlchemixShell() {
   const handleReset = () => {
     if (
       !window.confirm(
-        'Réinitialiser la progression ? L’inventaire reviendra aux 5 éléments de départ et le laboratoire sera vidé.',
+        'Reset progress? Inventory will return to the 5 starter elements and the laboratory will be cleared.',
       )
     ) {
       return
@@ -748,7 +748,7 @@ export function AlchemixShell() {
           <div className="relative z-10 h-full min-h-0 min-w-0 border-r border-[color:var(--border)] bg-[color:var(--panel-bg,var(--code-bg))]">
             <section
               className="absolute inset-0 overflow-visible"
-              aria-label="Zone de jeu"
+              aria-label="Play area"
             >
               <LabCanvas
                 placed={placed}
@@ -761,7 +761,7 @@ export function AlchemixShell() {
             </section>
             <div
               className="lab-leftHudCharacter pointer-events-none absolute inset-x-0 bottom-0 z-30 p-[0.85rem] pt-12"
-              aria-label="Personnage"
+              aria-label="Character"
             >
               <div className="pointer-events-auto mx-auto w-full max-w-xl">
                 <CharacterSipZone ref={characterSipRef} hint={sipHint} />
@@ -774,17 +774,17 @@ export function AlchemixShell() {
           </div>
           <aside
             className="lab-inventoryColumn relative z-0 flex h-full min-h-0 min-w-0 flex-col overflow-hidden"
-            aria-label="Inventaire"
+            aria-label="Inventory"
           >
             <header className="lab-inventoryColumn-header flex shrink-0 items-center justify-between gap-2 border-b px-[0.65rem] py-2">
-              <h2 className="lab-inventoryTitle">Inventaire</h2>
+              <h2 className="lab-inventoryTitle">Inventory</h2>
               <div className="flex shrink-0 items-center gap-[0.35rem]">
                 <button
                   type="button"
                   className="lab-resetBtn"
                   onClick={handleReset}
-                  title="Réinitialiser la progression"
-                  aria-label="Réinitialiser : inventaire de départ et laboratoire vide"
+                  title="Reset progress"
+                  aria-label="Reset: starter inventory and empty laboratory"
                 >
                   Reset
                 </button>

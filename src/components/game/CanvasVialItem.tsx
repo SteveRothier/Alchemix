@@ -222,7 +222,7 @@ export function CanvasVialItem({
           >
             <div
               className="lab-invItemWrap lab-dragSurface"
-              aria-label={`${vial.name} — glisser pour déplacer, double-clic pour dupliquer, clic droit pour retirer du labo (sélection multiple : glisser sur le fond, puis clic droit sur une carte sélectionnée pour tout retirer)`}
+              aria-label={`${vial.name} — drag to move, double-click to duplicate, right-click to remove from the bench (multi-select: drag on the background, then right-click a selected card to remove all)`}
               onDoubleClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()

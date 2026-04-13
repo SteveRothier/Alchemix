@@ -1,6 +1,6 @@
 /**
- * Recettes catalogue (symétriques côté jeu : ordre a/b indifférent).
- * Mis à jour depuis l’atelier recettes (/#/recipes) — bouton Enregistrer.
+ * Catalog recipes (symmetric in-game: a/b order does not matter).
+ * Updated from the recipe workshop (/#/recipes) — Save button.
  */
 export const MANUAL_RECIPE_PAIRS: { a: string; b: string; resultId: string }[] = [
   { a: "el-fire", b: "el-water", resultId: "craft-steam" },
