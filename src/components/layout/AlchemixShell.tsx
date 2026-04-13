@@ -701,9 +701,27 @@ export function AlchemixShell() {
   )
 
   const clearLabCanvas = useCallback(() => {
+    const ids = placedRef.current.map((p) => p.instanceId)
+    if (ids.length === 0) return
     pushLabUndoHistory()
-    setPlaced([])
-    setSelectedIdsArr([])
+    const root = canvasRef.current
+    if (!root) {
+      setPlaced([])
+      setSelectedIdsArr([])
+      return
+    }
+    let remaining = ids.length
+    const onOneDone = () => {
+      remaining -= 1
+      if (remaining <= 0) {
+        setPlaced([])
+        setSelectedIdsArr([])
+      }
+    }
+    for (const id of ids) {
+      const chip = canvasChipForInstance(root, id)
+      shrinkRemoveLabVial(chip, onOneDone)
+    }
   }, [pushLabUndoHistory])
 
   const handleReset = () => {

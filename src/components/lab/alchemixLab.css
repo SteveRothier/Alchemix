@@ -899,3 +899,71 @@ html[data-lab-canvas-chip-drag]
 .lab-controls-detail {
   color: var(--text);
 }
+
+/* ——— Clear canvas : même look que Controls (voile + carte + header) ——— */
+
+.lab-controls-dim.lab-clear-dim {
+  z-index: 405;
+}
+
+.lab-controls-dialog-layer.lab-clear-dialog-layer {
+  z-index: 406;
+}
+
+.lab-controls-dialog.lab-clear-dialog {
+  width: min(19rem, calc(100% - 2rem));
+  max-height: none;
+}
+
+.lab-clear-confirm-body {
+  padding: 0.85rem 0.85rem 0.8rem;
+  text-align: center;
+}
+
+.lab-clear-confirm-body .lab-clear-question {
+  margin: 0 0 0.8rem;
+  line-height: 1.4;
+}
+
+.lab-clear-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.lab-clear-dialog .lab-clear-btn {
+  min-width: 4rem;
+  padding: 0.32rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-lab-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  color: var(--text);
+  transition:
+    border-color 0.12s ease,
+    color 0.12s ease,
+    background 0.12s ease;
+}
+
+.lab-clear-dialog .lab-clear-btn-yes {
+  background: color-mix(in srgb, var(--panel-bg) 82%, var(--bg));
+}
+
+.lab-clear-dialog .lab-clear-btn-no {
+  background: var(--bg);
+  color: var(--text-muted);
+}
+
+.lab-clear-dialog .lab-clear-btn:hover {
+  border-color: var(--lab-hover);
+  color: var(--lab-hover);
+}
+
+.lab-clear-dialog .lab-clear-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lab-hover) 50%, transparent);
+  outline-offset: 2px;
+}

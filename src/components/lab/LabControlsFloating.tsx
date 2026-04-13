@@ -1,5 +1,5 @@
 import { gsap } from 'gsap'
-import { Keyboard, X } from 'lucide-react'
+import { Keyboard, Trash2, X } from 'lucide-react'
 import {
   useCallback,
   useEffect,
@@ -37,6 +37,11 @@ const ROWS: { keys: string; detail: string }[] = [
 const DIM_BLUR_PX = 1.5
 const DIM_BLUR_MAX = `${DIM_BLUR_PX}px`
 
+export type LabControlsFloatingProps = {
+  onClearCanvas: () => void
+  canClearCanvas: boolean
+}
+
 function iconToDialogDelta(
   fab: HTMLElement,
   dialog: HTMLElement,
@@ -50,8 +55,93 @@ function iconToDialogDelta(
   return { dx: ix - cx, dy: iy - cy }
 }
 
-export function LabControlsFloating() {
+/** Ouverture depuis le FAB (même timing que la modale Controls). */
+function playIconModalOpen(
+  dim: HTMLElement,
+  dialog: HTMLElement,
+  fab: HTMLElement,
+  onComplete: () => void,
+) {
+  const { dx, dy } = iconToDialogDelta(fab, dialog)
+  gsap.killTweensOf([dim, dialog])
+  gsap.set(dim, {
+    opacity: 0,
+    '--lab-controls-dim-blur': '0px',
+  })
+  gsap.set(dialog, {
+    x: dx,
+    y: dy,
+    scale: 0.12,
+    opacity: 0,
+    transformOrigin: '50% 50%',
+  })
+  const tl = gsap.timeline({ onComplete })
+  tl.to(
+    dim,
+    {
+      opacity: 1,
+      '--lab-controls-dim-blur': DIM_BLUR_MAX,
+      duration: 0.4,
+      ease: 'power1.out',
+    },
+    0,
+  )
+  tl.to(
+    dialog,
+    {
+      x: 0,
+      y: 0,
+      scale: 1,
+      opacity: 1,
+      duration: 0.42,
+      ease: 'power2.out',
+    },
+    0,
+  )
+  return tl
+}
+
+/** Fermeture vers le FAB. */
+function playIconModalClose(
+  dim: HTMLElement,
+  dialog: HTMLElement,
+  fab: HTMLElement,
+  onComplete: () => void,
+) {
+  const { dx, dy } = iconToDialogDelta(fab, dialog)
+  gsap.killTweensOf([dim, dialog])
+  const tl = gsap.timeline({ onComplete })
+  tl.to(
+    dialog,
+    {
+      x: dx,
+      y: dy,
+      scale: 0.12,
+      opacity: 0,
+      duration: 0.32,
+      ease: 'power2.in',
+    },
+    0,
+  )
+  tl.to(
+    dim,
+    {
+      opacity: 0,
+      '--lab-controls-dim-blur': '0px',
+      duration: 0.32,
+      ease: 'power1.in',
+    },
+    0.04,
+  )
+  return tl
+}
+
+export function LabControlsFloating({
+  onClearCanvas,
+  canClearCanvas,
+}: LabControlsFloatingProps) {
   const [open, setOpen] = useState(false)
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
   const fabRef = useRef<HTMLButtonElement>(null)
   const dimRef = useRef<HTMLDivElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
@@ -60,7 +150,16 @@ export function LabControlsFloating() {
   const openRef = useRef(open)
   openRef.current = open
 
+  const clearDimRef = useRef<HTMLDivElement>(null)
+  const clearDialogRef = useRef<HTMLDivElement>(null)
+  const clearFabRef = useRef<HTMLButtonElement>(null)
+  const clearYesRef = useRef<HTMLButtonElement>(null)
+  const clearClosingRef = useRef(false)
+  const clearConfirmOpenRef = useRef(clearConfirmOpen)
+  clearConfirmOpenRef.current = clearConfirmOpen
+
   const titleId = useId()
+  const clearQuestionId = useId()
 
   const runCloseAnimation = useCallback((onDone: () => void) => {
     const dim = dimRef.current
@@ -70,31 +169,7 @@ export function LabControlsFloating() {
       onDone()
       return
     }
-    const { dx, dy } = iconToDialogDelta(fab, dialog)
-    gsap.killTweensOf([dim, dialog])
-    const tl = gsap.timeline({ onComplete: onDone })
-    tl.to(
-      dialog,
-      {
-        x: dx,
-        y: dy,
-        scale: 0.12,
-        opacity: 0,
-        duration: 0.32,
-        ease: 'power2.in',
-      },
-      0,
-    )
-    tl.to(
-      dim,
-      {
-        opacity: 0,
-        '--lab-controls-dim-blur': '0px',
-        duration: 0.32,
-        ease: 'power1.in',
-      },
-      0.04,
-    )
+    playIconModalClose(dim, dialog, fab, onDone)
   }, [])
 
   const requestClose = useCallback(() => {
@@ -106,6 +181,29 @@ export function LabControlsFloating() {
     })
   }, [runCloseAnimation])
 
+  const requestCloseClear = useCallback(() => {
+    if (!clearConfirmOpenRef.current || clearClosingRef.current) return
+    clearClosingRef.current = true
+    const dim = clearDimRef.current
+    const dlg = clearDialogRef.current
+    const fab = clearFabRef.current
+    if (!dim || !dlg || !fab) {
+      setClearConfirmOpen(false)
+      clearClosingRef.current = false
+      return
+    }
+    playIconModalClose(dim, dlg, fab, () => {
+      setClearConfirmOpen(false)
+      clearClosingRef.current = false
+    })
+  }, [])
+
+  const confirmClearCanvas = useCallback(() => {
+    if (clearClosingRef.current) return
+    onClearCanvas()
+    requestCloseClear()
+  }, [onClearCanvas, requestCloseClear])
+
   useLayoutEffect(() => {
     if (!open) return
     const dim = dimRef.current
@@ -113,51 +211,9 @@ export function LabControlsFloating() {
     const fab = fabRef.current
     if (!dim || !dialog || !fab) return
 
-    /**
-     * Pas de requestAnimationFrame ici : le premier paint verrait la modale
-     * déjà centrée avant le gsap.set. useLayoutEffect s’exécute après le layout
-     * mais avant le paint : mesure + état initial + timeline restent synchrones.
-     */
-    const { dx, dy } = iconToDialogDelta(fab, dialog)
-    gsap.killTweensOf([dim, dialog])
-    gsap.set(dim, {
-      opacity: 0,
-      '--lab-controls-dim-blur': '0px',
+    const tl = playIconModalOpen(dim, dialog, fab, () => {
+      closeBtnRef.current?.focus()
     })
-    gsap.set(dialog, {
-      x: dx,
-      y: dy,
-      scale: 0.12,
-      opacity: 0,
-      transformOrigin: '50% 50%',
-    })
-    const tl = gsap.timeline({
-      onComplete: () => {
-        closeBtnRef.current?.focus()
-      },
-    })
-    tl.to(
-      dim,
-      {
-        opacity: 1,
-        '--lab-controls-dim-blur': DIM_BLUR_MAX,
-        duration: 0.4,
-        ease: 'power1.out',
-      },
-      0,
-    )
-    tl.to(
-      dialog,
-      {
-        x: 0,
-        y: 0,
-        scale: 1,
-        opacity: 1,
-        duration: 0.42,
-        ease: 'power2.out',
-      },
-      0,
-    )
 
     return () => {
       tl.kill()
@@ -165,14 +221,34 @@ export function LabControlsFloating() {
     }
   }, [open])
 
+  useLayoutEffect(() => {
+    if (!clearConfirmOpen) return
+    const dim = clearDimRef.current
+    const dlg = clearDialogRef.current
+    const fab = clearFabRef.current
+    if (!dim || !dlg || !fab) return
+    const tl = playIconModalOpen(dim, dlg, fab, () => {
+      clearYesRef.current?.focus()
+    })
+    return () => {
+      tl.kill()
+      gsap.killTweensOf([dim, dlg])
+    }
+  }, [clearConfirmOpen])
+
   useEffect(() => {
-    if (!open) return
+    if (!open && !clearConfirmOpen) return
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') requestClose()
+      if (e.key !== 'Escape') return
+      const t = e.target as HTMLElement | null
+      if (t?.closest('input, textarea, select, [contenteditable="true"]')) return
+      e.preventDefault()
+      if (clearConfirmOpen) requestCloseClear()
+      else requestClose()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, requestClose])
+  }, [clearConfirmOpen, open, requestClose, requestCloseClear])
 
   useEffect(() => {
     return () => {
@@ -180,10 +256,14 @@ export function LabControlsFloating() {
       const dlg = dialogRef.current
       if (d) gsap.killTweensOf(d)
       if (dlg) gsap.killTweensOf(dlg)
+      const cd = clearDimRef.current
+      const cdlg = clearDialogRef.current
+      if (cd) gsap.killTweensOf(cd)
+      if (cdlg) gsap.killTweensOf(cdlg)
     }
   }, [])
 
-  const modal =
+  const controlsModal =
     open &&
     createPortal(
       <>
@@ -234,10 +314,73 @@ export function LabControlsFloating() {
       document.body,
     )
 
+  const clearModal =
+    clearConfirmOpen &&
+    createPortal(
+      <>
+        <div
+          ref={clearDimRef}
+          className="lab-controls-dim lab-clear-dim"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) requestCloseClear()
+          }}
+        />
+        <div className="lab-controls-dialog-layer lab-clear-dialog-layer">
+          <div
+            ref={clearDialogRef}
+            className="lab-controls-dialog lab-clear-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={clearQuestionId}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="lab-clear-confirm-body">
+              <p id={clearQuestionId} className="lab-controls-detail lab-clear-question">
+                Clear all items on the canvas?
+              </p>
+              <div className="lab-clear-actions">
+                <button
+                  ref={clearYesRef}
+                  type="button"
+                  className="lab-clear-btn lab-clear-btn-yes"
+                  onClick={confirmClearCanvas}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  className="lab-clear-btn lab-clear-btn-no"
+                  onClick={requestCloseClear}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>,
+      document.body,
+    )
+
   return (
     <>
-      {modal}
-      <div className="pointer-events-none absolute bottom-0 right-0 z-40 p-2 max-[560px]:p-1.5">
+      {controlsModal}
+      {clearModal}
+      <div className="pointer-events-none absolute bottom-0 right-0 z-40 flex flex-row items-center gap-2 p-2 max-[560px]:gap-1.5 max-[560px]:p-1.5">
+        <button
+          ref={clearFabRef}
+          type="button"
+          className="lab-controls-fab pointer-events-auto"
+          onClick={() => {
+            if (!canClearCanvas || clearClosingRef.current) return
+            setClearConfirmOpen(true)
+          }}
+          title="Clear the bench"
+          aria-label="Clear all items from the laboratory bench"
+        >
+          <Trash2 size={22} strokeWidth={2} aria-hidden className="shrink-0" />
+        </button>
         <button
           ref={fabRef}
           type="button"
