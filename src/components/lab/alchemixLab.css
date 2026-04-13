@@ -803,6 +803,63 @@ html[data-lab-canvas-chip-drag]
   }
 }
 
+/* Sélecteur de langue (globe) */
+.alchemix-lab .lab-langFabWrap {
+  z-index: 45;
+}
+
+/* Tooltip globe : plus serré, lisible au survol */
+.alchemix-lab .lab-langFabTooltip {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  padding: 0.28rem 0.5rem;
+}
+
+/* Popover langue (portail body + GSAP, comme les autres modales) */
+.lab-langPopover {
+  min-width: 9rem;
+  padding: 0.35rem;
+  border-radius: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, var(--lab-hover) 15%);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--panel-bg) 96%, #fff) 0%,
+    var(--panel-bg) 100%
+  );
+  box-shadow:
+    0 2px 4px color-mix(in srgb, var(--text-h) 6%, transparent),
+    0 14px 36px color-mix(in srgb, var(--text-h) 12%, transparent);
+}
+
+.lab-langOption {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.42rem 0.55rem;
+  border: none;
+  border-radius: 0.4rem;
+  text-align: left;
+  font-family: var(--font-lab-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-h);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    color 0.12s ease;
+}
+
+.lab-langOption:hover {
+  background: color-mix(in srgb, var(--lab-hover) 14%, transparent);
+}
+
+.lab-langOption:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lab-hover) 50%, transparent);
+  outline-offset: 2px;
+}
+
 /* Voile (opacité animée par GSAP, séparé de la boîte pour ne pas la faire disparaître deux fois). */
 .lab-controls-dim {
   position: fixed;

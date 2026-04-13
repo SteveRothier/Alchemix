@@ -1,5 +1,5 @@
 import { gsap } from 'gsap'
-import { Keyboard, Trash2, X } from 'lucide-react'
+import { Globe, Keyboard, Trash2, X } from 'lucide-react'
 import {
   useCallback,
   useEffect,
@@ -142,7 +142,9 @@ export function LabControlsFloating({
 }: LabControlsFloatingProps) {
   const [open, setOpen] = useState(false)
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
+  const [langMenuOpen, setLangMenuOpen] = useState(false)
   const fabRef = useRef<HTMLButtonElement>(null)
+  const langFabRef = useRef<HTMLButtonElement>(null)
   const dimRef = useRef<HTMLDivElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeBtnRef = useRef<HTMLButtonElement>(null)
@@ -157,6 +159,12 @@ export function LabControlsFloating({
   const clearClosingRef = useRef(false)
   const clearConfirmOpenRef = useRef(clearConfirmOpen)
   clearConfirmOpenRef.current = clearConfirmOpen
+
+  const langDimRef = useRef<HTMLDivElement>(null)
+  const langDialogRef = useRef<HTMLDivElement>(null)
+  const langClosingRef = useRef(false)
+  const langMenuOpenRef = useRef(langMenuOpen)
+  langMenuOpenRef.current = langMenuOpen
 
   const titleId = useId()
   const clearQuestionId = useId()
@@ -204,6 +212,23 @@ export function LabControlsFloating({
     requestCloseClear()
   }, [onClearCanvas, requestCloseClear])
 
+  const requestCloseLang = useCallback(() => {
+    if (!langMenuOpenRef.current || langClosingRef.current) return
+    langClosingRef.current = true
+    const dim = langDimRef.current
+    const dlg = langDialogRef.current
+    const fab = langFabRef.current
+    if (!dim || !dlg || !fab) {
+      setLangMenuOpen(false)
+      langClosingRef.current = false
+      return
+    }
+    playIconModalClose(dim, dlg, fab, () => {
+      setLangMenuOpen(false)
+      langClosingRef.current = false
+    })
+  }, [])
+
   useLayoutEffect(() => {
     if (!open) return
     const dim = dimRef.current
@@ -236,19 +261,56 @@ export function LabControlsFloating({
     }
   }, [clearConfirmOpen])
 
+  useLayoutEffect(() => {
+    if (!langMenuOpen) return
+    const fab = langFabRef.current
+    const dlg = langDialogRef.current
+    const dim = langDimRef.current
+    if (!fab || !dlg || !dim) return
+    const fr = fab.getBoundingClientRect()
+    const gap = 6
+    Object.assign(dlg.style, {
+      position: 'fixed',
+      right: `${window.innerWidth - fr.right}px`,
+      bottom: `${window.innerHeight - fr.top + gap}px`,
+      left: 'auto',
+      top: 'auto',
+      margin: '0',
+      zIndex: '401',
+    })
+    const tl = playIconModalOpen(dim, dlg, fab, () => {
+      dlg.querySelector<HTMLButtonElement>('.lab-langOption')?.focus()
+    })
+    return () => {
+      tl.kill()
+      gsap.killTweensOf([dim, dlg])
+    }
+  }, [langMenuOpen])
+
   useEffect(() => {
-    if (!open && !clearConfirmOpen) return
+    if (!open && !clearConfirmOpen && !langMenuOpen) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       const t = e.target as HTMLElement | null
       if (t?.closest('input, textarea, select, [contenteditable="true"]')) return
       e.preventDefault()
       if (clearConfirmOpen) requestCloseClear()
-      else requestClose()
+      else if (open) requestClose()
+      else if (langMenuOpen) {
+        requestCloseLang()
+        langFabRef.current?.focus()
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [clearConfirmOpen, open, requestClose, requestCloseClear])
+  }, [
+    clearConfirmOpen,
+    open,
+    langMenuOpen,
+    requestClose,
+    requestCloseClear,
+    requestCloseLang,
+  ])
 
   useEffect(() => {
     return () => {
@@ -260,6 +322,10 @@ export function LabControlsFloating({
       const cdlg = clearDialogRef.current
       if (cd) gsap.killTweensOf(cd)
       if (cdlg) gsap.killTweensOf(cdlg)
+      const ld = langDimRef.current
+      const ldlg = langDialogRef.current
+      if (ld) gsap.killTweensOf(ld)
+      if (ldlg) gsap.killTweensOf(ldlg)
     }
   }, [])
 
@@ -363,10 +429,50 @@ export function LabControlsFloating({
       document.body,
     )
 
+  const langModal =
+    langMenuOpen &&
+    createPortal(
+      <>
+        <div
+          ref={langDimRef}
+          className="lab-controls-dim"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) requestCloseLang()
+          }}
+        />
+        <div
+          ref={langDialogRef}
+          className="lab-langPopover"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Choose language"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="lab-langOption"
+            onClick={requestCloseLang}
+          >
+            English
+          </button>
+          <button
+            type="button"
+            className="lab-langOption"
+            onClick={requestCloseLang}
+          >
+            Français
+          </button>
+        </div>
+      </>,
+      document.body,
+    )
+
   return (
     <>
       {controlsModal}
       {clearModal}
+      {langModal}
       <div className="pointer-events-none absolute bottom-0 right-0 z-40 flex flex-row items-center gap-2 p-2 max-[560px]:gap-1.5 max-[560px]:p-1.5">
         <div className="lab-fabWithTooltip pointer-events-auto">
           <button
@@ -402,6 +508,26 @@ export function LabControlsFloating({
           </button>
           <span className="lab-fabTooltip" aria-hidden="true">
             Controls
+          </span>
+        </div>
+        <div className="lab-fabWithTooltip lab-langFabWrap pointer-events-auto">
+          <button
+            ref={langFabRef}
+            type="button"
+            className="lab-controls-fab"
+            aria-expanded={langMenuOpen}
+            aria-haspopup="dialog"
+            aria-label="Choose language"
+            onClick={() => {
+              if (langClosingRef.current) return
+              if (langMenuOpenRef.current) requestCloseLang()
+              else setLangMenuOpen(true)
+            }}
+          >
+            <Globe size={22} strokeWidth={2} aria-hidden className="shrink-0" />
+          </button>
+          <span className="lab-fabTooltip lab-langFabTooltip" aria-hidden="true">
+            EN / FR
           </span>
         </div>
       </div>
