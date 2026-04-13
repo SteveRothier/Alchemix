@@ -113,9 +113,22 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
     }
 
     const detachDocument = () => {
-      document.removeEventListener('pointermove', onPointerMove)
-      document.removeEventListener('pointerup', onPointerEnd)
-      document.removeEventListener('pointercancel', onPointerEnd)
+      document.removeEventListener('pointermove', onPointerMove, true)
+      document.removeEventListener('pointerup', onPointerEnd, true)
+      document.removeEventListener('pointercancel', onPointerEnd, true)
+    }
+
+    const releaseCaptureIfAny = (pointerId: number) => {
+      try {
+        if (
+          typeof el.hasPointerCapture === 'function' &&
+          el.hasPointerCapture(pointerId)
+        ) {
+          el.releasePointerCapture(pointerId)
+        }
+      } catch {
+        /* navigateurs / shadow DOM */
+      }
     }
 
     function clampToLab(clientX: number, clientY: number) {
@@ -143,6 +156,13 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
         dragActive = true
         e.preventDefault()
 
+        const moves =
+          typeof e.getCoalescedEvents === 'function' &&
+          e.getCoalescedEvents().length > 0
+            ? e.getCoalescedEvents()
+            : [e]
+        const lastEv = moves[moves.length - 1]!
+
         const r = el.getBoundingClientRect()
         ghostEl = el.cloneNode(true) as HTMLDivElement
         ghostEl.classList.add('lab-invDragGhost')
@@ -168,16 +188,15 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
         const ghostBox = ghostEl.getBoundingClientRect()
         ghostW = ghostBox.width
         ghostH = ghostBox.height
-        /* Placer sous le pointeur avant grabOffsetRef : sinon le centre puce / souris est faux. */
-        const firstMoves =
-          typeof e.getCoalescedEvents === 'function' &&
-          e.getCoalescedEvents().length > 0
-            ? e.getCoalescedEvents()
-            : [e]
-        const firstLast = firstMoves[firstMoves.length - 1]!
-        const px = firstLast.clientX
-        const py = firstLast.clientY
-        clampToLab(px, py)
+        /*
+         * Recalcul du point de prise au moment où le drag démarre (rect actuel + dernier point du lot).
+         * Sinon, grabDx/grabDy figés au pointerdown + défilement / coalescence = saut ou « téléportation » si on va vite.
+         */
+        grabDx = lastEv.clientX - r.left
+        grabDy = lastEv.clientY - r.top
+        for (const ev of moves) {
+          clampToLab(ev.clientX, ev.clientY)
+        }
         scheduleFusionHoverFromGhost()
 
         ghostChipEl = ghostEl.querySelector(
@@ -187,8 +206,8 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
         if (chip) {
           const cr = chip.getBoundingClientRect()
           ctx.grabOffsetRef.current = {
-            dx: cr.left + cr.width / 2 - px,
-            dy: cr.top + cr.height / 2 - py,
+            dx: cr.left + cr.width / 2 - lastEv.clientX,
+            dy: cr.top + cr.height / 2 - lastEv.clientY,
           }
         } else {
           ctx.grabOffsetRef.current = null
@@ -211,6 +230,7 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
 
     function onPointerEnd(e: PointerEvent) {
       if (e.pointerId !== activePointerId) return
+      releaseCaptureIfAny(e.pointerId)
       detachDocument()
       activePointerId = null
 
@@ -251,15 +271,27 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
       grabDx = e.clientX - r.left
       grabDy = e.clientY - r.top
       activePointerId = e.pointerId
-      document.addEventListener('pointermove', onPointerMove, { passive: false })
-      document.addEventListener('pointerup', onPointerEnd)
-      document.addEventListener('pointercancel', onPointerEnd)
+      try {
+        el.setPointerCapture(e.pointerId)
+      } catch {
+        /* élément non eligible */
+      }
+      /* capture: true — certains cibles sous le curseur peuvent stopper la propagation avant document. */
+      document.addEventListener('pointermove', onPointerMove, {
+        passive: false,
+        capture: true,
+      })
+      document.addEventListener('pointerup', onPointerEnd, { capture: true })
+      document.addEventListener('pointercancel', onPointerEnd, { capture: true })
     }
 
     el.addEventListener('pointerdown', onPointerDown)
 
     return () => {
       el.removeEventListener('pointerdown', onPointerDown)
+      if (activePointerId !== null) {
+        releaseCaptureIfAny(activePointerId)
+      }
       detachDocument()
       cancelFusionHoverRaf()
       removeGhost()

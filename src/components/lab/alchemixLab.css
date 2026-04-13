@@ -752,6 +752,57 @@ html[data-lab-canvas-chip-drag]
   opacity: 0.75;
 }
 
+/* Infobulles FAB (clavier / corbeille) — au-dessus, thème labo. */
+.alchemix-lab .lab-fabWithTooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.alchemix-lab .lab-fabTooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.4rem);
+  z-index: 60;
+  transform: translateX(-50%) translateY(0.2rem);
+  padding: 0.3rem 0.55rem;
+  border-radius: 0.35rem;
+  font-family: var(--font-lab-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1.25;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--panel-bg) 94%, #fff);
+  background: color-mix(in srgb, var(--text-h) 88%, var(--lab-hover) 12%);
+  border: 1px solid color-mix(in srgb, var(--lab-hover) 42%, transparent);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--text-h) 12%, transparent),
+    0 4px 14px color-mix(in srgb, var(--text-h) 16%, transparent);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease,
+    visibility 0.18s ease,
+    transform 0.18s ease;
+}
+
+.alchemix-lab .lab-fabWithTooltip:hover .lab-fabTooltip,
+.alchemix-lab .lab-fabWithTooltip:focus-within .lab-fabTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alchemix-lab .lab-fabTooltip {
+    transition-duration: 0.01ms;
+  }
+}
+
 /* Voile (opacité animée par GSAP, séparé de la boîte pour ne pas la faire disparaître deux fois). */
 .lab-controls-dim {
   position: fixed;

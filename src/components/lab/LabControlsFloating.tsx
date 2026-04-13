@@ -368,34 +368,42 @@ export function LabControlsFloating({
       {controlsModal}
       {clearModal}
       <div className="pointer-events-none absolute bottom-0 right-0 z-40 flex flex-row items-center gap-2 p-2 max-[560px]:gap-1.5 max-[560px]:p-1.5">
-        <button
-          ref={clearFabRef}
-          type="button"
-          className="lab-controls-fab pointer-events-auto"
-          onClick={() => {
-            if (!canClearCanvas || clearClosingRef.current) return
-            setClearConfirmOpen(true)
-          }}
-          title="Clear the bench"
-          aria-label="Clear all items from the laboratory bench"
-        >
-          <Trash2 size={22} strokeWidth={2} aria-hidden className="shrink-0" />
-        </button>
-        <button
-          ref={fabRef}
-          type="button"
-          className="lab-controls-fab pointer-events-auto"
-          onClick={() => {
-            if (openRef.current) requestClose()
-            else setOpen(true)
-          }}
-          aria-expanded={open}
-          aria-haspopup="dialog"
-          title="Laboratory controls"
-          aria-label="Show laboratory controls"
-        >
-          <Keyboard size={22} strokeWidth={2} aria-hidden className="shrink-0" />
-        </button>
+        <div className="lab-fabWithTooltip pointer-events-auto">
+          <button
+            ref={clearFabRef}
+            type="button"
+            className="lab-controls-fab"
+            onClick={() => {
+              if (!canClearCanvas || clearClosingRef.current) return
+              setClearConfirmOpen(true)
+            }}
+            aria-label="Clear canvas"
+          >
+            <Trash2 size={22} strokeWidth={2} aria-hidden className="shrink-0" />
+          </button>
+          <span className="lab-fabTooltip" aria-hidden="true">
+            Clear canvas
+          </span>
+        </div>
+        <div className="lab-fabWithTooltip pointer-events-auto">
+          <button
+            ref={fabRef}
+            type="button"
+            className="lab-controls-fab"
+            onClick={() => {
+              if (openRef.current) requestClose()
+              else setOpen(true)
+            }}
+            aria-expanded={open}
+            aria-haspopup="dialog"
+            aria-label="Controls"
+          >
+            <Keyboard size={22} strokeWidth={2} aria-hidden className="shrink-0" />
+          </button>
+          <span className="lab-fabTooltip" aria-hidden="true">
+            Controls
+          </span>
+        </div>
       </div>
     </>
   )
