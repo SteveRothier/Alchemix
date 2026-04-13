@@ -101,11 +101,11 @@ export function buildDynamicSpellDraft(
 
   const name = englishSpellName(dominant, sec, canonicalId)
   const description = sec
-    ? `Improvised spell: ${dominant} overtone with ${sec} undertone.`
-    : `Improvised spell anchored in ${dominant}.`
+    ? `Improvised essence: ${dominant} overtone with ${sec} undertone.`
+    : `Improvised essence anchored in ${dominant}.`
 
   return {
-    type: 'spell',
+    type: 'element',
     name,
     description,
     liquid: {

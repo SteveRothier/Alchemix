@@ -47,7 +47,7 @@ function kindFromVial(vial: Vial): IngredientKind {
   const { id, type } = vial
   if (id.startsWith('creature-') || type === 'creature') return 'creature'
   if (id.startsWith('dyn-sp-')) return 'spell'
-  if (type === 'spell' || id.startsWith('sp-')) return 'spell'
+  if (id.startsWith('sp-')) return 'spell'
   if (id.startsWith('el-')) return 'primordial'
   if (id.startsWith('dyn-el-')) return 'crafted'
   if (id.startsWith('craft-') || id.startsWith('dyn-')) return 'crafted'
@@ -190,7 +190,7 @@ function affinityFromGenericId(id: string): ElementAffinity {
 export function getIngredientProfile(vial: Vial): IngredientProfile {
   const kind = kindFromVial(vial)
   const intensity = RARITY_TO_INTENSITY[vial.rarity] ?? 0
-  const { id, type } = vial
+  const { id } = vial
 
   const elCanon = /^dyn-el-(\d+)-(\d+)$/.exec(id)
   if (elCanon) {
@@ -216,7 +216,7 @@ export function getIngredientProfile(vial: Vial): IngredientProfile {
     /^dyn-sp-(air|arcane|earth|fire|light|nature|shadow|water)-(mono|air|arcane|earth|fire|light|nature|shadow|water)$/.exec(
       id,
     )
-  if (spCanon && type === 'spell') {
+  if (spCanon) {
     return {
       affinity: spCanon[1] as ElementAffinity,
       kind: 'spell',

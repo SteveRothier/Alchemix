@@ -1,8 +1,8 @@
 /**
- * Sorts qui, donnés à boire au personnage, peuvent manifester une créature.
- * Absence dans cette table = pas de créature (rareté / découverte).
+ * Element ids that can unlock a creature trophy when offered.
+ * Absence from this table = no trophy unlock.
  */
-export const SPELL_ID_TO_CREATURE_ID: Partial<Record<string, string>> = {
+export const OFFERING_ID_TO_CREATURE_ID: Partial<Record<string, string>> = {
   'sp-fireball': 'creature-infernal-beast',
   'sp-inferno-wave': 'creature-infernal-beast',
   'sp-icy-wind': 'creature-frost-beast',
@@ -17,6 +17,6 @@ export const SPELL_ID_TO_CREATURE_ID: Partial<Record<string, string>> = {
   'sp-plague-touch': 'creature-toxic-beast',
 }
 
-export function getCreatureIdFromDrunkSpell(spellVialId: string): string | null {
-  return SPELL_ID_TO_CREATURE_ID[spellVialId] ?? null
+export function getCreatureIdFromOfferedElement(vialId: string): string | null {
+  return OFFERING_ID_TO_CREATURE_ID[vialId] ?? null
 }

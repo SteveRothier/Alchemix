@@ -1,8 +1,6 @@
 import type { NewVialDraft, Vial, VialRarity, VialType } from '../types'
 import { buildDynamicElementDraft } from './dynamicElement'
-import { buildDynamicSpellDraft } from './dynamicSpell'
 import {
-  combineIngredientProfiles,
   ELEMENT_AFFINITY_ORDER,
   getIngredientProfile,
 } from './ingredientProfile'
@@ -24,28 +22,20 @@ function bumpRarity(r: VialRarity): VialRarity {
 }
 
 function resultType(va: Vial, vb: Vial): VialType {
-  if (va.type === 'creature' || vb.type === 'creature') return 'spell'
-  if (va.type === 'element' && vb.type === 'element') return 'element'
-  if (va.type === 'spell' && vb.type === 'spell') return 'spell'
-  return 'spell'
+  void va
+  void vb
+  return 'element'
 }
 
 /** Id canonique : plusieurs paires d’ingrédients peuvent mener à la même fiole. */
 export function canonicalDynamicVialId(ingredientA: Vial, ingredientB: Vial): string {
-  const rt = resultType(ingredientA, ingredientB)
   const pa = getIngredientProfile(ingredientA)
   const pb = getIngredientProfile(ingredientB)
-  if (rt === 'element') {
-    const ia = ELEMENT_AFFINITY_ORDER.indexOf(pa.affinity)
-    const ib = ELEMENT_AFFINITY_ORDER.indexOf(pb.affinity)
-    const lo = Math.min(ia, ib)
-    const hi = Math.max(ia, ib)
-    return `dyn-el-${lo}-${hi}`
-  }
-  const { dominant, secondary } = combineIngredientProfiles(pa, pb)
-  const sec =
-    secondary && secondary !== dominant ? secondary : 'mono'
-  return `dyn-sp-${dominant}-${sec}`
+  const ia = ELEMENT_AFFINITY_ORDER.indexOf(pa.affinity)
+  const ib = ELEMENT_AFFINITY_ORDER.indexOf(pb.affinity)
+  const lo = Math.min(ia, ib)
+  const hi = Math.max(ia, ib)
+  return `dyn-el-${lo}-${hi}`
 }
 
 /**
@@ -65,15 +55,6 @@ export function isInertUnseededFusion(ingredientA: Vial, ingredientB: Vial): boo
     if (
       /^dyn-el-\d+-\d+$/.test(ingredientA.id) &&
       /^dyn-el-\d+-\d+$/.test(ingredientB.id)
-    ) {
-      return true
-    }
-  }
-
-  if (rt === 'spell') {
-    if (
-      /^dyn-sp-/.test(ingredientA.id) &&
-      /^dyn-sp-/.test(ingredientB.id)
     ) {
       return true
     }
@@ -99,7 +80,7 @@ export function buildDynamicVialDraft(
       canonicalId,
     )
   }
-  return buildDynamicSpellDraft(
+  return buildDynamicElementDraft(
     ingredientA,
     ingredientB,
     rarity,

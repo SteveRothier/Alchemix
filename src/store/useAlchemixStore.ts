@@ -11,22 +11,22 @@ function freshStarterState(isoTime: string) {
   return {
     vials: stampStarterVials(isoTime),
     fusionCount: 0,
-    spellUseCount: {} as Record<string, number>,
+    offeringUseCount: {} as Record<string, number>,
   }
 }
 
 type PersistedData = {
   vials: Record<string, Vial>
   fusionCount: number
-  spellUseCount: Record<string, number>
+  offeringUseCount: Record<string, number>
 }
 
 export type AlchemixState = PersistedData & {
   addVial: (vial: Vial) => void
   recordFusion: () => void
-  incrementSpellUse: (vialId: string) => void
-  /** Fait boire un sort au personnage : usage + éventuelle créature (première fois). */
-  feedSpellToCharacter: (spellVialId: string) => DrinkSpellResult
+  incrementOfferingUse: (vialId: string) => void
+  /** Offer an element to the character and maybe unlock a creature trophy. */
+  offerElementToCharacter: (vialId: string) => DrinkSpellResult
   resetToStarters: () => void
 }
 
@@ -47,30 +47,30 @@ export const useAlchemixStore = create<AlchemixState>()(
           fusionCount: s.fusionCount + 1,
         })),
 
-      incrementSpellUse: (vialId) =>
+      incrementOfferingUse: (vialId) =>
         set((s) => ({
-          spellUseCount: {
-            ...s.spellUseCount,
-            [vialId]: (s.spellUseCount[vialId] ?? 0) + 1,
+          offeringUseCount: {
+            ...s.offeringUseCount,
+            [vialId]: (s.offeringUseCount[vialId] ?? 0) + 1,
           },
         })),
 
-      feedSpellToCharacter: (spellVialId) => {
-        const spell = get().vials[spellVialId]
-        if (!spell || spell.type !== 'spell') {
-          return { ok: false, reason: 'not_spell' }
+      offerElementToCharacter: (vialId) => {
+        const offered = get().vials[vialId]
+        if (!offered || offered.type !== 'element') {
+          return { ok: false, reason: 'not_element' }
         }
         const vials = get().vials
-        const result = resolveDrinkSpell(spell, vials)
-        const nextUse = (get().spellUseCount[spellVialId] ?? 0) + 1
+        const result = resolveDrinkSpell(offered, vials)
+        const nextUse = (get().offeringUseCount[vialId] ?? 0) + 1
         if (result.ok) {
           set((s) => ({
-            spellUseCount: { ...s.spellUseCount, [spellVialId]: nextUse },
+            offeringUseCount: { ...s.offeringUseCount, [vialId]: nextUse },
             vials: { ...s.vials, [result.creature.id]: result.creature },
           }))
         } else {
           set((s) => ({
-            spellUseCount: { ...s.spellUseCount, [spellVialId]: nextUse },
+            offeringUseCount: { ...s.offeringUseCount, [vialId]: nextUse },
           }))
         }
         return result
@@ -85,10 +85,15 @@ export const useAlchemixStore = create<AlchemixState>()(
       partialize: (state): PersistedData => ({
         vials: state.vials,
         fusionCount: state.fusionCount,
-        spellUseCount: state.spellUseCount,
+        offeringUseCount: state.offeringUseCount,
       }),
       migrate: (persisted, version) => {
-        const data = persisted as PersistedData
+        const data = persisted as PersistedData & {
+          spellUseCount?: Record<string, number>
+        }
+        if (!data.offeringUseCount) {
+          data.offeringUseCount = data.spellUseCount ?? {}
+        }
         if (version < 2 && data.vials) {
           for (const id of Object.keys(data.vials)) {
             if (id.startsWith('creature-')) {

@@ -54,7 +54,7 @@ type RegistreDeletePrompt =
   | { kind: 'pair'; clientId: number }
   | { kind: 'solo'; solo: EditableSolo }
 
-type CreateMode = 'element' | 'spell' | 'creature' | 'solo'
+type CreateMode = 'element' | 'creature' | 'solo'
 type SortKey = 'result' | 'pair' | 'type'
 
 type RegistreRow =
@@ -416,16 +416,12 @@ function resultType(resultId: string): VialType | 'unknown' {
 
   const lower = id.toLowerCase()
   if (lower.startsWith('creature-')) return 'creature'
-  if (lower.startsWith('sp-')) return 'spell'
-  if (lower.startsWith('leg-')) return 'spell'
+  if (lower.startsWith('sp-')) return 'element'
+  if (lower.startsWith('leg-')) return 'element'
   if (lower.startsWith('el-')) return 'element'
   if (lower.startsWith('craft-')) return 'element'
 
-  /**
-   * Référence sans entrée catalogue (ex. « feur ») : en atelier c’est presque toujours un sort.
-   * Les éléments attendent en pratique le préfixe el- ou craft-.
-   */
-  if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(id)) return 'spell'
+  if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(id)) return 'element'
 
   return 'unknown'
 }
@@ -458,29 +454,11 @@ function slugifyCreatureName(name: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-/** Onglet Sort : impose le préfixe `sp-` si l’utilisateur saisit seulement un slug. */
-function normalizeAtelierSpellResultId(raw: string): string {
-  const t = raw.trim()
-  if (!t) return t
-  const lower = t.toLowerCase()
-  if (
-    lower.startsWith('sp-') ||
-    lower.startsWith('creature-') ||
-    lower.startsWith('el-') ||
-    lower.startsWith('craft-') ||
-    lower.startsWith('leg-')
-  ) {
-    return t
-  }
-  return `sp-${slugifyCreatureName(t)}`
-}
-
 const TYPE_ORDER: Record<string, number> = {
   element: 0,
-  spell: 1,
-  creature: 2,
-  unknown: 3,
-  fioleSeule: 4,
+  creature: 1,
+  unknown: 2,
+  fioleSeule: 3,
 }
 
 function compareRegistreRowsByResult(
@@ -601,17 +579,17 @@ type AlertItem = { id: number; message: string; kind: 'success' | 'error' }
 
 export function RecipeManagerPage() {
   const vialOptions = useMemo(() => buildVialOptions(), [])
-  const spellOptions = useMemo(
-    () => vialOptions.filter((v) => v.type === 'spell'),
+  const elementOptions = useMemo(
+    () => vialOptions.filter((v) => v.type === 'element'),
     [vialOptions],
   )
   const knownVialIdSet = useMemo(
     () => new Set(vialOptions.map((v) => v.id)),
     [vialOptions],
   )
-  const knownSpellIdSet = useMemo(
-    () => new Set(spellOptions.map((v) => v.id)),
-    [spellOptions],
+  const knownElementIdSet = useMemo(
+    () => new Set(elementOptions.map((v) => v.id)),
+    [elementOptions],
   )
 
   const catalogElementIds = useMemo(() => {
@@ -650,10 +628,7 @@ export function RecipeManagerPage() {
   const [elA, setElA] = useState('')
   const [elB, setElB] = useState('')
   const [elRes, setElRes] = useState('')
-  const [spA, setSpA] = useState('')
-  const [spB, setSpB] = useState('')
-  const [spRes, setSpRes] = useState('')
-  const [crSpell, setCrSpell] = useState('')
+  const [crElement, setCrElement] = useState('')
   const [crName, setCrName] = useState('')
   const [soloIdInput, setSoloIdInput] = useState('')
 
@@ -813,12 +788,10 @@ export function RecipeManagerPage() {
 
   const stats = useMemo(() => {
     let elements = 0
-    let spells = 0
     let creatures = 0
     for (const p of pairs) {
       const t = resultType(p.resultId)
       if (t === 'element') elements += 1
-      else if (t === 'spell') spells += 1
       else if (t === 'creature') creatures += 1
     }
     return {
@@ -826,7 +799,6 @@ export function RecipeManagerPage() {
       pairs: pairs.length,
       fiolesSeules: mergedSoloEntries.length,
       elements,
-      spells,
       creatures,
     }
   }, [pairs, mergedSoloEntries])
@@ -945,58 +917,28 @@ export function RecipeManagerPage() {
             setElRes('')
           }
           break
-        case 'spell': {
-          if (!spRes.trim()) {
-            pushAlert('Enter the produced spell reference (result).', 'error')
-            return
-          }
-          const sA = spA.trim()
-          const sB = spB.trim()
-          if ((sA && !sB) || (!sA && sB)) {
-            pushAlert(
-              'Pick both ingredients or leave both empty (not just one).',
-              'error',
-            )
-            return
-          }
-          if ((sA && !knownVialIdSet.has(sA)) || (sB && !knownVialIdSet.has(sB))) {
-            pushAlert('Pick ingredients that exist in the list.', 'error')
-            return
-          }
-          const spellResultId = normalizeAtelierSpellResultId(spRes)
-          if (
-            tryAddPair(spA, spB, spellResultId, 'Combination added.', {
-              allowEmptyIngredients: true,
-            })
-          ) {
-            setSpA('')
-            setSpB('')
-            setSpRes('')
-          }
-          break
-        }
         case 'creature': {
           const slug = slugifyCreatureName(crName)
           if (!slug) {
             pushAlert('Enter a creature name.', 'error')
             return
           }
-          const spell = crSpell.trim()
-          if (spell && !knownSpellIdSet.has(spell)) {
-            pushAlert('Pick a spell that exists in the list.', 'error')
+          const element = crElement.trim()
+          if (element && !knownElementIdSet.has(element)) {
+            pushAlert('Pick an element that exists in the list.', 'error')
             return
           }
           const resultId = `creature-${slug}`
           if (
             tryAddPair(
-              spell,
-              spell,
+              element,
+              element,
               resultId,
               'Creature added.',
               { allowEmptyIngredients: true },
             )
           ) {
-            setCrSpell('')
+            setCrElement('')
             setCrName('')
           }
           break
@@ -1013,14 +955,11 @@ export function RecipeManagerPage() {
       elA,
       elB,
       elRes,
-      spA,
-      spB,
-      spRes,
-      crSpell,
+      crElement,
       crName,
       pushAlert,
       knownVialIdSet,
-      knownSpellIdSet,
+      knownElementIdSet,
     ],
   )
 
@@ -1215,8 +1154,8 @@ export function RecipeManagerPage() {
         return
       }
       const spellRef = rs.ref.trim()
-      if (spellRef && !knownSpellIdSet.has(spellRef)) {
-        pushAlert('Pick a spell that exists in the list.', 'error')
+      if (spellRef && !knownElementIdSet.has(spellRef)) {
+        pushAlert('Pick an element that exists in the list.', 'error')
         return
       }
       ta = spellRef
@@ -1293,7 +1232,7 @@ export function RecipeManagerPage() {
     displayName,
     allKnownVialIds,
     knownVialIdSet,
-    knownSpellIdSet,
+    knownElementIdSet,
   ])
 
   const saveEditSolo = useCallback(() => {
@@ -1369,7 +1308,6 @@ export function RecipeManagerPage() {
   const typeLabel = (t: VialType | 'unknown' | 'fioleSeule') => {
     if (t === 'fioleSeule') return 'Element'
     if (t === 'element') return 'Recipe'
-    if (t === 'spell') return 'Spell'
     if (t === 'creature') return 'Creature'
     return 'Unknown'
   }
@@ -1422,7 +1360,6 @@ export function RecipeManagerPage() {
               {(
                 [
                   ['element', 'Recipe'],
-                  ['spell', 'Spell'],
                   ['creature', 'Creature'],
                   ['solo', 'Element'],
                 ] as const
@@ -1484,51 +1421,15 @@ export function RecipeManagerPage() {
                   </>
                 )}
 
-                {createMode === 'spell' && (
-                  <>
-                    <div className="grid max-[520px]:grid-cols-1 grid-cols-2 gap-[0.45rem]">
-                      <VialOptionCombo
-                        inputId="spA"
-                        label="Ingredient A"
-                        value={spA}
-                        onChange={setSpA}
-                        options={vialOptions}
-                        placeholder="Type to search for an ingredient…"
-                      />
-                      <VialOptionCombo
-                        inputId="spB"
-                        label="Ingredient B"
-                        value={spB}
-                        onChange={setSpB}
-                        options={vialOptions}
-                        placeholder="Type to search for an ingredient…"
-                      />
-                    </div>
-                    <div className="ra-formGroup">
-                      <label htmlFor="spRes">
-                        Produced result<span className="ra-required">*</span>
-                      </label>
-                      <input
-                        id="spRes"
-                        className="ra-input"
-                        value={spRes}
-                        onChange={(e) => setSpRes(e.target.value)}
-                        placeholder="Created spell reference (result)"
-                        autoComplete="off"
-                      />
-                    </div>
-                  </>
-                )}
-
                 {createMode === 'creature' && (
                   <>
                     <VialOptionCombo
-                      inputId="crSpell"
-                      label="Sort"
-                      value={crSpell}
-                      onChange={setCrSpell}
-                      options={spellOptions}
-                      placeholder="Type to search for a spell…"
+                      inputId="crElement"
+                      label="Element offered"
+                      value={crElement}
+                      onChange={setCrElement}
+                      options={elementOptions}
+                      placeholder="Type to search for an element…"
                     />
                     <div className="ra-formGroup">
                       <label htmlFor="crName">
@@ -1563,7 +1464,7 @@ export function RecipeManagerPage() {
                     </div>
                     <p className="ra-hint">
                       Catalog recipes are already listed. Here, add an element outside
-                      the catalog (spell, craft, etc.).
+                      the catalog (craft, etc.).
                     </p>
                   </>
                 )}
@@ -1866,9 +1767,6 @@ export function RecipeManagerPage() {
             <strong>{stats.elements}</strong> → recipe
           </span>
           <span className="ra-statInline">
-            <strong>{stats.spells}</strong> → spell
-          </span>
-          <span className="ra-statInline">
             <strong>{stats.creatures}</strong> → creature
           </span>
         </div>
@@ -1953,8 +1851,8 @@ export function RecipeManagerPage() {
             </h3>
             {isCreatureResultId(editingPair.resultId) ? (
               <VialOptionCombo
-                inputId="edCreatureSpell"
-                label="Sort"
+                inputId="edCreatureElement"
+                label="Element offered"
                 value={pairEditDraft.a}
                 onChange={(id) =>
                   setPairEditDraft((d) => ({
@@ -1963,8 +1861,8 @@ export function RecipeManagerPage() {
                     b: id,
                   }))
                 }
-                options={spellOptions}
-                placeholder="Type to search for a spell…"
+                options={elementOptions}
+                placeholder="Type to search for an element…"
                 autoComplete="on"
               />
             ) : (

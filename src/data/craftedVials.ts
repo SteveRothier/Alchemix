@@ -548,7 +548,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   /* ——— TIER 3 : sorts primaires ——— */
   'sp-fireball': {
     id: 'sp-fireball',
-    type: 'spell',
+    type: 'element',
     name: 'Fireball',
     description: 'Feu pur, armé.',
     liquid: {
@@ -564,7 +564,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-inferno-wave': {
     id: 'sp-inferno-wave',
-    type: 'spell',
+    type: 'element',
     name: 'Inferno Wave',
     description: 'Vague de magma déchaîné.',
     liquid: {
@@ -580,7 +580,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-icy-wind': {
     id: 'sp-icy-wind',
-    type: 'spell',
+    type: 'element',
     name: 'Icy Wind',
     description: 'Souffle glacé tranchant.',
     liquid: {
@@ -596,7 +596,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-stone-wall': {
     id: 'sp-stone-wall',
-    type: 'spell',
+    type: 'element',
     name: 'Stone Wall',
     description: 'Barrière de granite.',
     liquid: {
@@ -612,7 +612,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-dark-pulse': {
     id: 'sp-dark-pulse',
-    type: 'spell',
+    type: 'element',
     name: 'Dark Pulse',
     description: 'Onde d’ombre pure.',
     liquid: {
@@ -628,7 +628,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-holy-light': {
     id: 'sp-holy-light',
-    type: 'spell',
+    type: 'element',
     name: 'Holy Light',
     description: 'Rayon sacré.',
     liquid: {
@@ -644,7 +644,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-nature-wrath': {
     id: 'sp-nature-wrath',
-    type: 'spell',
+    type: 'element',
     name: 'Nature Wrath',
     description: 'Fureur du sol et de la nature sauvage.',
     liquid: {
@@ -709,7 +709,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   /* ——— TIER 4 : sorts avancés ——— */
   'sp-scalding-steam': {
     id: 'sp-scalding-steam',
-    type: 'spell',
+    type: 'element',
     name: 'Scalding Steam',
     description: 'Vapeur surchauffée (Steam + Fire).',
     liquid: {
@@ -725,7 +725,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-magma-plume': {
     id: 'sp-magma-plume',
-    type: 'spell',
+    type: 'element',
     name: 'Magma Plume',
     description: 'Lave rencontre l’eau.',
     liquid: {
@@ -741,7 +741,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-magma-burst': {
     id: 'sp-magma-burst',
-    type: 'spell',
+    type: 'element',
     name: 'Magma Burst',
     description: 'Explosion de lave (Lava + Fire).',
     liquid: {
@@ -757,7 +757,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-dust-storm': {
     id: 'sp-dust-storm',
-    type: 'spell',
+    type: 'element',
     name: 'Dust Storm',
     description: 'Cendres emportées par le vent.',
     liquid: {
@@ -773,7 +773,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-tidal-wave': {
     id: 'sp-tidal-wave',
-    type: 'spell',
+    type: 'element',
     name: 'Tidal Wave',
     description: 'La tempête renverse l’océan.',
     liquid: {
@@ -789,7 +789,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-infernal-cyclone': {
     id: 'sp-infernal-cyclone',
-    type: 'spell',
+    type: 'element',
     name: 'Infernal Cyclone',
     description: 'Cyclone enflammé.',
     liquid: {
@@ -805,7 +805,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-swamp-curse': {
     id: 'sp-swamp-curse',
-    type: 'spell',
+    type: 'element',
     name: 'Swamp Curse',
     description: 'Boue et nature pourries.',
     liquid: {
@@ -821,7 +821,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-void-rift': {
     id: 'sp-void-rift',
-    type: 'spell',
+    type: 'element',
     name: 'Void Rift',
     description: 'Le vide s’ouvre davantage.',
     liquid: {
@@ -837,7 +837,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-golden-rays': {
     id: 'sp-golden-rays',
-    type: 'spell',
+    type: 'element',
     name: 'Golden Rays',
     description: 'Or et lumière unis.',
     liquid: {
@@ -853,7 +853,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-shadow-clone': {
     id: 'sp-shadow-clone',
-    type: 'spell',
+    type: 'element',
     name: 'Shadow Clone',
     description: 'Crépuscule figé en double.',
     liquid: {
@@ -869,7 +869,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-plague-touch': {
     id: 'sp-plague-touch',
-    type: 'spell',
+    type: 'element',
     name: 'Plague Touch',
     description: 'Fléau naturel.',
     liquid: {
@@ -885,7 +885,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-plague-swarm': {
     id: 'sp-plague-swarm',
-    type: 'spell',
+    type: 'element',
     name: 'Plague Swarm',
     description: 'Nuée de corruption (Blight + Mud).',
     liquid: {
@@ -901,7 +901,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'sp-chain-lightning': {
     id: 'sp-chain-lightning',
-    type: 'spell',
+    type: 'element',
     name: 'Chain Lightning',
     description: 'Éclairs en chaîne.',
     liquid: {
@@ -1019,7 +1019,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   /* ——— TIER 6 : légendaires ——— */
   'leg-abyss-demon': {
     id: 'leg-abyss-demon',
-    type: 'spell',
+    type: 'element',
     name: 'Abyss Demon',
     description: 'Démon né du gouffre et des flammes infernales.',
     liquid: {
@@ -1035,7 +1035,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'leg-celestial-phoenix': {
     id: 'leg-celestial-phoenix',
-    type: 'spell',
+    type: 'element',
     name: 'Celestial Phoenix',
     description: 'Renaissance de lumière et de floraison.',
     liquid: {
@@ -1051,7 +1051,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'leg-poison-tide': {
     id: 'leg-poison-tide',
-    type: 'spell',
+    type: 'element',
     name: 'Poison Tide',
     description: 'Marée empoisonnée.',
     liquid: {
@@ -1067,7 +1067,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'leg-hellstorm': {
     id: 'leg-hellstorm',
-    type: 'spell',
+    type: 'element',
     name: 'Hellstorm',
     description: 'Ouragan infernal et toxique.',
     liquid: {
@@ -1083,7 +1083,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'leg-divine-guardian': {
     id: 'leg-divine-guardian',
-    type: 'spell',
+    type: 'element',
     name: 'Divine Guardian',
     description: 'Gardien sacré.',
     liquid: {
@@ -1099,7 +1099,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'leg-void-incarnate': {
     id: 'leg-void-incarnate',
-    type: 'spell',
+    type: 'element',
     name: 'Void Incarnate',
     description: 'Le vide prend forme bestiale.',
     liquid: {
@@ -1115,7 +1115,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'leg-pestilence': {
     id: 'leg-pestilence',
-    type: 'spell',
+    type: 'element',
     name: 'Pestilence',
     description: 'Fléau absolu.',
     liquid: {
@@ -1131,7 +1131,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
   },
   'leg-storm-king': {
     id: 'leg-storm-king',
-    type: 'spell',
+    type: 'element',
     name: 'Storm King',
     description: 'Souverain des tempêtes et de la foudre.',
     liquid: {
@@ -1149,3 +1149,4 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, Omit<Vial, 'discoveredAt'>> 
 
 export { MANUAL_RECIPE_PAIRS } from './manualRecipePairs'
 export { MANUAL_SOLO_ELEMENT_IDS } from './manualSoloElements'
+

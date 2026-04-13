@@ -3,8 +3,6 @@ import { InventoryVialItem } from './InventoryVialItem'
 
 type InventoryPanelProps = {
   elements: Vial[]
-  spells: Vial[]
-  creatures: Vial[]
 }
 
 function InventorySection({
@@ -40,16 +38,10 @@ function InventorySection({
   )
 }
 
-export function InventoryPanel({
-  elements,
-  spells,
-  creatures,
-}: InventoryPanelProps) {
+export function InventoryPanel({ elements }: InventoryPanelProps) {
   return (
     <div className="lab-invPanelRoot flex min-h-0 flex-1 flex-col gap-[0.45rem] overflow-hidden pl-[0.65rem] pr-0 pb-2 pt-1">
       <InventorySection title="Elements" vials={elements} />
-      <InventorySection title="Spells" vials={spells} />
-      <InventorySection title="Creatures" vials={creatures} />
     </div>
   )
 }

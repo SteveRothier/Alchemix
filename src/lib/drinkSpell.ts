@@ -1,23 +1,23 @@
 import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
-import { getCreatureIdFromDrunkSpell } from '../data/spellDrinkCreatures'
+import { getCreatureIdFromOfferedElement } from '../data/spellDrinkCreatures'
 import type { Vial } from '../types'
 
 export type DrinkSpellResult =
-  | { ok: false; reason: 'not_spell' | 'no_creature' | 'already_owned' }
+  | { ok: false; reason: 'not_element' | 'no_creature' | 'already_owned' }
   | { ok: true; creature: Vial }
 
 /**
- * Fait « boire » un sort au personnage : compteur d’usage + éventuelle créature.
+ * Offers an element to the character: may unlock a creature trophy.
  */
 export function resolveDrinkSpell(
-  spellVial: Vial | undefined,
+  offeredVial: Vial | undefined,
   vialsById: Record<string, Vial>,
 ): DrinkSpellResult {
-  if (!spellVial || spellVial.type !== 'spell') {
-    return { ok: false, reason: 'not_spell' }
+  if (!offeredVial || offeredVial.type !== 'element') {
+    return { ok: false, reason: 'not_element' }
   }
 
-  const creatureId = getCreatureIdFromDrunkSpell(spellVial.id)
+  const creatureId = getCreatureIdFromOfferedElement(offeredVial.id)
   if (!creatureId) {
     return { ok: false, reason: 'no_creature' }
   }

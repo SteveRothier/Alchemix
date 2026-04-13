@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Trophy, X } from 'lucide-react'
 import { CharacterSipZone } from '../character/CharacterSipZone'
 import { LabDragContext, type InventoryDragEndInfo } from '../game/LabDragContext'
 import {
@@ -14,6 +15,7 @@ import { LabCanvas } from '../game/LabCanvas'
 import { InventoryPanel } from '../inventory/InventoryPanel'
 import { resolveFusionProduct } from '../../lib/fusion'
 import type { DrinkSpellResult } from '../../lib/drinkSpell'
+import { CRAFTED_VIAL_TEMPLATES } from '../../data/craftedVials'
 import {
   Draggable,
   gsap,
@@ -32,7 +34,7 @@ type LabHistorySnapshot = {
   placed: LabPlacedVial[]
   vials: Record<string, Vial>
   fusionCount: number
-  spellUseCount: Record<string, number>
+  offeringUseCount: Record<string, number>
 }
 
 function takeLabSnapshot(placed: LabPlacedVial[]): LabHistorySnapshot {
@@ -40,7 +42,7 @@ function takeLabSnapshot(placed: LabPlacedVial[]): LabHistorySnapshot {
   return {
     placed: placed.map((p) => ({ ...p })),
     fusionCount: s.fusionCount,
-    spellUseCount: { ...s.spellUseCount },
+    offeringUseCount: { ...s.offeringUseCount },
     vials: structuredClone(s.vials),
   }
 }
@@ -60,6 +62,88 @@ function chipOverlapsInventoryColumn(chip: HTMLElement): boolean {
     cr.bottom > ir.top &&
     cr.top < ir.bottom
   )
+}
+
+function iconToDialogDelta(
+  fab: HTMLElement,
+  dialog: HTMLElement,
+): { dx: number; dy: number } {
+  const ir = fab.getBoundingClientRect()
+  const dr = dialog.getBoundingClientRect()
+  const ix = ir.left + ir.width / 2
+  const iy = ir.top + ir.height / 2
+  const cx = dr.left + dr.width / 2
+  const cy = dr.top + dr.height / 2
+  return { dx: ix - cx, dy: iy - cy }
+}
+
+function playIconModalOpen(
+  dim: HTMLElement,
+  dialog: HTMLElement,
+  fab: HTMLElement,
+  onComplete: () => void,
+) {
+  const { dx, dy } = iconToDialogDelta(fab, dialog)
+  gsap.killTweensOf([dim, dialog])
+  gsap.set(dim, { opacity: 0, '--lab-controls-dim-blur': '0px' })
+  gsap.set(dialog, {
+    x: dx,
+    y: dy,
+    scale: 0.12,
+    opacity: 0,
+    transformOrigin: '50% 50%',
+  })
+  const tl = gsap.timeline({ onComplete })
+  tl.to(
+    dim,
+    {
+      opacity: 1,
+      '--lab-controls-dim-blur': '1.5px',
+      duration: 0.4,
+      ease: 'power1.out',
+    },
+    0,
+  )
+  tl.to(
+    dialog,
+    { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.42, ease: 'power2.out' },
+    0,
+  )
+  return tl
+}
+
+function playIconModalClose(
+  dim: HTMLElement,
+  dialog: HTMLElement,
+  fab: HTMLElement,
+  onComplete: () => void,
+) {
+  const { dx, dy } = iconToDialogDelta(fab, dialog)
+  gsap.killTweensOf([dim, dialog])
+  const tl = gsap.timeline({ onComplete })
+  tl.to(
+    dialog,
+    {
+      x: dx,
+      y: dy,
+      scale: 0.12,
+      opacity: 0,
+      duration: 0.32,
+      ease: 'power2.in',
+    },
+    0,
+  )
+  tl.to(
+    dim,
+    {
+      opacity: 0,
+      '--lab-controls-dim-blur': '0px',
+      duration: 0.32,
+      ease: 'power1.in',
+    },
+    0.04,
+  )
+  return tl
 }
 
 /** Réduction + disparition avant retrait du state (clic droit, retour inventaire). */
@@ -137,9 +221,22 @@ export function AlchemixShell() {
     const list = Object.values(vialsById)
     return {
       elements: list.filter((v) => v.type === 'element').sort(sortName),
-      spells: list.filter((v) => v.type === 'spell').sort(sortName),
-      creatures: list.filter((v) => v.type === 'creature').sort(sortName),
     }
+  }, [vialsById])
+
+  const creatureCatalog = useMemo(
+    () =>
+      Object.values(CRAFTED_VIAL_TEMPLATES)
+        .filter((v) => v.type === 'creature')
+        .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })),
+    [],
+  )
+  const discoveredCreatureIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const v of Object.values(vialsById)) {
+      if (v.type === 'creature') ids.add(v.id)
+    }
+    return ids
   }, [vialsById])
 
   const [placed, setPlaced] = useState<LabPlacedVial[]>([])
@@ -150,6 +247,13 @@ export function AlchemixShell() {
 
   const [sipHint, setSipHint] = useState<string | null>(null)
   const [inventoryGhostActive, setInventoryGhostActive] = useState(false)
+  const [trophyOpen, setTrophyOpen] = useState(false)
+  const trophyFabRef = useRef<HTMLButtonElement>(null)
+  const trophyDimRef = useRef<HTMLDivElement>(null)
+  const trophyDialogRef = useRef<HTMLDivElement>(null)
+  const trophyClosingRef = useRef(false)
+  const trophyOpenRef = useRef(trophyOpen)
+  trophyOpenRef.current = trophyOpen
   const sipTimerRef = useRef(0)
 
   const canvasRef = useRef<HTMLDivElement>(null)
@@ -180,7 +284,7 @@ export function AlchemixShell() {
     useAlchemixStore.setState({
       vials: snap.vials,
       fusionCount: snap.fusionCount,
-      spellUseCount: snap.spellUseCount,
+      offeringUseCount: snap.offeringUseCount,
     })
     setPlaced(snap.placed)
     setSelectedIdsArr([])
@@ -310,6 +414,51 @@ export function AlchemixShell() {
     return () => window.removeEventListener('keydown', onKey)
   }, [redoLab, removeSelectedPlaced, undoLab])
 
+  const requestCloseTrophy = useCallback(() => {
+    if (!trophyOpenRef.current || trophyClosingRef.current) return
+    trophyClosingRef.current = true
+    const dim = trophyDimRef.current
+    const dlg = trophyDialogRef.current
+    const fab = trophyFabRef.current
+    if (!dim || !dlg || !fab) {
+      setTrophyOpen(false)
+      trophyClosingRef.current = false
+      return
+    }
+    playIconModalClose(dim, dlg, fab, () => {
+      setTrophyOpen(false)
+      trophyClosingRef.current = false
+    })
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!trophyOpen) return
+    const dim = trophyDimRef.current
+    const dlg = trophyDialogRef.current
+    const fab = trophyFabRef.current
+    if (!dim || !dlg || !fab) return
+    const tl = playIconModalOpen(dim, dlg, fab, () => {
+      dlg.querySelector<HTMLButtonElement>('.lab-controls-close')?.focus()
+    })
+    return () => {
+      tl.kill()
+      gsap.killTweensOf([dim, dlg])
+    }
+  }, [trophyOpen])
+
+  useEffect(() => {
+    if (!trophyOpen) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      const t = e.target as HTMLElement | null
+      if (t?.closest('input, textarea, select, [contenteditable="true"]')) return
+      e.preventDefault()
+      requestCloseTrophy()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [requestCloseTrophy, trophyOpen])
+
   const labSelectionValue = useMemo(
     () => ({
       selectedIdsRef,
@@ -382,25 +531,25 @@ export function AlchemixShell() {
 
       const store = useAlchemixStore.getState()
       const vial = store.vials[vialId]
-      if (!vial || vial.type !== 'spell') {
-        showSipHint('Only spells can be drunk.')
+      if (!vial || vial.type !== 'element') {
+        showSipHint('Only elements can be offered.')
         return true
       }
       pushLabUndoHistory()
-      const result: DrinkSpellResult = store.feedSpellToCharacter(vialId)
+      const result: DrinkSpellResult = store.offerElementToCharacter(vialId)
       if (instanceId) {
         setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
       }
       switch (result.ok) {
         case true:
-          showSipHint(`${result.creature.name} appears!`)
+          showSipHint(`Trophy unlocked: ${result.creature.name}`)
           break
         case false: {
           const { reason } = result
           if (reason === 'no_creature') {
-            showSipHint('No creature responds to this spell.')
+            showSipHint('No trophy creature for this element yet.')
           } else if (reason === 'already_owned') {
-            showSipHint('Creature already manifested.')
+            showSipHint('Trophy already unlocked.')
           }
           break
         }
@@ -771,6 +920,74 @@ export function AlchemixShell() {
               onClearCanvas={clearLabCanvas}
               canClearCanvas={placed.length > 0}
             />
+            <div className="lab-trophyDock pointer-events-none absolute bottom-0 left-0 z-40 p-2 max-[560px]:p-1.5">
+              <div className="lab-fabWithTooltip pointer-events-auto">
+                <button
+                  ref={trophyFabRef}
+                  type="button"
+                  className="lab-controls-fab"
+                  onClick={() => {
+                    if (trophyClosingRef.current) return
+                    if (trophyOpenRef.current) requestCloseTrophy()
+                    else setTrophyOpen(true)
+                  }}
+                  aria-expanded={trophyOpen}
+                  aria-haspopup="dialog"
+                  aria-label="Creatures"
+                >
+                  <Trophy size={22} strokeWidth={2} aria-hidden className="shrink-0" />
+                </button>
+                <span className="lab-fabTooltip" aria-hidden="true">
+                  Creatures
+                </span>
+              </div>
+            </div>
+            {trophyOpen ? (
+              <div
+                className="lab-trophyOverlay"
+                role="presentation"
+                ref={trophyDimRef}
+                onClick={(e) => {
+                  if (e.target === e.currentTarget) requestCloseTrophy()
+                }}
+              >
+                <div className="lab-trophyDialogLayer">
+                  <div
+                    className="lab-trophyPopup"
+                    ref={trophyDialogRef}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Creatures to discover"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <header className="lab-trophyPopupHeader">
+                      <h3 className="lab-trophyPopupTitle">Creatures to discover</h3>
+                      <button
+                        type="button"
+                        className="lab-controls-close"
+                        onClick={requestCloseTrophy}
+                        aria-label="Close creature popup"
+                      >
+                        <X size={16} strokeWidth={2} aria-hidden />
+                      </button>
+                    </header>
+                    <ul className="lab-trophyList" role="list">
+                      {creatureCatalog.map((creature) => {
+                        const discovered = discoveredCreatureIds.has(creature.id)
+                        return (
+                          <li key={creature.id} className="lab-trophyRow">
+                          <span className="lab-trophyThumb" aria-hidden />
+                            <span className="lab-trophyName">
+                              {discovered ? creature.name : '???'}
+                            </span>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
           <aside
             className="lab-inventoryColumn relative z-0 flex h-full min-h-0 min-w-0 flex-col overflow-hidden"
@@ -792,8 +1009,6 @@ export function AlchemixShell() {
             </header>
             <InventoryPanel
               elements={inventoryGroups.elements}
-              spells={inventoryGroups.spells}
-              creatures={inventoryGroups.creatures}
             />
           </aside>
         </div>

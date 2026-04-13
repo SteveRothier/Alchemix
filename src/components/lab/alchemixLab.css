@@ -860,6 +860,114 @@ html[data-lab-canvas-chip-drag]
   outline-offset: 2px;
 }
 
+/* Popup trophées créatures (bas-gauche) */
+.alchemix-lab .lab-trophyDock {
+  z-index: 45;
+}
+
+.lab-trophyOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 401;
+  background: color-mix(in srgb, var(--text-h) 22%, transparent);
+  --lab-controls-dim-blur: 0px;
+  backdrop-filter: blur(var(--lab-controls-dim-blur));
+  -webkit-backdrop-filter: blur(var(--lab-controls-dim-blur));
+}
+
+.lab-trophyDialogLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 402;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.lab-trophyPopup {
+  pointer-events: auto;
+  width: min(20rem, 100%);
+  max-height: min(56dvh, 24rem);
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, var(--lab-hover) 15%);
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--panel-bg) 96%, #fff) 0%,
+    var(--panel-bg) 48%,
+    color-mix(in srgb, var(--lab-inventory-bg) 22%, var(--panel-bg)) 100%
+  );
+  box-shadow:
+    0 2px 4px color-mix(in srgb, var(--text-h) 6%, transparent),
+    0 18px 48px color-mix(in srgb, var(--text-h) 14%, transparent);
+}
+
+.lab-trophyPopupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding: 0.32rem 0.55rem 0.32rem 0.8rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, var(--lab-hover) 18%);
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--lab-hover) 12%, transparent) 0,
+    transparent 0.35rem
+  );
+}
+
+.lab-trophyPopupTitle {
+  margin: 0;
+  font-family: var(--font-lab-heading);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  color: var(--text-h);
+}
+
+.lab-trophyList {
+  margin: 0;
+  padding: 0.35rem 0.55rem 0.55rem;
+  list-style: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-h) 18%, transparent) transparent;
+}
+
+.lab-trophyRow {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 1.7rem;
+  padding: 0.18rem 0.3rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.lab-trophyRow:last-child {
+  border-bottom: none;
+}
+
+.lab-trophyName {
+  font-family: var(--font-lab-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--text-h);
+}
+
+.lab-trophyThumb {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: 0 0 1.35rem;
+  border-radius: 0.25rem;
+  background: #000;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, #000 15%);
+}
+
 /* Voile (opacité animée par GSAP, séparé de la boîte pour ne pas la faire disparaître deux fois). */
 .lab-controls-dim {
   position: fixed;
