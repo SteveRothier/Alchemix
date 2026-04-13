@@ -327,6 +327,25 @@
   transform: scale(1.06);
 }
 
+/*
+ * Sélection : même zoom que fusion + même dégradé ::before que le survol plateau
+ * (linear-gradient lab-canvas-chip-hover-a/b — défini plus bas sur .lab-canvas .lab-chipInventory::before).
+ */
+.alchemix-lab .lab-canvas .lab-dropHit[data-lab-selected] .lab-chipInventory {
+  transform: scale(1.06);
+}
+
+.alchemix-lab .lab-canvas .lab-dropHit[data-lab-selected] .lab-chipInventory::before {
+  opacity: 0.94;
+}
+
+/* Rectangle de sélection (glisser sur le fond du canvas). */
+.alchemix-lab .lab-marqueeRect {
+  border: 1px solid var(--lab-selection-border);
+  background: var(--lab-selection-fill);
+  border-radius: 0;
+}
+
 .alchemix-lab .lab-dragSurface {
   cursor: grab;
   border-radius: 0;

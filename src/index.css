@@ -35,6 +35,9 @@ html {
   /* Survols dans le labo (cartes, pastilles, fusion, personnage) : même famille que pierre / mousse. */
   --lab-hover: #3a5544;
   --lab-hover-soft: color-mix(in srgb, var(--lab-hover) 14%, transparent);
+  /* Sélection multiple (rectangle + cartes) : même teinte que les survols labo. */
+  --lab-selection-border: color-mix(in srgb, var(--lab-hover) 62%, transparent);
+  --lab-selection-fill: color-mix(in srgb, var(--lab-hover) 14%, transparent);
   /* Survol cartes sur fond noir : verts plus sourds, moins « blanc / lait ». */
   --lab-canvas-chip-hover-a: #7a9c86;
   --lab-canvas-chip-hover-b: #4a6b58;

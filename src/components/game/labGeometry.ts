@@ -81,6 +81,27 @@ export function clientPointInCanvasPlacement(
   )
 }
 
+/** Chevauchement géométrique simple (boîtes client), ex. rectangle de sélection vs carte. */
+export function rectsIntersect(
+  a: DOMRectReadOnly,
+  b: DOMRectReadOnly,
+): boolean {
+  return !(
+    a.right < b.left ||
+    a.left > b.right ||
+    a.bottom < b.top ||
+    a.top > b.bottom
+  )
+}
+
+/** Limites alignées sur `clientPointToCanvasPercent`. */
+export function clampLabPlacementPercent(xPct: number, yPct: number) {
+  return {
+    xPct: Math.max(4, Math.min(96, xPct)),
+    yPct: Math.max(4, Math.min(96, yPct)),
+  }
+}
+
 /**
  * Au moins `thresholdPct` % de la surface de l’un ou l’autre rectangle doit chevaucher.
  */

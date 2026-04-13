@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CharacterSipZone } from '../character/CharacterSipZone'
 import { LabDragContext, type InventoryDragEndInfo } from '../game/LabDragContext'
 import {
+  clampLabPlacementPercent,
   clientPointInCanvasPlacement,
   clientPointToCanvasPercent,
   fusionCardsOverlap,
   grabCenterClient,
 } from '../game/labGeometry'
+import { LabSelectionContext } from '../game/LabSelectionContext'
 import type { LabPlacedVial } from '../game/labTypes'
 import { LabCanvas } from '../game/LabCanvas'
 import { InventoryPanel } from '../inventory/InventoryPanel'
@@ -120,6 +122,11 @@ export function AlchemixShell() {
   }, [vialsById])
 
   const [placed, setPlaced] = useState<LabPlacedVial[]>([])
+  const [selectedIdsArr, setSelectedIdsArr] = useState<string[]>([])
+  const selectedIds = useMemo(() => new Set(selectedIdsArr), [selectedIdsArr])
+  const selectedIdsRef = useRef<ReadonlySet<string>>(selectedIds)
+  selectedIdsRef.current = selectedIds
+
   const [sipHint, setSipHint] = useState<string | null>(null)
   const [inventoryGhostActive, setInventoryGhostActive] = useState(false)
   const sipTimerRef = useRef(0)
@@ -129,6 +136,111 @@ export function AlchemixShell() {
   const grabOffsetRef = useRef<{ dx: number; dy: number } | null>(null)
   const placedRef = useRef(placed)
   placedRef.current = placed
+
+  useEffect(() => {
+    const valid = new Set(placed.map((p) => p.instanceId))
+    setSelectedIdsArr((prev) => prev.filter((id) => valid.has(id)))
+  }, [placed])
+
+  const clearLabSelection = useCallback(() => {
+    setSelectedIdsArr([])
+  }, [])
+
+  const selectSingleLab = useCallback((instanceId: string) => {
+    setSelectedIdsArr([instanceId])
+  }, [])
+
+  const toggleLabSelection = useCallback((instanceId: string) => {
+    setSelectedIdsArr((prev) => {
+      const s = new Set(prev)
+      if (s.has(instanceId)) s.delete(instanceId)
+      else s.add(instanceId)
+      return [...s]
+    })
+  }, [])
+
+  const addToLabSelection = useCallback((instanceIds: string[]) => {
+    if (instanceIds.length === 0) return
+    setSelectedIdsArr((prev) => [...new Set([...prev, ...instanceIds])])
+  }, [])
+
+  const setMarqueeLabSelection = useCallback(
+    (instanceIds: string[], mode: 'replace' | 'add') => {
+      const next = new Set(mode === 'add' ? [...selectedIdsRef.current] : [])
+      for (const id of instanceIds) next.add(id)
+      setSelectedIdsArr([...next])
+    },
+    [],
+  )
+
+  const isLabSelected = useCallback(
+    (instanceId: string) => selectedIds.has(instanceId),
+    [selectedIds],
+  )
+
+  const removeSelectedPlaced = useCallback(() => {
+    const ids = [...selectedIdsRef.current]
+    if (ids.length === 0) return
+    const root = canvasRef.current
+    if (!root) {
+      setPlaced((prev) => prev.filter((p) => !ids.includes(p.instanceId)))
+      setSelectedIdsArr([])
+      return
+    }
+    const chips = ids
+      .map((id) => canvasChipForInstance(root, id))
+      .filter((c): c is HTMLElement => c !== null)
+    if (chips.length === 0) {
+      setPlaced((prev) => prev.filter((p) => !ids.includes(p.instanceId)))
+      setSelectedIdsArr([])
+      return
+    }
+    let remaining = chips.length
+    const onOneDone = () => {
+      remaining -= 1
+      if (remaining <= 0) {
+        setPlaced((prev) => prev.filter((p) => !ids.includes(p.instanceId)))
+        setSelectedIdsArr([])
+      }
+    }
+    for (const ch of chips) shrinkRemoveLabVial(ch, onOneDone)
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return
+      const t = e.target as HTMLElement | null
+      if (t?.closest('input, textarea, select, [contenteditable="true"]'))
+        return
+      if (selectedIdsRef.current.size === 0) return
+      e.preventDefault()
+      removeSelectedPlaced()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [removeSelectedPlaced])
+
+  const labSelectionValue = useMemo(
+    () => ({
+      selectedIdsRef,
+      selectedIds,
+      clearSelection: clearLabSelection,
+      selectSingle: selectSingleLab,
+      toggleInSelection: toggleLabSelection,
+      addToSelection: addToLabSelection,
+      setMarqueeSelection: setMarqueeLabSelection,
+      isSelected: isLabSelected,
+    }),
+    [
+      selectedIds,
+      clearLabSelection,
+      selectSingleLab,
+      toggleLabSelection,
+      addToLabSelection,
+      setMarqueeLabSelection,
+      isLabSelected,
+    ],
+  )
 
   const showSipHint = useCallback((msg: string) => {
     window.clearTimeout(sipTimerRef.current)
@@ -294,7 +406,14 @@ export function AlchemixShell() {
       const canvasEl = canvasRef.current
       if (!chip || !canvasEl) return false
 
-      const hitVial = findHitPlacedVial(chip, instanceId)
+      const sel = selectedIdsRef.current
+      const groupIds =
+        sel.size > 1 && sel.has(instanceId) ? [...sel] : [instanceId]
+      const isGroupDrag = groupIds.length > 1
+
+      const hitVial = !isGroupDrag
+        ? findHitPlacedVial(chip, instanceId)
+        : null
       if (hitVial) {
         const targetInstanceId = hitVial.instanceId
         const targetPlaced = placedRef.current.find(
@@ -347,17 +466,44 @@ export function AlchemixShell() {
         return false
       }
 
-      if (tryCharacterSip(vialId, instanceId, chip)) return false
+      if (!isGroupDrag && tryCharacterSip(vialId, instanceId, chip))
+        return false
 
       if (chipOverlapsInventoryColumn(chip)) {
         const canvasRoot = canvasEl
         if (chip instanceof HTMLElement && canvasRoot.contains(chip)) {
+          if (isGroupDrag) {
+            const chips = groupIds
+              .map((id) => canvasChipForInstance(canvasEl, id))
+              .filter((c): c is HTMLElement => c !== null)
+            if (chips.length === 0) {
+              setPlaced((prev) =>
+                prev.filter((p) => !groupIds.includes(p.instanceId)),
+              )
+              setSelectedIdsArr([])
+              return false
+            }
+            let remaining = chips.length
+            const onOneDone = () => {
+              remaining -= 1
+              if (remaining <= 0) {
+                setPlaced((prev) =>
+                  prev.filter((p) => !groupIds.includes(p.instanceId)),
+                )
+                setSelectedIdsArr([])
+              }
+            }
+            for (const ch of chips) shrinkRemoveLabVial(ch, onOneDone)
+            return true
+          }
           shrinkRemoveLabVial(chip, () => {
             setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
           })
           return true
         }
-        setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
+        setPlaced((prev) =>
+          prev.filter((p) => !groupIds.includes(p.instanceId)),
+        )
         return false
       }
 
@@ -365,10 +511,18 @@ export function AlchemixShell() {
       const { cx, cy } = grabCenterClient(drag, grab, chip)
       if (clientPointInCanvasPlacement(canvasEl, cx, cy)) {
         const pos = clientPointToCanvasPercent(canvasEl, cx, cy)
+        const leaderOld = placedRef.current.find(
+          (p) => p.instanceId === instanceId,
+        )
+        if (!leaderOld) return false
+        const dx = pos.xPct - leaderOld.xPct
+        const dy = pos.yPct - leaderOld.yPct
         setPlaced((prev) =>
-          prev.map((p) =>
-            p.instanceId === instanceId ? { ...p, ...pos } : p,
-          ),
+          prev.map((p) => {
+            if (!groupIds.includes(p.instanceId)) return p
+            const np = clampLabPlacementPercent(p.xPct + dx, p.yPct + dy)
+            return { ...p, ...np }
+          }),
         )
       }
       return false
@@ -437,6 +591,7 @@ export function AlchemixShell() {
   return (
     <div className="alchemix-lab flex h-full min-h-0 min-w-0 flex-1 flex-col">
       <LabDragContext.Provider value={labDragValue}>
+        <LabSelectionContext.Provider value={labSelectionValue}>
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(220px,19.5rem)] gap-0 text-left max-[560px]:grid-cols-[minmax(0,1fr)_minmax(140px,36vw)]">
           <div className="relative z-10 h-full min-h-0 min-w-0 border-r border-[color:var(--border)] bg-[color:var(--panel-bg,var(--code-bg))]">
             <section
@@ -448,6 +603,7 @@ export function AlchemixShell() {
                 vialsById={vialsById}
                 canvasRef={canvasRef}
                 onRemovePlaced={removePlaced}
+                onRemoveSelectedPlaced={removeSelectedPlaced}
                 onDuplicatePlaced={duplicatePlaced}
               />
             </section>
@@ -485,6 +641,7 @@ export function AlchemixShell() {
             />
           </aside>
         </div>
+        </LabSelectionContext.Provider>
       </LabDragContext.Provider>
     </div>
   )

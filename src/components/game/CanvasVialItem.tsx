@@ -9,6 +9,7 @@ import {
   type LabFusionDropTarget,
 } from './labGeometry'
 import { useLabDrag } from './LabDragContext'
+import { useLabSelection } from './LabSelectionContext'
 import type { LabPlacedVial } from './labTypes'
 import { VialChip } from '../vial/VialChip'
 
@@ -19,7 +20,10 @@ type CanvasVialItemProps = {
   placed: LabPlacedVial
   vial: Vial
   zIndex: number
+  isSelected: boolean
   onRemove: (instanceId: string) => void
+  /** Clic droit sur une carte déjà sélectionnée : retirer toute la sélection du labo. */
+  onRemoveSelectedPlaced: () => void
   onDuplicate: (source: LabPlacedVial) => void
 }
 
@@ -27,12 +31,15 @@ export function CanvasVialItem({
   placed,
   vial,
   zIndex,
+  isSelected,
   onRemove,
+  onRemoveSelectedPlaced,
   onDuplicate,
 }: CanvasVialItemProps) {
   const outerRef = useRef<HTMLDivElement>(null)
   const dragLayerRef = useRef<HTMLDivElement>(null)
   const labDrag = useLabDrag()
+  const labSelection = useLabSelection()
   const zIndexRef = useRef(zIndex)
   zIndexRef.current = zIndex
 
@@ -45,6 +52,7 @@ export function CanvasVialItem({
     let lastOverDropHit: HTMLElement | null = null
     let fusionHoverRaf = 0
     let fusionDropTargets: LabFusionDropTarget[] = []
+    let groupPeerDragLayers: HTMLElement[] = []
     const chipFound = dragLayer.querySelector('.lab-chipInventory')
     const dragChipEl = chipFound instanceof HTMLElement ? chipFound : null
 
@@ -117,6 +125,24 @@ export function CanvasVialItem({
       dragResistance: 0,
       edgeResistance: 0,
       onPress(this: DraggableInstance) {
+        groupPeerDragLayers = []
+        const sel = labSelection?.selectedIdsRef.current
+        const root = labDrag.labCanvasRef.current
+        if (
+          sel &&
+          sel.size > 1 &&
+          sel.has(placed.instanceId) &&
+          root instanceof HTMLElement
+        ) {
+          for (const id of sel) {
+            if (id === placed.instanceId) continue
+            const host = root.querySelector(
+              `[data-lab-canvas-vial="${CSS.escape(id)}"]`,
+            )
+            const layer = host?.querySelector('.lab-canvasVialDragLayer')
+            if (layer instanceof HTMLElement) groupPeerDragLayers.push(layer)
+          }
+        }
         refreshFusionDropTargets()
         document.documentElement.setAttribute(HTML_ATTR_CANVAS_CHIP_DRAG, '')
         const chip = dragChipEl
@@ -134,6 +160,9 @@ export function CanvasVialItem({
       /* Draggable ne pousse le rendu transform qu’au tick GSAP : on applique x/y tout de suite pour coller au curseur. */
       onMove(this: DraggableInstance) {
         gsap.set(dragLayer, { x: this.x, y: this.y })
+        for (const el of groupPeerDragLayers) {
+          gsap.set(el, { x: this.x, y: this.y })
+        }
       },
       onDrag() {
         scheduleFusionHover()
@@ -145,6 +174,14 @@ export function CanvasVialItem({
         const moved = Math.hypot(this.x, this.y) >= 2
         const skipDragLayerReset =
           moved && labDrag.completeLabDrag(placed.instanceId, placed.vialId, this)
+        /* Si skip (fusion / retour inventaire / etc.), ne pas remettre les pairs à 0 :
+         * sinon les cartes du groupe sautent à leur ancienne position pendant shrinkRemoveLabVial. */
+        if (!skipDragLayerReset) {
+          for (const el of groupPeerDragLayers) {
+            gsap.set(el, { x: 0, y: 0 })
+          }
+        }
+        groupPeerDragLayers = []
         labDrag.grabOffsetRef.current = null
         if (!skipDragLayerReset) {
           gsap.set(dragLayer, { x: 0, y: 0 })
@@ -157,13 +194,7 @@ export function CanvasVialItem({
       document.documentElement.removeAttribute(HTML_ATTR_CANVAS_CHIP_DRAG)
       d.kill()
     }
-  }, [
-    labDrag,
-    placed.instanceId,
-    placed.vialId,
-    placed.xPct,
-    placed.yPct,
-  ])
+  }, [labDrag, placed.instanceId, placed.vialId, placed.xPct, placed.yPct])
 
   return (
     <div
@@ -187,10 +218,11 @@ export function CanvasVialItem({
           <div
             className="lab-dropHit"
             data-lab-drop-target={placed.instanceId}
+            {...(isSelected ? { 'data-lab-selected': '' } : {})}
           >
             <div
               className="lab-invItemWrap lab-dragSurface"
-              aria-label={`${vial.name} — glisser pour déplacer, double-clic pour dupliquer, clic droit pour retirer du labo`}
+              aria-label={`${vial.name} — glisser pour déplacer, double-clic pour dupliquer, clic droit pour retirer du labo (sélection multiple : glisser sur le fond, puis clic droit sur une carte sélectionnée pour tout retirer)`}
               onDoubleClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
@@ -199,7 +231,11 @@ export function CanvasVialItem({
               onContextMenu={(e) => {
                 e.preventDefault()
                 e.stopPropagation()
-                onRemove(placed.instanceId)
+                if (isSelected) {
+                  onRemoveSelectedPlaced()
+                } else {
+                  onRemove(placed.instanceId)
+                }
               }}
             >
               <VialChip vial={vial} inventory />
