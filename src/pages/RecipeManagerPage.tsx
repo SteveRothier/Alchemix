@@ -528,7 +528,7 @@ function TextureSelect({
 
 function seedPairs(): EditablePair[] {
   const rows = Object.entries(CRAFTED_VIAL_TEMPLATES)
-    .filter(([, t]) => t.recipe)
+    .filter(([id, t]) => t.recipe || t.type === 'creature' || id.startsWith('creature-'))
     .sort(([a], [b]) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
 
   return rows.map(([resultId, t], i) => ({
@@ -832,13 +832,21 @@ function buildCraftedVialsTs(
   soloRows: EditableSolo[],
   visualOverrides: Record<string, VisualOverrideDraft>,
 ): string {
+  const defaultLiquid = (): Vial['liquid'] => ({
+    primaryColor: '#ffffff',
+    opacity: 0.85,
+    texture: 'liquid' as LiquidTexture,
+  })
+
+  const cloneTemplate = (t: CraftedVialTemplate): CraftedVialTemplate => ({
+    ...t,
+    ...(t.liquid ? { liquid: { ...t.liquid } } : {}),
+    recipe: t.recipe ? { ...t.recipe } : undefined,
+  })
+
   const out = new Map<string, CraftedVialTemplate>()
   for (const [id, t] of Object.entries(CRAFTED_VIAL_TEMPLATES)) {
-    out.set(id, {
-      ...t,
-      liquid: { ...t.liquid },
-      recipe: t.recipe ? { ...t.recipe } : undefined,
-    })
+    out.set(id, cloneTemplate(t))
   }
 
   const pairIds = new Set<string>()
@@ -855,19 +863,12 @@ function buildCraftedVialsTs(
     const lower = id.toLowerCase()
     const type: VialType = lower.startsWith('creature-') ? 'creature' : 'element'
     const next: CraftedVialTemplate = existing
-      ? { ...existing, liquid: { ...existing.liquid } }
+      ? cloneTemplate(existing)
       : {
           id,
           type,
           name: inferLabelFromRef(id),
-          liquid: {
-            primaryColor: '#ffffff',
-            opacity: 0.85,
-            texture: 'liquid',
-          },
-          description: `${inferLabelFromRef(id)} essence.`,
-          icon: 'rune',
-          rarity: 'common',
+          liquid: defaultLiquid(),
         }
     if (a && b) next.recipe = { ingredientA: a, ingredientB: b }
     else delete next.recipe
@@ -881,19 +882,12 @@ function buildCraftedVialsTs(
     soloIds.add(id)
     const existing = out.get(id)
     const next: CraftedVialTemplate = existing
-      ? { ...existing, liquid: { ...existing.liquid } }
+      ? cloneTemplate(existing)
       : {
           id,
           type: 'element',
           name: inferLabelFromRef(id),
-          liquid: {
-            primaryColor: '#ffffff',
-            opacity: 0.85,
-            texture: 'liquid',
-          },
-          description: `${inferLabelFromRef(id)} essence.`,
-          icon: 'rune',
-          rarity: 'common',
+          liquid: defaultLiquid(),
         }
     delete next.recipe
     out.set(id, next)
@@ -904,19 +898,12 @@ function buildCraftedVialsTs(
     const lower = id.toLowerCase()
     const type: VialType = lower.startsWith('creature-') ? 'creature' : 'element'
     const next: CraftedVialTemplate = existing
-      ? { ...existing, liquid: { ...existing.liquid } }
+      ? cloneTemplate(existing)
       : {
           id,
           type,
           name: inferLabelFromRef(id),
-          liquid: {
-            primaryColor: '#ffffff',
-            opacity: 0.85,
-            texture: 'liquid',
-          },
-          description: `${inferLabelFromRef(id)} essence.`,
-          icon: 'rune',
-          rarity: 'common',
+          liquid: defaultLiquid(),
         }
     next.liquid = {
       primaryColor: ov.primaryColor.trim() || '#ffffff',
@@ -950,11 +937,9 @@ function buildCraftedVialsTs(
     '',
     'export type CraftedVialTemplate = Omit<',
     '  Vial,',
-    "  'discoveredAt' | 'rarity' | 'description' | 'icon'",
+    "  'discoveredAt' | 'rarity' | 'description' | 'icon' | 'liquid'",
     '> & {',
-    "  rarity?: Vial['rarity']",
-    "  description?: Vial['description']",
-    "  icon?: Vial['icon']",
+    "  liquid?: Vial['liquid']",
     '}',
     '',
     '/** Fioles du catalogue seed (sans `discoveredAt`). */',
@@ -966,22 +951,22 @@ function buildCraftedVialsTs(
     lines.push(`    id: ${q(t.id)},`)
     lines.push(`    type: ${q(t.type)},`)
     lines.push(`    name: ${q(t.name)},`)
-    lines.push('    liquid: {')
-    lines.push(`      primaryColor: ${q(t.liquid.primaryColor)},`)
-    if (t.liquid.secondaryColor?.trim()) {
-      lines.push(`      secondaryColor: ${q(t.liquid.secondaryColor.trim())},`)
+    if (t.type !== 'creature') {
+      const liquid = t.liquid ?? defaultLiquid()
+      lines.push('    liquid: {')
+      lines.push(`      primaryColor: ${q(liquid.primaryColor)},`)
+      if (liquid.secondaryColor?.trim()) {
+        lines.push(`      secondaryColor: ${q(liquid.secondaryColor.trim())},`)
+      }
+      lines.push(`      opacity: ${Math.min(1, Math.max(0, Number(liquid.opacity) || 0.85))},`)
+      lines.push(`      texture: ${q(liquid.texture)},`)
+      lines.push('    },')
     }
-    lines.push(`      opacity: ${Math.min(1, Math.max(0, Number(t.liquid.opacity) || 0.85))},`)
-    lines.push(`      texture: ${q(t.liquid.texture)},`)
-    lines.push('    },')
     if (t.recipe) {
       lines.push(
         `    recipe: { ingredientA: ${q(t.recipe.ingredientA)}, ingredientB: ${q(t.recipe.ingredientB)} },`,
       )
     }
-    if (t.rarity) lines.push(`    rarity: ${q(t.rarity)},`)
-    if (t.description) lines.push(`    description: ${q(t.description)},`)
-    if (t.icon) lines.push(`    icon: ${q(t.icon)},`)
     lines.push('  },')
   }
   lines.push('}')
@@ -992,10 +977,10 @@ function buildCraftedVialsTs(
 function visualFromTemplate(id: string): VisualOverrideDraft {
   const t = CRAFTED_VIAL_TEMPLATES[id]
   return {
-    primaryColor: t?.liquid.primaryColor ?? '#ffffff',
-    secondaryColor: t?.liquid.secondaryColor ?? '',
-    opacity: t?.liquid.opacity ?? 0.85,
-    texture: t?.liquid.texture ?? 'liquid',
+    primaryColor: t?.liquid?.primaryColor ?? '#ffffff',
+    secondaryColor: t?.liquid?.secondaryColor ?? '',
+    opacity: t?.liquid?.opacity ?? 0.85,
+    texture: t?.liquid?.texture ?? 'liquid',
   }
 }
 

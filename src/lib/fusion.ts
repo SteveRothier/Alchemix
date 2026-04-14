@@ -7,6 +7,12 @@ import {
 } from './dynamicVial'
 import { lookupSeedResultId } from './recipeMap'
 
+const DEFAULT_LIQUID: Vial['liquid'] = {
+  primaryColor: '#ffffff',
+  opacity: 0.85,
+  texture: 'liquid',
+}
+
 export type FusionResolution =
   | { ok: true; vial: Vial; wasNew: boolean }
   | { ok: false; reason: 'inert' }
@@ -46,11 +52,13 @@ export function resolveFusionProduct(
     if (!template) {
       return buildDynamicOutcome(ingredientA, ingredientB, vialsById)
     }
+    const liquid = template.liquid ?? DEFAULT_LIQUID
     const vial: Vial = {
       ...template,
-      description: template.description ?? inferSeedDescription(template.name),
-      icon: template.icon ?? 'rune',
-      rarity: template.rarity ?? 'common',
+      liquid,
+      description: inferSeedDescription(template.name),
+      icon: 'rune',
+      rarity: 'common',
       discoveredAt: new Date().toISOString(),
     }
     return { ok: true, vial, wasNew: true }

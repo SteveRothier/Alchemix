@@ -2,6 +2,12 @@ import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
 import { getCreatureIdFromOfferedElement } from '../data/spellDrinkCreatures'
 import type { Vial } from '../types'
 
+const DEFAULT_LIQUID: Vial['liquid'] = {
+  primaryColor: '#ffffff',
+  opacity: 0.85,
+  texture: 'liquid',
+}
+
 export type DrinkSpellResult =
   | { ok: false; reason: 'not_element' | 'no_creature' | 'already_owned' }
   | { ok: true; creature: Vial }
@@ -32,11 +38,13 @@ export function resolveDrinkSpell(
     return { ok: false, reason: 'already_owned' }
   }
 
+  const liquid = template.liquid ?? DEFAULT_LIQUID
   const creature: Vial = {
     ...template,
-    description: template.description ?? `${template.name} trophy.`,
-    icon: template.icon ?? 'rune',
-    rarity: template.rarity ?? 'common',
+    liquid,
+    description: `${template.name} trophy.`,
+    icon: 'rune',
+    rarity: 'common',
     discoveredAt: new Date().toISOString(),
   }
   return { ok: true, creature }

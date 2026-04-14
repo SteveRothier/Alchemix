@@ -2,11 +2,9 @@ import type { Vial } from '../types'
 
 export type CraftedVialTemplate = Omit<
   Vial,
-  'discoveredAt' | 'rarity' | 'description' | 'icon'
+  'discoveredAt' | 'rarity' | 'description' | 'icon' | 'liquid'
 > & {
-  rarity?: Vial['rarity']
-  description?: Vial['description']
-  icon?: Vial['icon']
+  liquid?: Vial['liquid']
 }
 
 /** Fioles du catalogue seed (sans `discoveredAt`). */
@@ -395,18 +393,17 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipe: { ingredientA: "craft-wind", ingredientB: "el-earth" },
   },
-  'creature-undine': {
-    id: "creature-undine",
+  'creature-kobold': {
+    id: "creature-kobold",
     type: "creature",
-    name: "Undine",
-    liquid: {
-      primaryColor: "#ffffff",
-      opacity: 0.85,
-      texture: "liquid",
-    },
-    rarity: "common",
-    description: "Undine essence.",
-    icon: "rune",
+    name: "Kobold",
+    recipe: { ingredientA: "craft-wildspark", ingredientB: "craft-wildspark" },
+  },
+  'creature-yeti': {
+    id: "creature-yeti",
+    type: "creature",
+    name: "Yeti",
+    recipe: { ingredientA: "craft-twilight", ingredientB: "craft-twilight" },
   },
   'el-light': {
     id: "el-light",
