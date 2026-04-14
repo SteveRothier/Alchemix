@@ -20,9 +20,7 @@ import {
   RefreshCcw,
   Trash2,
 } from 'lucide-react'
-import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
-import { MANUAL_RECIPE_PAIRS } from '../data/manualRecipePairs'
-import { MANUAL_SOLO_ELEMENT_IDS } from '../data/manualSoloElements'
+import { CRAFTED_VIAL_TEMPLATES, type CraftedVialTemplate } from '../data/craftedVials'
 import { STARTER_VIAL_DEFINITIONS } from '../data/starterVials'
 import { gsap } from '../lib/gsap'
 import { inferLabelFromRef } from '../lib/inferVialLabel'
@@ -529,16 +527,25 @@ function TextureSelect({
 }
 
 function seedPairs(): EditablePair[] {
-  return MANUAL_RECIPE_PAIRS.map((p, i) => ({
+  const rows = Object.entries(CRAFTED_VIAL_TEMPLATES)
+    .filter(([, t]) => t.recipe)
+    .sort(([a], [b]) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
+
+  return rows.map(([resultId, t], i) => ({
     clientId: i + 1,
-    a: p.a,
-    b: p.b,
-    resultId: p.resultId,
+    a: t.recipe?.ingredientA ?? '',
+    b: t.recipe?.ingredientB ?? '',
+    resultId,
   }))
 }
 
 function seedSolo(): EditableSolo[] {
-  return MANUAL_SOLO_ELEMENT_IDS.map((id, i) => ({
+  const soloIds = Object.entries(CRAFTED_VIAL_TEMPLATES)
+    .filter(([, t]) => t.type === 'element' && !t.recipe)
+    .map(([id]) => id)
+    .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
+
+  return soloIds.map((id, i) => ({
     clientId: 10_000 + i,
     id,
   }))
@@ -820,20 +827,166 @@ function stableCatalogSoloClientId(id: string): number {
   return -Math.abs(h | 0)
 }
 
-function buildManualPairsTs(pairs: EditablePair[]): string {
-  const body = pairs
-    .map(
-      (p) =>
-        `  { a: ${JSON.stringify(p.a)}, b: ${JSON.stringify(p.b)}, resultId: ${JSON.stringify(p.resultId)} },`,
-    )
-    .join('\n')
-  return `/**\n * Catalog recipes (symmetric in-game: a/b order does not matter).\n * Updated from the recipe workshop (/#/recipes) — Save button.\n */\nexport const MANUAL_RECIPE_PAIRS: { a: string; b: string; resultId: string }[] = [\n${body}\n]\n`
-}
+function buildCraftedVialsTs(
+  pairs: EditablePair[],
+  soloRows: EditableSolo[],
+  visualOverrides: Record<string, VisualOverrideDraft>,
+): string {
+  const out = new Map<string, CraftedVialTemplate>()
+  for (const [id, t] of Object.entries(CRAFTED_VIAL_TEMPLATES)) {
+    out.set(id, {
+      ...t,
+      liquid: { ...t.liquid },
+      recipe: t.recipe ? { ...t.recipe } : undefined,
+    })
+  }
 
-function buildManualSoloTs(ids: string[]): string {
-  const sorted = [...new Set(ids.map((x) => x.trim()).filter(Boolean))].sort()
-  const json = JSON.stringify(sorted, null, 2)
-  return `/**\n * Vial references declared alone (no pair recipe).\n * Updated from the recipe workshop (/#/recipes) — Save button.\n */\nexport const MANUAL_SOLO_ELEMENT_IDS: string[] = ${json}\n`
+  const pairIds = new Set<string>()
+  const ingredientIds = new Set<string>()
+  for (const p of pairs) {
+    const id = p.resultId.trim()
+    if (!id) continue
+    pairIds.add(id)
+    const a = p.a.trim()
+    const b = p.b.trim()
+    if (a) ingredientIds.add(a)
+    if (b) ingredientIds.add(b)
+    const existing = out.get(id)
+    const lower = id.toLowerCase()
+    const type: VialType = lower.startsWith('creature-') ? 'creature' : 'element'
+    const next: CraftedVialTemplate = existing
+      ? { ...existing, liquid: { ...existing.liquid } }
+      : {
+          id,
+          type,
+          name: inferLabelFromRef(id),
+          liquid: {
+            primaryColor: '#ffffff',
+            opacity: 0.85,
+            texture: 'liquid',
+          },
+          description: `${inferLabelFromRef(id)} essence.`,
+          icon: 'rune',
+          rarity: 'common',
+        }
+    if (a && b) next.recipe = { ingredientA: a, ingredientB: b }
+    else delete next.recipe
+    out.set(id, next)
+  }
+
+  const soloIds = new Set<string>()
+  for (const s of soloRows) {
+    const id = s.id.trim()
+    if (!id) continue
+    soloIds.add(id)
+    const existing = out.get(id)
+    const next: CraftedVialTemplate = existing
+      ? { ...existing, liquid: { ...existing.liquid } }
+      : {
+          id,
+          type: 'element',
+          name: inferLabelFromRef(id),
+          liquid: {
+            primaryColor: '#ffffff',
+            opacity: 0.85,
+            texture: 'liquid',
+          },
+          description: `${inferLabelFromRef(id)} essence.`,
+          icon: 'rune',
+          rarity: 'common',
+        }
+    delete next.recipe
+    out.set(id, next)
+  }
+
+  for (const [id, ov] of Object.entries(visualOverrides)) {
+    const existing = out.get(id)
+    const lower = id.toLowerCase()
+    const type: VialType = lower.startsWith('creature-') ? 'creature' : 'element'
+    const next: CraftedVialTemplate = existing
+      ? { ...existing, liquid: { ...existing.liquid } }
+      : {
+          id,
+          type,
+          name: inferLabelFromRef(id),
+          liquid: {
+            primaryColor: '#ffffff',
+            opacity: 0.85,
+            texture: 'liquid',
+          },
+          description: `${inferLabelFromRef(id)} essence.`,
+          icon: 'rune',
+          rarity: 'common',
+        }
+    next.liquid = {
+      primaryColor: ov.primaryColor.trim() || '#ffffff',
+      ...(ov.secondaryColor.trim() ? { secondaryColor: ov.secondaryColor.trim() } : {}),
+      opacity: Math.min(1, Math.max(0, Number(ov.opacity) || 0.85)),
+      texture: ov.texture,
+    }
+    out.set(id, next)
+  }
+
+  // Ne conserve que les fioles encore présentes/nécessaires dans l'état courant.
+  const activeIds = new Set<string>([
+    ...pairIds,
+    ...soloIds,
+    ...ingredientIds,
+    ...Object.keys(visualOverrides),
+  ])
+  for (const id of out.keys()) {
+    if (!activeIds.has(id)) {
+      out.delete(id)
+    }
+  }
+
+  const sorted = [...out.entries()].sort(([a], [b]) =>
+    a.localeCompare(b, 'en', { sensitivity: 'base' }),
+  )
+
+  const q = (v: string) => JSON.stringify(v)
+  const lines: string[] = [
+    "import type { Vial } from '../types'",
+    '',
+    'export type CraftedVialTemplate = Omit<',
+    '  Vial,',
+    "  'discoveredAt' | 'rarity' | 'description' | 'icon'",
+    '> & {',
+    "  rarity?: Vial['rarity']",
+    "  description?: Vial['description']",
+    "  icon?: Vial['icon']",
+    '}',
+    '',
+    '/** Fioles du catalogue seed (sans `discoveredAt`). */',
+    'export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {',
+  ]
+
+  for (const [id, t] of sorted) {
+    lines.push(`  '${id}': {`)
+    lines.push(`    id: ${q(t.id)},`)
+    lines.push(`    type: ${q(t.type)},`)
+    lines.push(`    name: ${q(t.name)},`)
+    lines.push('    liquid: {')
+    lines.push(`      primaryColor: ${q(t.liquid.primaryColor)},`)
+    if (t.liquid.secondaryColor?.trim()) {
+      lines.push(`      secondaryColor: ${q(t.liquid.secondaryColor.trim())},`)
+    }
+    lines.push(`      opacity: ${Math.min(1, Math.max(0, Number(t.liquid.opacity) || 0.85))},`)
+    lines.push(`      texture: ${q(t.liquid.texture)},`)
+    lines.push('    },')
+    if (t.recipe) {
+      lines.push(
+        `    recipe: { ingredientA: ${q(t.recipe.ingredientA)}, ingredientB: ${q(t.recipe.ingredientB)} },`,
+      )
+    }
+    if (t.rarity) lines.push(`    rarity: ${q(t.rarity)},`)
+    if (t.description) lines.push(`    description: ${q(t.description)},`)
+    if (t.icon) lines.push(`    icon: ${q(t.icon)},`)
+    lines.push('  },')
+  }
+  lines.push('}')
+  lines.push('')
+  return lines.join('\n')
 }
 
 function visualFromTemplate(id: string): VisualOverrideDraft {
@@ -865,17 +1018,18 @@ export function RecipeManagerPage() {
   )
 
   const catalogElementIds = useMemo(() => {
-    const ids = vialOptions
-      .filter((v) => v.type === 'element')
+    const starters = STARTER_VIAL_DEFINITIONS.filter((v) => v.type === 'element')
+    const nameById = new Map(starters.map((v) => [v.id, v.name]))
+    return starters
       .map((v) => v.id)
-    return ids.sort((a, b) => {
-      const na =
-        vialOptions.find((o) => o.id === a)?.name ?? inferLabelFromRef(a)
-      const nb =
-        vialOptions.find((o) => o.id === b)?.name ?? inferLabelFromRef(b)
-      return na.localeCompare(nb, 'en', { sensitivity: 'base' })
-    })
-  }, [vialOptions])
+      .sort((a, b) =>
+        (nameById.get(a) ?? inferLabelFromRef(a)).localeCompare(
+          nameById.get(b) ?? inferLabelFromRef(b),
+          'en',
+          { sensitivity: 'base' },
+        ),
+      )
+  }, [])
 
   const [pairs, setPairs] = useState<EditablePair[]>(() => loadPairs())
   const [soloRows, setSoloRows] = useState<EditableSolo[]>(() => loadSolo())
@@ -1645,22 +1799,17 @@ export function RecipeManagerPage() {
   }, [pushAlert, triggerRegisterLoading])
 
   const saveToSourceFiles = useCallback(async () => {
-    const pairsTs = buildManualPairsTs(pairs)
-    const soloTs = buildManualSoloTs(soloRows.map((s) => s.id))
-    const craftedUpdates = Object.entries(visualOverrides).map(([id, liquid]) => ({
-      id,
-      liquid,
-    }))
+    const craftedTs = buildCraftedVialsTs(pairs, soloRows, visualOverrides)
 
     try {
       const res = await fetch('/api/save-recipes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pairsTs, soloTs, craftedUpdates }),
+        body: JSON.stringify({ craftedTs }),
       })
       if (res.ok) {
         pushAlert(
-          'Files updated directly in src/data. Restart the dev server if needed.',
+          'craftedVials updated directly in src/data. Restart the dev server if needed.',
           'success',
         )
         return
@@ -1669,77 +1818,10 @@ export function RecipeManagerPage() {
       // Fallback handled below for non-dev contexts.
     }
 
-    const download = (name: string, content: string) => {
-      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-      const u = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = u
-      a.download = name
-      a.click()
-      URL.revokeObjectURL(u)
-    }
-
-    type SavePickerWindow = Window & {
-      showSaveFilePicker?: (options: {
-        suggestedName?: string
-        types?: { description: string; accept: Record<string, string[]> }[]
-      }) => Promise<{
-        createWritable: () => Promise<FileSystemWritableFileStream>
-      }>
-    }
-    const w = window as SavePickerWindow
-
-    if (typeof w.showSaveFilePicker === 'function') {
-      try {
-        const h1 = await w.showSaveFilePicker({
-          suggestedName: 'manualRecipePairs.ts',
-          types: [
-            {
-              description: 'TypeScript',
-              accept: { 'text/plain': ['.ts'] },
-            },
-          ],
-        })
-        const wr1 = await h1.createWritable()
-        await wr1.write(pairsTs)
-        await wr1.close()
-        pushAlert(
-          'Pairs saved. Now choose manualSoloElements.ts in src/data/.',
-          'success',
-        )
-        const h2 = await w.showSaveFilePicker({
-          suggestedName: 'manualSoloElements.ts',
-          types: [
-            {
-              description: 'TypeScript',
-              accept: { 'text/plain': ['.ts'] },
-            },
-          ],
-        })
-        const wr2 = await h2.createWritable()
-        await wr2.write(soloTs)
-        await wr2.close()
-        pushAlert(
-          'Both files are up to date. Restart the dev server if needed.',
-          'success',
-        )
-      } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') return
-        download('manualRecipePairs.ts', pairsTs)
-        download('manualSoloElements.ts', soloTs)
-        pushAlert(
-          'Could not save in place: both files were downloaded.',
-          'success',
-        )
-      }
-    } else {
-      download('manualRecipePairs.ts', pairsTs)
-      download('manualSoloElements.ts', soloTs)
-      pushAlert(
-        'Download the files and replace src/data/manualRecipePairs.ts and manualSoloElements.ts.',
-        'success',
-      )
-    }
+    pushAlert(
+      'Could not save in this context. Run with the local save API enabled.',
+      'error',
+    )
   }, [pairs, soloRows, visualOverrides, pushAlert])
 
   const saveEditPair = useCallback(() => {
