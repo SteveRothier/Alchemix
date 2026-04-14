@@ -3,6 +3,7 @@
  * Updated from the recipe workshop (/#/recipes) — Save button.
  */
 export const MANUAL_SOLO_ELEMENT_IDS: string[] = [
-  "craft-abyss",
-  "feur"
+  "feur0",
+  "feur8",
+  "plom2"
 ]

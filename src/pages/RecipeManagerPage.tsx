@@ -14,6 +14,8 @@ import {
   ArrowDownAZ,
   ArrowDownUp,
   ArrowDownWideNarrow,
+  MoveLeft,
+  MoveRight,
   Pencil,
   RefreshCcw,
   Trash2,
@@ -25,8 +27,9 @@ import { STARTER_VIAL_DEFINITIONS } from '../data/starterVials'
 import { gsap } from '../lib/gsap'
 import { inferLabelFromRef } from '../lib/inferVialLabel'
 import { pairKey } from '../lib/recipeMap'
-import type { LiquidTexture, VialType } from '../types'
+import type { LiquidTexture, Vial, VialType } from '../types'
 import { RaColorPickerField } from '../components/recipeAtelier/RaColorPickerField'
+import { VialFlaskGraphic } from '../components/vial/flask/VialFlaskGraphic'
 import './recipeAtelier.css'
 
 const STORAGE_KEY_PAIRS = 'alchemix-recipe-manager-pairs'
@@ -72,6 +75,7 @@ type VisualOverrideDraft = {
 }
 
 const COMBO_LIST_LIMIT = 120
+const REGISTER_PAGE_SIZE = 50
 const TEXTURE_OPTIONS: LiquidTexture[] = [
   'bubbles',
   'crystal',
@@ -915,9 +919,11 @@ export function RecipeManagerPage() {
   const [pairVisualEditDraft, setPairVisualEditDraft] =
     useState<VisualOverrideDraft>(visualFromTemplate(''))
   const [backConfirmOpen, setBackConfirmOpen] = useState(false)
+  const [registerPage, setRegisterPage] = useState(1)
   const [registerReady, setRegisterReady] = useState(false)
   const registerLoadTokenRef = useRef(0)
   const addBtnRef = useRef<HTMLButtonElement>(null)
+  const registerTableScrollRef = useRef<HTMLDivElement>(null)
   const backNavLinkRef = useRef<HTMLAnchorElement>(null)
   const modalAnchorRef = useRef<HTMLElement | null>(null)
   const deleteOverlayRef = useRef<HTMLDivElement>(null)
@@ -1352,6 +1358,65 @@ export function RecipeManagerPage() {
     )
     return sorted
   }, [allRows, search, activeSortKeys, displayName])
+
+  useEffect(() => {
+    setRegisterPage(1)
+  }, [search, activeSortKeys])
+
+  const registerTotalPages = Math.max(
+    1,
+    Math.ceil(filtered.length / REGISTER_PAGE_SIZE),
+  )
+
+  useEffect(() => {
+    setRegisterPage((p) => Math.min(p, registerTotalPages))
+  }, [registerTotalPages])
+
+  const safeRegisterPage = Math.min(registerPage, registerTotalPages)
+  const registerPageStart = (safeRegisterPage - 1) * REGISTER_PAGE_SIZE
+  const paginatedRegisterRows = useMemo(
+    () => filtered.slice(registerPageStart, registerPageStart + REGISTER_PAGE_SIZE),
+    [filtered, registerPageStart],
+  )
+
+  useEffect(() => {
+    registerTableScrollRef.current?.scrollTo({ top: 0, behavior: 'auto' })
+  }, [safeRegisterPage])
+
+  const elOpacitySliderValue = useMemo(() => {
+    const raw = Number(elOpacity)
+    return Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 0.85
+  }, [elOpacity])
+
+  const pairEditOpacityClamped = useMemo(() => {
+    const raw = Number(pairVisualEditDraft.opacity)
+    return Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 0.85
+  }, [pairVisualEditDraft.opacity])
+
+  const elementPreviewVial = useMemo((): Vial | null => {
+    if (createMode !== 'element') return null
+    const parsedOpacity = Number(elOpacity)
+    const opacity = Number.isFinite(parsedOpacity)
+      ? Math.min(1, Math.max(0, parsedOpacity))
+      : 0.85
+    const resultId = elRes.trim() || 'preview-element'
+    const secondary = elSecondaryColor.trim()
+    return {
+      id: resultId,
+      type: 'element',
+      name: inferLabelFromRef(resultId),
+      description: '',
+      liquid: {
+        primaryColor: elPrimaryColor.trim() || '#ffffff',
+        ...(secondary ? { secondaryColor: secondary } : {}),
+        opacity,
+        texture: elTexture,
+      },
+      icon: 'rune',
+      discoveredAt: '1970-01-01T00:00:00.000Z',
+      rarity: 'common',
+    }
+  }, [createMode, elOpacity, elRes, elPrimaryColor, elSecondaryColor, elTexture])
 
   const stats = useMemo(() => {
     let elements = 0
@@ -2043,20 +2108,6 @@ export function RecipeManagerPage() {
                         aria-label="Secondary color"
                       />
                       <div className="ra-formGroup ra-formGroup--fieldRow">
-                        <label htmlFor="elOpacity">
-                          Opacity<span className="ra-required">*</span>
-                        </label>
-                        <input
-                          id="elOpacity"
-                          className="ra-input"
-                          value={elOpacity}
-                          onChange={(e) => setElOpacity(e.target.value)}
-                          placeholder="0–1"
-                          autoComplete="off"
-                          inputMode="decimal"
-                        />
-                      </div>
-                      <div className="ra-formGroup ra-formGroup--fieldRow">
                         <label htmlFor="elTexture">
                           Texture<span className="ra-required">*</span>
                         </label>
@@ -2067,7 +2118,40 @@ export function RecipeManagerPage() {
                           options={TEXTURE_OPTIONS}
                         />
                       </div>
+                      <div className="ra-formGroup ra-formGroup--fieldRow">
+                        <label htmlFor="elOpacity">
+                          Opacity<span className="ra-required">*</span>
+                        </label>
+                        <div className="ra-opacityControl">
+                          <input
+                            id="elOpacity"
+                            type="range"
+                            className="ra-opacityRange"
+                            min={0}
+                            max={1}
+                            step={0.01}
+                            value={elOpacitySliderValue}
+                            onChange={(e) => setElOpacity(String(Number(e.target.value)))}
+                            aria-valuemin={0}
+                            aria-valuemax={1}
+                            aria-valuenow={elOpacitySliderValue}
+                            aria-valuetext={`${Math.round(elOpacitySliderValue * 100)}%`}
+                          />
+                          <output className="ra-opacityReadout" htmlFor="elOpacity">
+                            {elOpacitySliderValue.toFixed(2)}
+                          </output>
+                        </div>
+                      </div>
                     </div>
+                    {elementPreviewVial && (
+                      <div className="ra-previewFlaskWrap">
+                        <span className="ra-previewFlaskLabel">Preview</span>
+                        <VialFlaskGraphic
+                          vial={elementPreviewVial}
+                          className="ra-previewFlaskSvg"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -2162,7 +2246,7 @@ export function RecipeManagerPage() {
             </div>
 
             <div className="ra-tableWrap flex min-h-0 flex-1 flex-col">
-              <div className="ra-tableScroll">
+              <div ref={registerTableScrollRef} className="ra-tableScroll">
                 <table className="ra-table">
                   <thead>
                     <tr>
@@ -2340,12 +2424,13 @@ export function RecipeManagerPage() {
                         </td>
                       </tr>
                     ) : (
-                      filtered.map((row, i) => {
+                      paginatedRegisterRows.map((row, i) => {
+                        const rowNum = registerPageStart + i + 1
                         if (row.kind === 'solo') {
                           const s = row.data
                           return (
                             <tr key={`solo-${s.clientId}`}>
-                              <td>{i + 1}</td>
+                              <td>{rowNum}</td>
                               <td>
                                 <span className="ra-dashCell">—</span>
                               </td>
@@ -2402,7 +2487,7 @@ export function RecipeManagerPage() {
                         const rt = resultType(p.resultId)
                         return (
                           <tr key={`pair-${p.clientId}`}>
-                            <td>{i + 1}</td>
+                            <td>{rowNum}</td>
                             <td>
                               <div className="ra-combo">
                                 {hasNoCombination(p) ? (
@@ -2477,6 +2562,41 @@ export function RecipeManagerPage() {
                 </table>
               </div>
             </div>
+            {registerReady && filtered.length > REGISTER_PAGE_SIZE && (
+              <div
+                className="ra-registerPager"
+                role="navigation"
+                aria-label="Register pages"
+              >
+                <span className="ra-registerPagerMeta">
+                  Page {safeRegisterPage} of {registerTotalPages}
+                </span>
+                <div className="ra-registerPagerBtns">
+                  <button
+                    type="button"
+                    className="ra-btn ra-btnSecondary ra-registerPagerBtn"
+                    disabled={safeRegisterPage <= 1}
+                    aria-label="Previous page"
+                    onClick={() => setRegisterPage((p) => Math.max(1, p - 1))}
+                  >
+                    <MoveLeft size={14} strokeWidth={2.2} aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    className="ra-btn ra-btnSecondary ra-registerPagerBtn"
+                    disabled={safeRegisterPage >= registerTotalPages}
+                    aria-label="Next page"
+                    onClick={() =>
+                      setRegisterPage((p) =>
+                        Math.min(registerTotalPages, p + 1),
+                      )
+                    }
+                  >
+                    <MoveRight size={14} strokeWidth={2.2} aria-hidden />
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         </div>
 
@@ -2691,21 +2811,6 @@ export function RecipeManagerPage() {
                   aria-label="Secondary color"
                 />
                 <div className="ra-formGroup ra-formGroup--fieldRow">
-                  <label htmlFor="edOpacity">Opacity</label>
-                  <input
-                    id="edOpacity"
-                    className="ra-input"
-                    value={String(pairVisualEditDraft.opacity)}
-                    onChange={(e) =>
-                      setPairVisualEditDraft((d) => ({
-                        ...d,
-                        opacity: Number(e.target.value),
-                      }))
-                    }
-                    autoComplete="off"
-                  />
-                </div>
-                <div className="ra-formGroup ra-formGroup--fieldRow">
                   <label htmlFor="edTexture">Texture</label>
                   <TextureSelect
                     id="edTexture"
@@ -2715,6 +2820,33 @@ export function RecipeManagerPage() {
                     }
                     options={TEXTURE_OPTIONS}
                   />
+                </div>
+                <div className="ra-formGroup ra-formGroup--fieldRow">
+                  <label htmlFor="edOpacity">Opacity</label>
+                  <div className="ra-opacityControl">
+                    <input
+                      id="edOpacity"
+                      type="range"
+                      className="ra-opacityRange"
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      value={pairEditOpacityClamped}
+                      onChange={(e) =>
+                        setPairVisualEditDraft((d) => ({
+                          ...d,
+                          opacity: Number(e.target.value),
+                        }))
+                      }
+                      aria-valuemin={0}
+                      aria-valuemax={1}
+                      aria-valuenow={pairEditOpacityClamped}
+                      aria-valuetext={`${Math.round(pairEditOpacityClamped * 100)}%`}
+                    />
+                    <output className="ra-opacityReadout" htmlFor="edOpacity">
+                      {pairEditOpacityClamped.toFixed(2)}
+                    </output>
+                  </div>
                 </div>
               </div>
             )}
