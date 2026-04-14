@@ -34,6 +34,10 @@ export default defineConfig({
       name: 'local-recipes-writer',
       configureServer(server) {
         server.middlewares.use('/api/save-recipes', async (req, res) => {
+          if (process.env.NODE_ENV !== 'development') {
+            json(res, 403, { ok: false, error: 'Endpoint available in development only' })
+            return
+          }
           if (req.method !== 'POST') {
             json(res, 405, { ok: false, error: 'Method not allowed' })
             return

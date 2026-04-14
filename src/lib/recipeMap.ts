@@ -1,7 +1,11 @@
 import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
 
+function normalizeVialRef(id: string): string {
+  return id.trim()
+}
+
 function pairKey(idA: string, idB: string): string {
-  return [idA, idB].sort().join('|')
+  return [normalizeVialRef(idA), normalizeVialRef(idB)].sort().join('|')
 }
 
 const SEED_RESULT_BY_PAIR = new Map<string, string>()
@@ -18,4 +22,4 @@ export function lookupSeedResultId(vialIdA: string, vialIdB: string): string | n
   return SEED_RESULT_BY_PAIR.get(pairKey(vialIdA, vialIdB)) ?? null
 }
 
-export { pairKey }
+export { normalizeVialRef, pairKey }

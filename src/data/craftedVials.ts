@@ -393,17 +393,20 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipe: { ingredientA: "craft-wind", ingredientB: "el-earth" },
   },
+  'creature-goblin': {
+    id: "creature-goblin",
+    type: "creature",
+    name: "Goblin",
+  },
   'creature-kobold': {
     id: "creature-kobold",
     type: "creature",
     name: "Kobold",
-    recipe: { ingredientA: "craft-wildspark", ingredientB: "craft-wildspark" },
   },
   'creature-yeti': {
     id: "creature-yeti",
     type: "creature",
     name: "Yeti",
-    recipe: { ingredientA: "craft-twilight", ingredientB: "craft-twilight" },
   },
   'el-light': {
     id: "el-light",
@@ -428,5 +431,17 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "smoke",
     },
     recipe: { ingredientA: "craft-mist", ingredientB: "craft-ash" },
+  },
+  'test': {
+    id: "test",
+    type: "element",
+    name: "Test",
+    liquid: {
+      primaryColor: "#3218a7",
+      secondaryColor: "#000000",
+      opacity: 1,
+      texture: "crystal",
+    },
+    recipe: { ingredientA: "el-light", ingredientB: "craft-lightning" },
   },
 }

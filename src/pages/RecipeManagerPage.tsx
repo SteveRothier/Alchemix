@@ -20,11 +20,18 @@ import {
   RefreshCcw,
   Trash2,
 } from 'lucide-react'
-import { CRAFTED_VIAL_TEMPLATES, type CraftedVialTemplate } from '../data/craftedVials'
+import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
 import { STARTER_VIAL_DEFINITIONS } from '../data/starterVials'
 import { gsap } from '../lib/gsap'
 import { inferLabelFromRef } from '../lib/inferVialLabel'
-import { pairKey } from '../lib/recipeMap'
+import { buildCraftedVialsTs } from '../lib/buildCraftedVialsSource'
+import {
+  AMBIGUOUS_NAME_ERROR,
+  HALF_PAIR_ERROR,
+  hasHalfFilledPair,
+  hasPairConflict,
+  hasSoloConflict,
+} from '../lib/atelierValidation'
 import type { LiquidTexture, Vial, VialType } from '../types'
 import { RaColorPickerField } from '../components/recipeAtelier/RaColorPickerField'
 import { VialFlaskGraphic } from '../components/vial/flask/VialFlaskGraphic'
@@ -827,153 +834,6 @@ function stableCatalogSoloClientId(id: string): number {
   return -Math.abs(h | 0)
 }
 
-function buildCraftedVialsTs(
-  pairs: EditablePair[],
-  soloRows: EditableSolo[],
-  visualOverrides: Record<string, VisualOverrideDraft>,
-): string {
-  const defaultLiquid = (): Vial['liquid'] => ({
-    primaryColor: '#ffffff',
-    opacity: 0.85,
-    texture: 'liquid' as LiquidTexture,
-  })
-
-  const cloneTemplate = (t: CraftedVialTemplate): CraftedVialTemplate => ({
-    ...t,
-    ...(t.liquid ? { liquid: { ...t.liquid } } : {}),
-    recipe: t.recipe ? { ...t.recipe } : undefined,
-  })
-
-  const out = new Map<string, CraftedVialTemplate>()
-  for (const [id, t] of Object.entries(CRAFTED_VIAL_TEMPLATES)) {
-    out.set(id, cloneTemplate(t))
-  }
-
-  const pairIds = new Set<string>()
-  const ingredientIds = new Set<string>()
-  for (const p of pairs) {
-    const id = p.resultId.trim()
-    if (!id) continue
-    pairIds.add(id)
-    const a = p.a.trim()
-    const b = p.b.trim()
-    if (a) ingredientIds.add(a)
-    if (b) ingredientIds.add(b)
-    const existing = out.get(id)
-    const lower = id.toLowerCase()
-    const type: VialType = lower.startsWith('creature-') ? 'creature' : 'element'
-    const next: CraftedVialTemplate = existing
-      ? cloneTemplate(existing)
-      : {
-          id,
-          type,
-          name: inferLabelFromRef(id),
-          liquid: defaultLiquid(),
-        }
-    if (a && b) next.recipe = { ingredientA: a, ingredientB: b }
-    else delete next.recipe
-    out.set(id, next)
-  }
-
-  const soloIds = new Set<string>()
-  for (const s of soloRows) {
-    const id = s.id.trim()
-    if (!id) continue
-    soloIds.add(id)
-    const existing = out.get(id)
-    const next: CraftedVialTemplate = existing
-      ? cloneTemplate(existing)
-      : {
-          id,
-          type: 'element',
-          name: inferLabelFromRef(id),
-          liquid: defaultLiquid(),
-        }
-    delete next.recipe
-    out.set(id, next)
-  }
-
-  for (const [id, ov] of Object.entries(visualOverrides)) {
-    const existing = out.get(id)
-    const lower = id.toLowerCase()
-    const type: VialType = lower.startsWith('creature-') ? 'creature' : 'element'
-    const next: CraftedVialTemplate = existing
-      ? cloneTemplate(existing)
-      : {
-          id,
-          type,
-          name: inferLabelFromRef(id),
-          liquid: defaultLiquid(),
-        }
-    next.liquid = {
-      primaryColor: ov.primaryColor.trim() || '#ffffff',
-      ...(ov.secondaryColor.trim() ? { secondaryColor: ov.secondaryColor.trim() } : {}),
-      opacity: Math.min(1, Math.max(0, Number(ov.opacity) || 0.85)),
-      texture: ov.texture,
-    }
-    out.set(id, next)
-  }
-
-  // Ne conserve que les fioles encore présentes/nécessaires dans l'état courant.
-  const activeIds = new Set<string>([
-    ...pairIds,
-    ...soloIds,
-    ...ingredientIds,
-    ...Object.keys(visualOverrides),
-  ])
-  for (const id of out.keys()) {
-    if (!activeIds.has(id)) {
-      out.delete(id)
-    }
-  }
-
-  const sorted = [...out.entries()].sort(([a], [b]) =>
-    a.localeCompare(b, 'en', { sensitivity: 'base' }),
-  )
-
-  const q = (v: string) => JSON.stringify(v)
-  const lines: string[] = [
-    "import type { Vial } from '../types'",
-    '',
-    'export type CraftedVialTemplate = Omit<',
-    '  Vial,',
-    "  'discoveredAt' | 'rarity' | 'description' | 'icon' | 'liquid'",
-    '> & {',
-    "  liquid?: Vial['liquid']",
-    '}',
-    '',
-    '/** Fioles du catalogue seed (sans `discoveredAt`). */',
-    'export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {',
-  ]
-
-  for (const [id, t] of sorted) {
-    lines.push(`  '${id}': {`)
-    lines.push(`    id: ${q(t.id)},`)
-    lines.push(`    type: ${q(t.type)},`)
-    lines.push(`    name: ${q(t.name)},`)
-    if (t.type !== 'creature') {
-      const liquid = t.liquid ?? defaultLiquid()
-      lines.push('    liquid: {')
-      lines.push(`      primaryColor: ${q(liquid.primaryColor)},`)
-      if (liquid.secondaryColor?.trim()) {
-        lines.push(`      secondaryColor: ${q(liquid.secondaryColor.trim())},`)
-      }
-      lines.push(`      opacity: ${Math.min(1, Math.max(0, Number(liquid.opacity) || 0.85))},`)
-      lines.push(`      texture: ${q(liquid.texture)},`)
-      lines.push('    },')
-    }
-    if (t.recipe) {
-      lines.push(
-        `    recipe: { ingredientA: ${q(t.recipe.ingredientA)}, ingredientB: ${q(t.recipe.ingredientB)} },`,
-      )
-    }
-    lines.push('  },')
-  }
-  lines.push('}')
-  lines.push('')
-  return lines.join('\n')
-}
-
 function visualFromTemplate(id: string): VisualOverrideDraft {
   const t = CRAFTED_VIAL_TEMPLATES[id]
   return {
@@ -1060,7 +920,18 @@ export function RecipeManagerPage() {
   const [backConfirmOpen, setBackConfirmOpen] = useState(false)
   const [registerPage, setRegisterPage] = useState(1)
   const [registerReady, setRegisterReady] = useState(false)
+  const [pairsVersion, setPairsVersion] = useState(0)
+  const [soloVersion, setSoloVersion] = useState(0)
+  const [hiddenVersion, setHiddenVersion] = useState(0)
+  const [baselineVersions, setBaselineVersions] = useState({
+    pairs: 0,
+    solo: 0,
+    hidden: 0,
+  })
   const registerLoadTokenRef = useRef(0)
+  const didMountPairsRef = useRef(false)
+  const didMountSoloRef = useRef(false)
+  const didMountHiddenRef = useRef(false)
   const addBtnRef = useRef<HTMLButtonElement>(null)
   const registerTableScrollRef = useRef<HTMLDivElement>(null)
   const backNavLinkRef = useRef<HTMLAnchorElement>(null)
@@ -1081,12 +952,6 @@ export function RecipeManagerPage() {
   const rememberModalAnchor = useCallback((target: EventTarget | null) => {
     modalAnchorRef.current = target instanceof HTMLElement ? target : null
   }, [])
-
-  const initialPairsRef = useRef(JSON.stringify(pairs))
-  const initialSoloRowsRef = useRef(JSON.stringify(soloRows))
-  const initialHiddenCatalogRef = useRef(
-    JSON.stringify(hiddenCatalogSoloIds.slice().sort()),
-  )
 
   const requestCloseDeletePrompt = useCallback(
     (afterClose?: () => void) => {
@@ -1295,16 +1160,13 @@ export function RecipeManagerPage() {
     }
   }, [triggerRegisterLoading])
 
-  const hasRegisterChanges = useMemo(() => {
-    const pairsNow = JSON.stringify(pairs)
-    const soloNow = JSON.stringify(soloRows)
-    const hiddenNow = JSON.stringify(hiddenCatalogSoloIds.slice().sort())
-    return (
-      pairsNow !== initialPairsRef.current ||
-      soloNow !== initialSoloRowsRef.current ||
-      hiddenNow !== initialHiddenCatalogRef.current
-    )
-  }, [pairs, soloRows, hiddenCatalogSoloIds])
+  const hasRegisterChanges = useMemo(
+    () =>
+      pairsVersion !== baselineVersions.pairs ||
+      soloVersion !== baselineVersions.solo ||
+      hiddenVersion !== baselineVersions.hidden,
+    [pairsVersion, soloVersion, hiddenVersion, baselineVersions],
+  )
 
   const pushAlert = useCallback((message: string, kind: AlertItem['kind']) => {
     const id = Date.now()
@@ -1344,14 +1206,29 @@ export function RecipeManagerPage() {
 
   useEffect(() => {
     savePairs(pairs)
+    if (!didMountPairsRef.current) {
+      didMountPairsRef.current = true
+      return
+    }
+    setPairsVersion((v) => v + 1)
   }, [pairs])
 
   useEffect(() => {
     saveSolo(soloRows)
+    if (!didMountSoloRef.current) {
+      didMountSoloRef.current = true
+      return
+    }
+    setSoloVersion((v) => v + 1)
   }, [soloRows])
 
   useEffect(() => {
     saveHiddenCatalogSoloIds(hiddenCatalogSoloIds)
+    if (!didMountHiddenRef.current) {
+      didMountHiddenRef.current = true
+      return
+    }
+    setHiddenVersion((v) => v + 1)
   }, [hiddenCatalogSoloIds])
 
   useEffect(() => {
@@ -1364,10 +1241,14 @@ export function RecipeManagerPage() {
     return () => window.removeEventListener('beforeunload', flushNow)
   }, [])
 
+  const vialNameById = useMemo(() => {
+    const out = new Map<string, string>()
+    for (const option of vialOptions) out.set(option.id, option.name)
+    return out
+  }, [vialOptions])
   const displayName = useCallback(
-    (id: string) =>
-      vialOptions.find((o) => o.id === id)?.name ?? inferLabelFromRef(id),
-    [vialOptions],
+    (id: string) => vialNameById.get(id) ?? inferLabelFromRef(id),
+    [vialNameById],
   )
   const toPairEditDraft = useCallback(
     (pair: EditablePair) => {
@@ -1602,26 +1483,12 @@ export function RecipeManagerPage() {
           pushAlert('Enter both ingredients and the result.', 'error')
           return false
         }
-      } else if ((ta && !tb) || (!ta && tb)) {
-        pushAlert(
-          'Either fill both ingredients or leave both empty (not just one).',
-          'error',
-        )
+      } else if (hasHalfFilledPair(ta, tb)) {
+        pushAlert(HALF_PAIR_ERROR, 'error')
         return false
       }
 
-      let dup: boolean
-      if (ta === '' && tb === '') {
-        dup = pairs.some(
-          (p) =>
-            !p.a.trim() &&
-            !p.b.trim() &&
-            p.resultId.trim() === tr,
-        )
-      } else {
-        const key = pairKey(ta, tb)
-        dup = pairs.some((p) => pairKey(p.a.trim(), p.b.trim()) === key)
-      }
+      const dup = hasPairConflict(pairs, ta, tb, tr)
       if (dup) {
         pushAlert(
           ta === '' && tb === ''
@@ -1793,6 +1660,11 @@ export function RecipeManagerPage() {
         body: JSON.stringify({ craftedTs }),
       })
       if (res.ok) {
+        setBaselineVersions({
+          pairs: pairsVersion,
+          solo: soloVersion,
+          hidden: hiddenVersion,
+        })
         pushAlert(
           'craftedVials updated directly in src/data. Restart the dev server if needed.',
           'success',
@@ -1807,7 +1679,15 @@ export function RecipeManagerPage() {
       'Could not save in this context. Run with the local save API enabled.',
       'error',
     )
-  }, [pairs, soloRows, visualOverrides, pushAlert])
+  }, [
+    pairs,
+    soloRows,
+    visualOverrides,
+    pushAlert,
+    pairsVersion,
+    soloVersion,
+    hiddenVersion,
+  ])
 
   const saveEditPair = useCallback(() => {
     if (!editingPair) return
@@ -1841,10 +1721,7 @@ export function RecipeManagerPage() {
         return
       }
       if (rr.error === 'ambiguous') {
-        pushAlert(
-          'Several vials share the same name: use the technical reference or a unique name.',
-          'error',
-        )
+        pushAlert(AMBIGUOUS_NAME_ERROR, 'error')
         return
       }
       tr = rr.ref.trim()
@@ -1859,10 +1736,7 @@ export function RecipeManagerPage() {
         allKnownVialIds,
       )
       if (rs.error === 'ambiguous') {
-        pushAlert(
-          'Several vials share the same name: use the technical reference or a unique name.',
-          'error',
-        )
+        pushAlert(AMBIGUOUS_NAME_ERROR, 'error')
         return
       }
       const spellRef = rs.ref.trim()
@@ -1884,10 +1758,7 @@ export function RecipeManagerPage() {
         allKnownVialIds,
       )
       if (ra.error === 'ambiguous' || rb.error === 'ambiguous') {
-        pushAlert(
-          'Several vials share the same name: use the technical reference or a unique name.',
-          'error',
-        )
+        pushAlert(AMBIGUOUS_NAME_ERROR, 'error')
         return
       }
       ta = ra.ref.trim()
@@ -1896,30 +1767,12 @@ export function RecipeManagerPage() {
         pushAlert('Pick ingredients that exist in the list.', 'error')
         return
       }
-      if ((ta && !tb) || (!ta && tb)) {
-        pushAlert(
-          'Either fill both ingredients or leave both empty (not just one).',
-          'error',
-        )
+      if (hasHalfFilledPair(ta, tb)) {
+        pushAlert(HALF_PAIR_ERROR, 'error')
         return
       }
     }
-    let clash: boolean
-    if (ta === '' && tb === '') {
-      clash = pairs.some(
-        (p) =>
-          p.clientId !== clientId &&
-          !p.a.trim() &&
-          !p.b.trim() &&
-          p.resultId.trim() === tr,
-      )
-    } else {
-      clash = pairs.some(
-        (p) =>
-          p.clientId !== clientId &&
-          pairKey(p.a.trim(), p.b.trim()) === pairKey(ta, tb),
-      )
-    }
+    const clash = hasPairConflict(pairs, ta, tb, tr, clientId)
     if (clash) {
       pushAlert(
         ta === '' && tb === ''
@@ -1970,17 +1823,14 @@ export function RecipeManagerPage() {
       return
     }
     if (resolved.error === 'ambiguous') {
-      pushAlert(
-        'Several vials share the same name: use the technical reference or a unique name.',
-        'error',
-      )
+      pushAlert(AMBIGUOUS_NAME_ERROR, 'error')
       return
     }
     const newId = resolved.ref.trim()
     const src = editingSolo.catalogSourceId
 
     if (src) {
-      if (soloRows.some((r) => r.id === newId)) {
+      if (hasSoloConflict(soloRows, newId)) {
         pushAlert('This reference already exists in your element entries.', 'error')
         return
       }
@@ -1996,9 +1846,7 @@ export function RecipeManagerPage() {
       return
     }
 
-    const clash = soloRows.some(
-      (s) => s.clientId !== editingSolo.clientId && s.id === newId,
-    )
+    const clash = hasSoloConflict(soloRows, newId, editingSolo.clientId)
     if (clash) {
       pushAlert('This reference already exists as an element.', 'error')
       return
