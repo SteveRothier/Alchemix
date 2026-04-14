@@ -1,24 +1,24 @@
-/* Atelier recettes — thème laboratoire (variables + chrome). Layout : Tailwind dans le TSX. */
+/* Atelier recettes — même palette et ton que le laboratoire (index.css + alchemixLab). */
 
 .recipe-atelier {
-  --lab-text: #dce8e4;
-  --lab-muted: #7a918a;
-  --lab-panel: rgba(18, 32, 30, 0.92);
-  --lab-border: rgba(72, 110, 102, 0.55);
-  --lab-glass: rgba(32, 52, 48, 0.65);
-  --lab-copper: #c4956a;
-  --lab-copper-dim: #8a6a4e;
-  --lab-accent: #4ade80;
-  --lab-danger: #f87171;
+  /* Alias locaux : mêmes noms que l’ancien thème sombre, valeurs = thème clair global */
+  --lab-text: var(--text);
+  --lab-muted: var(--text-muted);
+  --lab-panel: var(--bg);
+  --lab-border: var(--border);
+  --lab-glass: color-mix(in srgb, var(--bg) 90%, var(--panel-bg));
+  --lab-copper: var(--text-h);
+  --lab-copper-dim: var(--lab-hover);
+  --lab-accent: var(--lab-hover);
+  --lab-danger: #b42318;
   --lab-header-h: 1.75rem;
+  /* Champs texte, select, pastille couleur : même hauteur */
+  --ra-control-h: 1.75rem;
 
   box-sizing: border-box;
   color: var(--lab-text);
-  background:
-    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(45, 90, 82, 0.35), transparent),
-    radial-gradient(ellipse 80% 50% at 100% 50%, rgba(30, 58, 52, 0.25), transparent),
-    linear-gradient(165deg, #0a1210 0%, #0f1a18 45%, #0c1412 100%);
-  font-family: system-ui, 'Segoe UI', sans-serif;
+  background: var(--lab-canvas-bg);
+  font-family: var(--sans);
 }
 
 .recipe-atelier *,
@@ -27,19 +27,19 @@
   box-sizing: border-box;
 }
 
-/* Annule le thème global index.css pour les titres de cette page */
 .recipe-atelier h2 {
-  font-family: system-ui, 'Segoe UI', sans-serif;
-  font-weight: 700;
-  color: var(--lab-copper);
+  font-family: var(--font-lab-heading);
+  font-weight: 800;
+  color: var(--lab-inventory-title);
 }
 
 .recipe-atelier .ra-pageTitle {
   margin: 0;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--lab-copper);
+  font-family: var(--font-lab-heading);
+  font-size: clamp(0.88rem, 0.8rem + 0.35vw, 1.1rem);
+  font-weight: 800;
+  letter-spacing: 1.75px;
+  color: var(--lab-inventory-title);
   text-transform: uppercase;
   min-width: 0;
 }
@@ -48,23 +48,29 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.4rem 0.7rem;
-  border-radius: 6px;
+  padding: 0.25rem 0.45rem;
+  border-radius: 4px;
   border: 1px solid var(--lab-border);
-  background: var(--lab-glass);
-  color: var(--lab-text);
+  background: var(--bg);
+  color: var(--lab-muted);
   text-decoration: none;
-  font-size: 0.8rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: clamp(0.68rem, 0.64rem + 0.12vw, 0.75rem);
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.25px;
   flex-shrink: 0;
-  transition:
-    border-color 0.15s,
-    background 0.15s;
+  transition: border-color 0.15s, color 0.15s;
 }
 
 .recipe-atelier .ra-navLink:hover {
-  border-color: var(--lab-copper-dim);
-  background: rgba(196, 149, 106, 0.08);
+  border-color: var(--lab-hover);
+  color: var(--lab-hover);
+}
+
+.recipe-atelier .ra-navLink:focus-visible {
+  outline: 2px solid var(--lab-hover);
+  outline-offset: 2px;
 }
 
 .recipe-atelier .ra-topActions .ra-btn,
@@ -72,12 +78,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.4rem 0.7rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: clamp(0.68rem, 0.64rem + 0.12vw, 0.75rem);
   line-height: 1.2;
-  min-height: 2.05rem;
+  min-height: 1.75rem;
   box-sizing: border-box;
+}
+
+.recipe-atelier .ra-topActions .ra-btn {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.25px;
 }
 
 .recipe-atelier .ra-panel {
@@ -85,16 +98,15 @@
   flex-direction: column;
   background: var(--lab-panel);
   border: 1px solid var(--lab-border);
-  border-radius: 8px;
-  padding: 0.55rem 0.65rem;
-  box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  padding: 0.45rem 0.55rem;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--text-h) 8%, transparent);
   min-height: 0;
   overflow: hidden;
 }
 
 .recipe-atelier .ra-panelForm {
+  background: color-mix(in srgb, var(--lab-inventory-bg) 22%, var(--bg));
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -104,15 +116,17 @@
 }
 
 .recipe-atelier .ra-panelTable {
+  background: var(--bg);
   min-height: 0;
 }
 
 .recipe-atelier .ra-panelTitle {
-  margin: 0 0 0.45rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--lab-copper);
-  letter-spacing: 0.06em;
+  margin: 0 0 0.32rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: clamp(0.68rem, 0.64rem + 0.12vw, 0.75rem);
+  font-weight: 600;
+  color: var(--lab-muted);
+  letter-spacing: 1.25px;
   text-transform: uppercase;
   flex-shrink: 0;
 }
@@ -120,33 +134,34 @@
 .recipe-atelier .ra-modeTabs {
   display: flex;
   gap: 0.25rem;
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.32rem;
   flex-shrink: 0;
 }
 
 .recipe-atelier .ra-modeTab {
   flex: 1;
-  padding: 0.35rem 0.4rem;
+  padding: 0.28rem 0.35rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
   font-size: 0.68rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 1.1px;
   border: 1px solid var(--lab-border);
   border-radius: 4px;
-  background: #0d1816;
+  background: var(--bg);
   color: var(--lab-muted);
   cursor: pointer;
 }
 
 .recipe-atelier .ra-modeTab:hover {
-  border-color: var(--lab-copper-dim);
-  color: var(--lab-text);
+  border-color: var(--lab-hover);
+  color: var(--lab-hover);
 }
 
 .recipe-atelier .ra-modeTabActive {
-  border-color: var(--lab-copper);
-  color: var(--lab-copper);
-  background: rgba(196, 149, 106, 0.08);
+  border-color: var(--lab-hover);
+  color: var(--lab-inventory-title);
+  background: var(--lab-hover-soft);
 }
 
 .recipe-atelier .ra-formBody {
@@ -165,16 +180,17 @@
 }
 
 .recipe-atelier .ra-formGroup {
-  margin-bottom: 0.45rem;
+  margin-bottom: 0.32rem;
 }
 
 .recipe-atelier .ra-formGroup label {
   display: block;
-  margin-bottom: 0.25rem;
-  font-size: 0.65rem;
+  margin-bottom: 0.15rem;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 0.62rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 1.1px;
   color: var(--lab-muted);
 }
 
@@ -186,27 +202,158 @@
 .recipe-atelier .ra-input,
 .recipe-atelier .ra-select {
   width: 100%;
-  padding: 0.4rem 0.5rem;
+  height: var(--ra-control-h);
+  min-height: var(--ra-control-h);
+  padding: 0 0.45rem;
   border-radius: 4px;
   border: 1px solid var(--lab-border);
-  background: #0d1816;
-  color: var(--lab-text);
-  font-size: 0.78rem;
+  background: #fff;
+  color: var(--text-h);
+  font-size: 0.76rem;
+  line-height: 1.2;
   box-sizing: border-box;
+}
+
+.recipe-atelier .ra-select {
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 1.85rem;
+  font-family: var(--font-lab-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'%3E%3Cpath stroke='%2364748b' stroke-width='1.35' stroke-linecap='round' stroke-linejoin='round' d='M2.75 4.5L6 7.75 9.25 4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  background-size: 0.7rem;
+}
+
+.recipe-atelier .ra-select:hover {
+  border-color: color-mix(in srgb, var(--lab-border) 55%, var(--lab-hover));
+}
+
+.recipe-atelier .ra-formGroup--fieldRow .ra-select {
+  min-width: 0;
+}
+
+.recipe-atelier button.ra-textureSelectBtn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Même typo que les autres champs (sans 0.76rem), pas le style mono du .ra-select générique */
+.recipe-atelier .ra-textureSelectBtn.ra-select {
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.recipe-atelier button.ra-textureSelectBtn::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
+
+.recipe-atelier .ra-textureSelectValue {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  text-align: left;
+}
+
+/* Liste texture : pas de gouttière vide haut/bas (padding ul retiré vs combo ingrédient) */
+.ra-vialComboList.ra-textureComboList {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.ra-textureComboList > li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Liste en portail sur body : pas de parent .recipe-atelier */
+.ra-textureComboList .ra-vialComboOption {
+  font-family: var(--sans);
+  font-size: 0.76rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  margin: 0;
+  line-height: 1.25;
 }
 
 .recipe-atelier .ra-input:focus,
 .recipe-atelier .ra-select:focus {
   outline: none;
-  border-color: var(--lab-copper-dim);
-  box-shadow: 0 0 0 2px rgba(196, 149, 106, 0.15);
+  border-color: var(--lab-hover);
+  box-shadow: 0 0 0 2px var(--lab-hover-soft);
+}
+
+.recipe-atelier .ra-formVisualGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+@media (max-width: 520px) {
+  .recipe-atelier .ra-formVisualGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.recipe-atelier .ra-colorFieldRow {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.recipe-atelier .ra-colorHexInput {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  font-family: var(--font-lab-mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.02em;
+}
+
+.recipe-atelier .ra-colorPicker {
+  flex-shrink: 0;
+  width: 1.65rem;
+  height: 1.65rem;
+  padding: 0;
+  border: 1px solid var(--lab-border);
+  border-radius: 0.22rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.recipe-atelier .ra-colorPicker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.recipe-atelier .ra-colorPicker::-webkit-color-swatch {
+  border: none;
+  border-radius: 0.18rem;
 }
 
 .recipe-atelier .ra-vialComboAnchor {
   position: relative;
+  min-width: 0;
+  width: 100%;
 }
 
-/* Liste portail sur document.body : couleurs explicites (hors arbre .recipe-atelier) */
+/* Liste portail sur document.body : thème clair (variables :root) */
 .ra-vialComboList {
   margin: 0;
   padding: 0.2rem 0;
@@ -215,10 +362,10 @@
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  background: #0d1816;
-  border: 1px solid rgba(72, 110, 102, 0.55);
+  background: #fff;
+  border: 1px solid var(--border);
   border-radius: 4px;
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--text-h) 18%, transparent);
 }
 
 .ra-vialComboList::-webkit-scrollbar {
@@ -231,8 +378,9 @@
   padding: 0.35rem 0.5rem;
   border: none;
   background: transparent;
-  color: #dce8e4;
-  font-size: 0.72rem;
+  color: var(--text-h);
+  font-family: var(--font-lab-name);
+  font-size: 0.78rem;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
@@ -241,8 +389,8 @@
 
 .ra-vialComboOption:hover,
 .ra-vialComboOption:focus-visible {
-  background: rgba(74, 222, 128, 0.04);
-  color: #dce8e4;
+  background: var(--lab-hover-soft);
+  color: var(--text-h);
   outline: none;
 }
 
@@ -272,34 +420,45 @@
 .recipe-atelier .ra-btnPrimary {
   flex: 1;
   min-width: 100px;
-  background: linear-gradient(180deg, #a67c52 0%, #7d5a3a 100%);
-  color: #0a0f0e;
-  border-color: rgba(196, 149, 106, 0.5);
+  background: var(--lab-hover);
+  color: #f4f8f5;
+  border-color: color-mix(in srgb, var(--lab-hover) 65%, var(--text-h));
 }
 
 .recipe-atelier .ra-btnPrimary:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.06);
 }
 
 .recipe-atelier .ra-btnSecondary {
-  background: var(--lab-glass);
-  color: var(--lab-text);
-  border-color: var(--lab-border);
+  background: var(--bg);
+  color: var(--lab-muted);
+  border: 1px solid var(--lab-border);
   white-space: nowrap;
 }
 
 .recipe-atelier .ra-btnSecondary:hover {
-  border-color: var(--lab-copper-dim);
+  border-color: var(--lab-hover);
+  color: var(--lab-hover);
+}
+
+.recipe-atelier .ra-btnSecondary:focus-visible {
+  outline: 2px solid var(--lab-hover);
+  outline-offset: 2px;
+}
+
+.recipe-atelier .ra-btnPrimary:focus-visible {
+  outline: 2px solid var(--lab-hover);
+  outline-offset: 2px;
 }
 
 .recipe-atelier .ra-btnDanger {
-  background: linear-gradient(180deg, #b91c1c 0%, #7f1d1d 100%);
-  color: #fef2f2;
-  border-color: rgba(248, 113, 113, 0.45);
+  background: #fef2f2;
+  color: var(--lab-danger);
+  border-color: color-mix(in srgb, var(--lab-danger) 35%, var(--border));
 }
 
 .recipe-atelier .ra-btnDanger:hover {
-  filter: brightness(1.08);
+  background: #fee2e2;
 }
 
 .recipe-atelier .ra-hint {
@@ -348,11 +507,12 @@
 
 .recipe-atelier .ra-tableHeaderLeft h2 {
   margin: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--lab-copper);
+  font-family: var(--font-lab-heading);
+  font-size: clamp(0.88rem, 0.8rem + 0.35vw, 1.1rem);
+  font-weight: 800;
+  color: var(--lab-inventory-title);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 1.75px;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -441,24 +601,24 @@
   line-height: 0.82rem;
   text-align: center;
   border-radius: 50%;
-  background: var(--lab-copper);
-  color: #0a1210;
+  background: var(--lab-hover);
+  color: #f4f8f5;
   pointer-events: none;
 }
 
 .recipe-atelier .ra-sortHeaderBtn:hover {
-  color: var(--lab-copper);
-  background: rgba(196, 149, 106, 0.1);
+  color: var(--lab-hover);
+  background: var(--lab-hover-soft);
 }
 
 .recipe-atelier .ra-sortHeaderBtn:focus-visible {
-  outline: 2px solid var(--lab-copper-dim);
+  outline: 2px solid var(--lab-hover);
   outline-offset: 1px;
 }
 
 .recipe-atelier .ra-sortHeaderBtnActive {
-  color: var(--lab-copper);
-  background: rgba(196, 149, 106, 0.12);
+  color: var(--lab-hover);
+  background: var(--lab-hover-soft);
 }
 
 .recipe-atelier .ra-tableWrap {
@@ -467,7 +627,7 @@
   overflow: hidden;
   flex: 1;
   min-height: 0;
-  background: #0a1210;
+  background: #fff;
 }
 
 .recipe-atelier .ra-tableScroll {
@@ -498,11 +658,12 @@
   z-index: 1;
   text-align: left;
   padding: 0.35rem 0.4rem;
-  background: rgba(30, 52, 48, 0.98);
-  color: var(--lab-copper);
-  font-weight: 700;
+  background: var(--panel-bg);
+  color: var(--lab-inventory-title);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 1px;
   font-size: 0.62rem;
   border-bottom: 1px solid var(--lab-border);
 }
@@ -521,16 +682,17 @@
 
 .recipe-atelier .ra-table td {
   padding: 0.3rem 0.4rem;
-  border-bottom: 1px solid rgba(72, 110, 102, 0.2);
+  border-bottom: 1px solid color-mix(in srgb, var(--lab-border) 65%, transparent);
   vertical-align: middle;
   overflow: hidden;
 }
 
 .recipe-atelier .ra-table tbody tr:hover {
-  background: rgba(74, 222, 128, 0.04);
+  background: var(--lab-hover-soft);
 }
 
 .recipe-atelier .ra-tdResult {
+  font-family: var(--font-lab-name);
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -542,8 +704,9 @@
   min-width: 0;
   padding: 0.12rem 0.3rem;
   border-radius: 3px;
-  background: var(--lab-glass);
+  background: color-mix(in srgb, var(--panel-bg) 80%, var(--bg));
   border: 1px solid var(--lab-border);
+  font-family: var(--font-lab-name);
   font-size: 0.68rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -551,7 +714,7 @@
 }
 
 .recipe-atelier .ra-plus {
-  color: var(--lab-copper);
+  color: var(--lab-hover);
   font-weight: 800;
   flex-shrink: 0;
 }
@@ -567,33 +730,33 @@
 }
 
 .recipe-atelier .ra-typeElement {
-  background: rgba(34, 197, 94, 0.12);
-  color: #86efac;
-  border: 1px solid rgba(34, 197, 94, 0.25);
+  background: color-mix(in srgb, var(--lab-hover) 16%, var(--bg));
+  color: var(--text-h);
+  border: 1px solid color-mix(in srgb, var(--lab-hover) 32%, var(--border));
 }
 
 .recipe-atelier .ra-typeSpell {
-  background: rgba(168, 85, 247, 0.12);
-  color: #d8b4fe;
-  border: 1px solid rgba(168, 85, 247, 0.25);
+  background: color-mix(in srgb, #7c3aed 14%, var(--bg));
+  color: #4c1d95;
+  border: 1px solid color-mix(in srgb, #7c3aed 28%, var(--border));
 }
 
 .recipe-atelier .ra-typeCreature {
-  background: rgba(251, 146, 60, 0.12);
-  color: #fdba74;
-  border: 1px solid rgba(251, 146, 60, 0.25);
+  background: color-mix(in srgb, #ea580c 14%, var(--bg));
+  color: #7c2d12;
+  border: 1px solid color-mix(in srgb, #ea580c 28%, var(--border));
 }
 
 .recipe-atelier .ra-typeUnknown {
-  background: rgba(148, 163, 184, 0.1);
+  background: color-mix(in srgb, var(--text-muted) 12%, var(--bg));
   color: var(--lab-muted);
   border: 1px solid var(--lab-border);
 }
 
 .recipe-atelier .ra-typeSolo {
-  background: rgba(56, 189, 248, 0.1);
-  color: #7dd3fc;
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: color-mix(in srgb, #0284c7 12%, var(--bg));
+  color: #0c4a6e;
+  border: 1px solid color-mix(in srgb, #0284c7 26%, var(--border));
 }
 
 .recipe-atelier .ra-dashCell {
@@ -610,23 +773,23 @@
   padding: 0;
   border-radius: 4px;
   border: 1px solid var(--lab-border);
-  background: var(--lab-glass);
-  color: var(--lab-text);
+  background: var(--bg);
+  color: var(--lab-muted);
   cursor: pointer;
 }
 
 .recipe-atelier .ra-iconBtn:hover {
-  border-color: var(--lab-copper-dim);
-  color: var(--lab-copper);
+  border-color: var(--lab-hover);
+  color: var(--lab-hover);
 }
 
 .recipe-atelier .ra-iconBtnDanger {
-  border-color: rgba(248, 113, 113, 0.35);
+  border-color: color-mix(in srgb, var(--lab-danger) 28%, var(--border));
   color: var(--lab-danger);
 }
 
 .recipe-atelier .ra-iconBtnDanger:hover {
-  background: rgba(248, 113, 113, 0.08);
+  background: #fef2f2;
 }
 
 .recipe-atelier .ra-empty {
@@ -649,7 +812,7 @@
 }
 
 .recipe-atelier .ra-statInline strong {
-  color: var(--lab-copper);
+  color: var(--lab-inventory-title);
   font-weight: 800;
 }
 
@@ -676,15 +839,15 @@
 }
 
 .recipe-atelier .ra-alertSuccess {
-  background: #134022;
-  border-color: #4ade80;
-  color: #ecfdf3;
+  background: #ecfdf3;
+  border-color: #22c55e;
+  color: #14532d;
 }
 
 .recipe-atelier .ra-alertError {
-  background: #3f1d1d;
+  background: #fef2f2;
   border-color: #f87171;
-  color: #fee2e2;
+  color: #7f1d1d;
 }
 
 .recipe-atelier .ra-alertClose {
@@ -704,7 +867,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.65);
+  background: color-mix(in srgb, var(--text-h) 42%, transparent);
   z-index: 1000;
   padding: 1rem;
 }
@@ -716,28 +879,28 @@
 .recipe-atelier .ra-modal {
   width: 100%;
   max-width: 400px;
-  background: var(--lab-panel);
-  border: 1px solid var(--lab-copper-dim);
+  background: var(--bg);
+  border: 1px solid var(--lab-border);
   border-radius: 8px;
   padding: 1rem 1.1rem;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 20px 50px color-mix(in srgb, var(--text-h) 22%, transparent);
 }
 
 .recipe-atelier .ra-modal h3 {
   margin: 0 0 0.75rem;
-  font-size: 0.9rem;
-  color: var(--lab-copper);
+  font-size: 0.85rem;
+  color: var(--lab-inventory-title);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-family: system-ui, 'Segoe UI', sans-serif;
-  font-weight: 700;
+  letter-spacing: 1.25px;
+  font-family: var(--font-lab-heading);
+  font-weight: 800;
 }
 
 .recipe-atelier .ra-modalBody {
   margin: 0;
   font-size: 0.82rem;
   line-height: 1.45;
-  color: var(--lab-text);
+  color: var(--text);
 }
 
 .recipe-atelier .ra-modalActions {
@@ -761,7 +924,71 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  gap: 0.5rem;
+  gap: 0.35rem;
+}
+
+/* Formulaire recette : une colonne, chaque champ sur sa ligne */
+.recipe-atelier .ra-formRecipeLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  align-items: stretch;
+  width: 100%;
+}
+
+.recipe-atelier .ra-formGroup--fieldRow {
+  display: grid;
+  grid-template-columns: minmax(5.75rem, 9.5rem) minmax(0, 1fr);
+  gap: 0.2rem 0.5rem;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.recipe-atelier .ra-formGroup--fieldRow > label {
+  margin-bottom: 0;
+  font-size: 0.58rem;
+  line-height: 1.2;
+}
+
+.recipe-atelier .ra-formGroup--fieldRow .ra-vialComboAnchor {
+  min-width: 0;
+}
+
+.recipe-atelier .ra-formVisualStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  align-items: stretch;
+  width: 100%;
+}
+
+.recipe-atelier .ra-formVisualStack--modal {
+  margin-top: 0.15rem;
+}
+
+.recipe-atelier .ra-colorCompactRow {
+  display: flex;
+  gap: 0.35rem;
+  align-items: stretch;
+  min-height: var(--ra-control-h);
+}
+
+.recipe-atelier .ra-colorSwatchBtn {
+  flex-shrink: 0;
+  width: var(--ra-control-h);
+  height: var(--ra-control-h);
+  min-width: var(--ra-control-h);
+  min-height: var(--ra-control-h);
+  padding: 0;
+  border: 1px solid var(--lab-border);
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-h) 10%, transparent);
+}
+
+.recipe-atelier .ra-colorSwatchBtn:focus-visible {
+  outline: 2px solid var(--lab-hover);
+  outline-offset: 2px;
 }
 
 .recipe-atelier .ra-actions {
@@ -779,4 +1006,120 @@
   align-items: center;
   gap: 0.25rem;
   min-width: 0;
+}
+
+/* Popover couleur (portail sur body — variables :root) */
+.ra-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ra-colorPopover {
+  box-sizing: border-box;
+  padding: 0.45rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 12px 32px color-mix(in srgb, var(--text-h) 18%, transparent);
+}
+
+.ra-colorPopover-sv {
+  position: relative;
+  width: 100%;
+  height: 100px;
+  box-sizing: border-box;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: default;
+  touch-action: none;
+  border: 1px solid var(--border);
+  contain: layout paint;
+}
+
+.ra-colorPopover-svLayers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ra-colorPopover-knob {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  margin: 0;
+  box-sizing: border-box;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text-h) 45%, transparent);
+  pointer-events: none;
+  will-change: left, top;
+  transform: translate(-50%, -50%);
+}
+
+.ra-colorPopover-hueLabel {
+  display: block;
+  margin-top: 0.35rem;
+}
+
+.ra-colorPopover-hue {
+  display: block;
+  width: 100%;
+  height: 0.55rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  appearance: none;
+  background: linear-gradient(
+    to right,
+    #f00,
+    #ff0,
+    #0f0,
+    #0ff,
+    #00f,
+    #f0f,
+    #f00
+  );
+}
+
+.ra-colorPopover-hue::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text-h) 12%, transparent);
+}
+
+.ra-colorPopover-hue::-moz-range-thumb {
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--text-h) 12%, transparent);
+}
+
+.ra-colorPopover-hue::-moz-range-track {
+  height: 0.55rem;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    #f00,
+    #ff0,
+    #0f0,
+    #0ff,
+    #00f,
+    #f0f,
+    #f00
+  );
 }

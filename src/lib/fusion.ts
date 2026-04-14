@@ -48,10 +48,16 @@ export function resolveFusionProduct(
     }
     const vial: Vial = {
       ...template,
+      description: template.description ?? inferSeedDescription(template.name),
+      icon: template.icon ?? 'rune',
       rarity: template.rarity ?? 'common',
       discoveredAt: new Date().toISOString(),
     }
     return { ok: true, vial, wasNew: true }
   }
   return buildDynamicOutcome(ingredientA, ingredientB, vialsById)
+}
+
+function inferSeedDescription(name: string): string {
+  return `${name} essence.`
 }

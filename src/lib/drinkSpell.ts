@@ -34,6 +34,8 @@ export function resolveDrinkSpell(
 
   const creature: Vial = {
     ...template,
+    description: template.description ?? `${template.name} trophy.`,
+    icon: template.icon ?? 'rune',
     rarity: template.rarity ?? 'common',
     discoveredAt: new Date().toISOString(),
   }

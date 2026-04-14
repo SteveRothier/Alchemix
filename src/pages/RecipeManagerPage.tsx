@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowDownAZ,
   ArrowDownUp,
@@ -22,9 +22,11 @@ import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
 import { MANUAL_RECIPE_PAIRS } from '../data/manualRecipePairs'
 import { MANUAL_SOLO_ELEMENT_IDS } from '../data/manualSoloElements'
 import { STARTER_VIAL_DEFINITIONS } from '../data/starterVials'
+import { gsap } from '../lib/gsap'
 import { inferLabelFromRef } from '../lib/inferVialLabel'
 import { pairKey } from '../lib/recipeMap'
-import type { VialType } from '../types'
+import type { LiquidTexture, VialType } from '../types'
+import { RaColorPickerField } from '../components/recipeAtelier/RaColorPickerField'
 import './recipeAtelier.css'
 
 const STORAGE_KEY_PAIRS = 'alchemix-recipe-manager-pairs'
@@ -62,8 +64,120 @@ type RegistreRow =
   | { kind: 'solo'; data: EditableSolo }
 
 type VialPickOption = { id: string; name: string }
+type VisualOverrideDraft = {
+  primaryColor: string
+  secondaryColor: string
+  opacity: number
+  texture: LiquidTexture
+}
 
 const COMBO_LIST_LIMIT = 120
+const TEXTURE_OPTIONS: LiquidTexture[] = [
+  'bubbles',
+  'crystal',
+  'drip',
+  'ember',
+  'flakes',
+  'glow',
+  'liquid',
+  'mist',
+  'ooze',
+  'sheen',
+  'smoke',
+  'spark',
+  'static',
+  'swirl',
+  'wave',
+]
+
+function textureDisplayLabel(t: LiquidTexture): string {
+  if (!t) return ''
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase()
+}
+
+function anchorToDialogDelta(
+  anchor: HTMLElement,
+  dialog: HTMLElement,
+): { dx: number; dy: number } {
+  const ar = anchor.getBoundingClientRect()
+  const dr = dialog.getBoundingClientRect()
+  const ax = ar.left + ar.width / 2
+  const ay = ar.top + ar.height / 2
+  const cx = dr.left + dr.width / 2
+  const cy = dr.top + dr.height / 2
+  return { dx: ax - cx, dy: ay - cy }
+}
+
+function playActionModalOpen(
+  overlay: HTMLElement,
+  dialog: HTMLElement,
+  anchor: HTMLElement,
+) {
+  const { dx, dy } = anchorToDialogDelta(anchor, dialog)
+  gsap.killTweensOf([overlay, dialog])
+  gsap.set(overlay, { opacity: 0 })
+  gsap.set(dialog, {
+    x: dx,
+    y: dy,
+    scale: 0.14,
+    opacity: 0,
+    transformOrigin: '50% 50%',
+  })
+  const tl = gsap.timeline()
+  tl.to(overlay, { opacity: 1, duration: 0.34, ease: 'power1.out' }, 0)
+  tl.to(
+    dialog,
+    {
+      x: 0,
+      y: 0,
+      scale: 1,
+      opacity: 1,
+      duration: 0.38,
+      ease: 'power2.out',
+    },
+    0,
+  )
+  return tl
+}
+
+function playActionModalClose(
+  overlay: HTMLElement,
+  dialog: HTMLElement,
+  anchor: HTMLElement | null,
+  onComplete: () => void,
+) {
+  gsap.killTweensOf([overlay, dialog])
+  const tl = gsap.timeline({ onComplete })
+  if (anchor) {
+    const { dx, dy } = anchorToDialogDelta(anchor, dialog)
+    tl.to(
+      dialog,
+      {
+        x: dx,
+        y: dy,
+        scale: 0.14,
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power2.in',
+      },
+      0,
+    )
+    tl.to(overlay, { opacity: 0, duration: 0.3, ease: 'power1.in' }, 0.03)
+    return tl
+  }
+  tl.to(
+    dialog,
+    {
+      scale: 0.96,
+      opacity: 0,
+      duration: 0.22,
+      ease: 'power1.in',
+    },
+    0,
+  )
+  tl.to(overlay, { opacity: 0, duration: 0.22, ease: 'power1.in' }, 0)
+  return tl
+}
 
 /**
  * Champ texte + liste filtrée (comportement type sélecteur avec recherche par nom ou id).
@@ -76,6 +190,7 @@ function VialOptionCombo({
   options,
   placeholder = 'Type to filter or pick…',
   autoComplete = 'on',
+  compact = false,
 }: {
   inputId: string
   label: ReactNode
@@ -84,6 +199,7 @@ function VialOptionCombo({
   options: VialPickOption[]
   placeholder?: string
   autoComplete?: string
+  compact?: boolean
 }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState(false)
@@ -216,7 +332,11 @@ function VialOptionCombo({
     )
 
   return (
-    <div className="ra-formGroup">
+    <div
+      className={
+        compact ? 'ra-formGroup ra-formGroup--fieldRow' : 'ra-formGroup'
+      }
+    >
       <label htmlFor={inputId}>{label}</label>
       <div ref={wrapRef} className="ra-vialComboAnchor">
         <input
@@ -262,6 +382,143 @@ function VialOptionCombo({
           }}
         />
       </div>
+      {listNode}
+    </div>
+  )
+}
+
+/** Liste déroulante texture (pas de `<select>` natif : hover / focus = thème atelier). */
+function TextureSelect({
+  id,
+  value,
+  onChange,
+  options,
+}: {
+  id: string
+  value: LiquidTexture
+  onChange: (t: LiquidTexture) => void
+  options: readonly LiquidTexture[]
+}) {
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [open, setOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState<{
+    top: number
+    left: number
+    width: number
+  } | null>(null)
+
+  const listId = `${id}-texture-listbox`
+
+  const updateMenuPos = useCallback(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    setMenuPos({
+      top: r.bottom + 2,
+      left: r.left,
+      width: r.width,
+    })
+  }, [])
+
+  useLayoutEffect(() => {
+    if (!open) return
+    updateMenuPos()
+    const onReposition = () => updateMenuPos()
+    window.addEventListener('scroll', onReposition, true)
+    window.addEventListener('resize', onReposition)
+    return () => {
+      window.removeEventListener('scroll', onReposition, true)
+      window.removeEventListener('resize', onReposition)
+    }
+  }, [open, updateMenuPos])
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (wrapRef.current?.contains(t)) return
+      const listEl = document.getElementById(listId)
+      if (listEl?.contains(t)) return
+      setOpen(false)
+    }
+    document.addEventListener('mousedown', onDown, true)
+    return () => document.removeEventListener('mousedown', onDown, true)
+  }, [open, listId])
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const pick = useCallback(
+    (t: LiquidTexture) => {
+      onChange(t)
+      setOpen(false)
+    },
+    [onChange],
+  )
+
+  const listNode =
+    open &&
+    menuPos &&
+    createPortal(
+      <ul
+        id={listId}
+        className="ra-vialComboList ra-textureComboList"
+        role="listbox"
+        aria-label="Textures"
+        style={{
+          position: 'fixed',
+          top: menuPos.top,
+          left: menuPos.left,
+          width: menuPos.width,
+          zIndex: 12_000,
+        }}
+      >
+        {options.map((t) => (
+          <li key={t} role="presentation">
+            <button
+              type="button"
+              role="option"
+              aria-selected={value === t}
+              className="ra-vialComboOption"
+              onMouseDown={(e) => {
+                e.preventDefault()
+                pick(t)
+              }}
+            >
+              <span className="ra-vialComboName">
+                {textureDisplayLabel(t)}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>,
+      document.body,
+    )
+
+  return (
+    <div ref={wrapRef} className="ra-vialComboAnchor">
+      <button
+        type="button"
+        id={id}
+        className="ra-input ra-select ra-textureSelectBtn"
+        role="combobox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-haspopup="listbox"
+        onClick={() => {
+          setOpen((o) => !o)
+        }}
+      >
+        <span className="ra-textureSelectValue">
+          {textureDisplayLabel(value)}
+        </span>
+      </button>
       {listNode}
     </div>
   )
@@ -575,9 +832,20 @@ function buildManualSoloTs(ids: string[]): string {
   return `/**\n * Vial references declared alone (no pair recipe).\n * Updated from the recipe workshop (/#/recipes) — Save button.\n */\nexport const MANUAL_SOLO_ELEMENT_IDS: string[] = ${json}\n`
 }
 
+function visualFromTemplate(id: string): VisualOverrideDraft {
+  const t = CRAFTED_VIAL_TEMPLATES[id]
+  return {
+    primaryColor: t?.liquid.primaryColor ?? '#ffffff',
+    secondaryColor: t?.liquid.secondaryColor ?? '',
+    opacity: t?.liquid.opacity ?? 0.85,
+    texture: t?.liquid.texture ?? 'liquid',
+  }
+}
+
 type AlertItem = { id: number; message: string; kind: 'success' | 'error' }
 
 export function RecipeManagerPage() {
+  const navigate = useNavigate()
   const vialOptions = useMemo(() => buildVialOptions(), [])
   const elementOptions = useMemo(
     () => vialOptions.filter((v) => v.type === 'element'),
@@ -634,9 +902,232 @@ export function RecipeManagerPage() {
   const [elA, setElA] = useState('')
   const [elB, setElB] = useState('')
   const [elRes, setElRes] = useState('')
+  const [elPrimaryColor, setElPrimaryColor] = useState('#ffffff')
+  const [elSecondaryColor, setElSecondaryColor] = useState('')
+  const [elOpacity, setElOpacity] = useState('0.85')
+  const [elTexture, setElTexture] = useState<LiquidTexture>('liquid')
   const [crElement, setCrElement] = useState('')
   const [crName, setCrName] = useState('')
   const [soloIdInput, setSoloIdInput] = useState('')
+  const [visualOverrides, setVisualOverrides] = useState<
+    Record<string, VisualOverrideDraft>
+  >({})
+  const [pairVisualEditDraft, setPairVisualEditDraft] =
+    useState<VisualOverrideDraft>(visualFromTemplate(''))
+  const [backConfirmOpen, setBackConfirmOpen] = useState(false)
+  const addBtnRef = useRef<HTMLButtonElement>(null)
+  const backNavLinkRef = useRef<HTMLAnchorElement>(null)
+  const modalAnchorRef = useRef<HTMLElement | null>(null)
+  const deleteOverlayRef = useRef<HTMLDivElement>(null)
+  const deleteDialogRef = useRef<HTMLDivElement>(null)
+  const editPairOverlayRef = useRef<HTMLDivElement>(null)
+  const editPairDialogRef = useRef<HTMLDivElement>(null)
+  const editSoloOverlayRef = useRef<HTMLDivElement>(null)
+  const editSoloDialogRef = useRef<HTMLDivElement>(null)
+  const backConfirmOverlayRef = useRef<HTMLDivElement>(null)
+  const backConfirmDialogRef = useRef<HTMLDivElement>(null)
+  const deleteClosingRef = useRef(false)
+  const editPairClosingRef = useRef(false)
+  const editSoloClosingRef = useRef(false)
+  const backConfirmClosingRef = useRef(false)
+
+  const rememberModalAnchor = useCallback((target: EventTarget | null) => {
+    modalAnchorRef.current = target instanceof HTMLElement ? target : null
+  }, [])
+
+  const initialPairsRef = useRef(JSON.stringify(pairs))
+  const initialSoloRowsRef = useRef(JSON.stringify(soloRows))
+  const initialHiddenCatalogRef = useRef(
+    JSON.stringify(hiddenCatalogSoloIds.slice().sort()),
+  )
+
+  const requestCloseDeletePrompt = useCallback(
+    (afterClose?: () => void) => {
+      if (deleteClosingRef.current || !registreDeletePrompt) return
+      const overlay = deleteOverlayRef.current
+      const dialog = deleteDialogRef.current
+      const anchor = modalAnchorRef.current
+      if (!overlay || !dialog) {
+        setRegistreDeletePrompt(null)
+        afterClose?.()
+        return
+      }
+      deleteClosingRef.current = true
+      playActionModalClose(overlay, dialog, anchor, () => {
+        deleteClosingRef.current = false
+        setRegistreDeletePrompt(null)
+        afterClose?.()
+      })
+    },
+    [registreDeletePrompt],
+  )
+
+  const requestCloseEditPair = useCallback(
+    (afterClose?: () => void) => {
+      if (editPairClosingRef.current || !editingPair) return
+      const overlay = editPairOverlayRef.current
+      const dialog = editPairDialogRef.current
+      const anchor = modalAnchorRef.current
+      if (!overlay || !dialog) {
+        setEditingPair(null)
+        afterClose?.()
+        return
+      }
+      editPairClosingRef.current = true
+      playActionModalClose(overlay, dialog, anchor, () => {
+        editPairClosingRef.current = false
+        setEditingPair(null)
+        afterClose?.()
+      })
+    },
+    [editingPair],
+  )
+
+  const requestCloseEditSolo = useCallback(
+    (afterClose?: () => void) => {
+      if (editSoloClosingRef.current || !editingSolo) return
+      const overlay = editSoloOverlayRef.current
+      const dialog = editSoloDialogRef.current
+      const anchor = modalAnchorRef.current
+      if (!overlay || !dialog) {
+        setEditingSolo(null)
+        afterClose?.()
+        return
+      }
+      editSoloClosingRef.current = true
+      playActionModalClose(overlay, dialog, anchor, () => {
+        editSoloClosingRef.current = false
+        setEditingSolo(null)
+        afterClose?.()
+      })
+    },
+    [editingSolo],
+  )
+
+  const requestCloseBackConfirm = useCallback(
+    (afterClose?: () => void) => {
+      if (backConfirmClosingRef.current || !backConfirmOpen) return
+      const overlay = backConfirmOverlayRef.current
+      const dialog = backConfirmDialogRef.current
+      const anchor = backNavLinkRef.current
+      if (!overlay || !dialog) {
+        setBackConfirmOpen(false)
+        afterClose?.()
+        return
+      }
+      backConfirmClosingRef.current = true
+      playActionModalClose(overlay, dialog, anchor, () => {
+        backConfirmClosingRef.current = false
+        setBackConfirmOpen(false)
+        afterClose?.()
+      })
+    },
+    [backConfirmOpen],
+  )
+
+  useLayoutEffect(() => {
+    if (!registreDeletePrompt) return
+    const anchor = modalAnchorRef.current
+    const overlay = deleteOverlayRef.current
+    const dialog = deleteDialogRef.current
+    if (!anchor || !overlay || !dialog) return
+    const tl = playActionModalOpen(overlay, dialog, anchor)
+    return () => {
+      tl.kill()
+    }
+  }, [registreDeletePrompt])
+
+  useLayoutEffect(() => {
+    if (!editingPair) return
+    const anchor = modalAnchorRef.current
+    const overlay = editPairOverlayRef.current
+    const dialog = editPairDialogRef.current
+    if (!anchor || !overlay || !dialog) return
+    const tl = playActionModalOpen(overlay, dialog, anchor)
+    return () => {
+      tl.kill()
+    }
+  }, [editingPair])
+
+  useLayoutEffect(() => {
+    if (!editingSolo) return
+    const anchor = modalAnchorRef.current
+    const overlay = editSoloOverlayRef.current
+    const dialog = editSoloDialogRef.current
+    if (!anchor || !overlay || !dialog) return
+    const tl = playActionModalOpen(overlay, dialog, anchor)
+    return () => {
+      tl.kill()
+    }
+  }, [editingSolo])
+
+  useLayoutEffect(() => {
+    if (!backConfirmOpen) return
+    const anchor = backNavLinkRef.current
+    const overlay = backConfirmOverlayRef.current
+    const dialog = backConfirmDialogRef.current
+    if (!overlay || !dialog) return
+    if (!anchor) {
+      gsap.killTweensOf([overlay, dialog])
+      gsap.set(overlay, { opacity: 0 })
+      gsap.set(dialog, { scale: 0.96, opacity: 0, transformOrigin: '50% 50%' })
+      const tl = gsap.timeline()
+      tl.to(overlay, { opacity: 1, duration: 0.24, ease: 'power1.out' }, 0)
+      tl.to(
+        dialog,
+        { scale: 1, opacity: 1, duration: 0.26, ease: 'power2.out' },
+        0,
+      )
+      return () => {
+        tl.kill()
+      }
+    }
+    const tl = playActionModalOpen(overlay, dialog, anchor)
+    return () => {
+      tl.kill()
+    }
+  }, [backConfirmOpen])
+
+  useEffect(() => {
+    const btn = addBtnRef.current
+    if (!btn) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const onEnter = () => {
+      gsap.to(btn, {
+        y: -1,
+        scale: 1.015,
+        duration: 0.16,
+        ease: 'power2.out',
+      })
+    }
+    const onLeave = () => {
+      gsap.to(btn, {
+        y: 0,
+        scale: 1,
+        duration: 0.16,
+        ease: 'power2.out',
+      })
+    }
+    btn.addEventListener('mouseenter', onEnter)
+    btn.addEventListener('mouseleave', onLeave)
+    return () => {
+      btn.removeEventListener('mouseenter', onEnter)
+      btn.removeEventListener('mouseleave', onLeave)
+      gsap.killTweensOf(btn)
+      gsap.set(btn, { clearProps: 'transform' })
+    }
+  }, [])
+
+  const hasRegisterChanges = useMemo(() => {
+    const pairsNow = JSON.stringify(pairs)
+    const soloNow = JSON.stringify(soloRows)
+    const hiddenNow = JSON.stringify(hiddenCatalogSoloIds.slice().sort())
+    return (
+      pairsNow !== initialPairsRef.current ||
+      soloNow !== initialSoloRowsRef.current ||
+      hiddenNow !== initialHiddenCatalogRef.current
+    )
+  }, [pairs, soloRows, hiddenCatalogSoloIds])
 
   const pushAlert = useCallback((message: string, kind: AlertItem['kind']) => {
     const id = Date.now()
@@ -645,6 +1136,34 @@ export function RecipeManagerPage() {
       setAlerts((prev) => prev.filter((a) => a.id !== id))
     }, 2200)
   }, [])
+
+  const upsertVisualOverride = useCallback(
+    (
+      resultId: string,
+      raw: {
+        primaryColor: string
+        secondaryColor: string
+        opacity: string | number
+        texture: LiquidTexture
+      },
+    ) => {
+      const id = resultId.trim()
+      if (!id) return
+      const parsedOpacity =
+        typeof raw.opacity === 'number' ? raw.opacity : Number(raw.opacity)
+      const opacity = Number.isFinite(parsedOpacity)
+        ? Math.min(1, Math.max(0, parsedOpacity))
+        : 0.85
+      const next: VisualOverrideDraft = {
+        primaryColor: raw.primaryColor.trim() || '#ffffff',
+        secondaryColor: raw.secondaryColor.trim(),
+        opacity,
+        texture: raw.texture,
+      }
+      setVisualOverrides((prev) => ({ ...prev, [id]: next }))
+    },
+    [],
+  )
 
   useEffect(() => {
     savePairs(pairs)
@@ -928,9 +1447,19 @@ export function RecipeManagerPage() {
             return
           }
           if (tryAddPair(elA, elB, elRes, 'Recipe added.')) {
+            upsertVisualOverride(elRes, {
+              primaryColor: elPrimaryColor,
+              secondaryColor: elSecondaryColor,
+              opacity: elOpacity,
+              texture: elTexture,
+            })
             setElA('')
             setElB('')
             setElRes('')
+            setElPrimaryColor('#ffffff')
+            setElSecondaryColor('')
+            setElOpacity('0.85')
+            setElTexture('liquid')
           }
           break
         case 'creature': {
@@ -971,11 +1500,16 @@ export function RecipeManagerPage() {
       elA,
       elB,
       elRes,
+      elPrimaryColor,
+      elSecondaryColor,
+      elOpacity,
+      elTexture,
       crElement,
       crName,
       pushAlert,
       knownVialIdSet,
       knownElementIdSet,
+      upsertVisualOverride,
     ],
   )
 
@@ -1006,13 +1540,6 @@ export function RecipeManagerPage() {
   )
 
   const resetDefaults = useCallback(() => {
-    if (
-      !window.confirm(
-        'Reload data from the store? Local changes will be lost.',
-      )
-    ) {
-      return
-    }
     setPairs(seedPairs())
     setSoloRows(seedSolo())
     setHiddenCatalogSoloIds([])
@@ -1022,12 +1549,16 @@ export function RecipeManagerPage() {
   const saveToSourceFiles = useCallback(async () => {
     const pairsTs = buildManualPairsTs(pairs)
     const soloTs = buildManualSoloTs(soloRows.map((s) => s.id))
+    const craftedUpdates = Object.entries(visualOverrides).map(([id, liquid]) => ({
+      id,
+      liquid,
+    }))
 
     try {
       const res = await fetch('/api/save-recipes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pairsTs, soloTs }),
+        body: JSON.stringify({ pairsTs, soloTs, craftedUpdates }),
       })
       if (res.ok) {
         pushAlert(
@@ -1111,7 +1642,7 @@ export function RecipeManagerPage() {
         'success',
       )
     }
-  }, [pairs, soloRows, pushAlert])
+  }, [pairs, soloRows, visualOverrides, pushAlert])
 
   const saveEditPair = useCallback(() => {
     if (!editingPair) return
@@ -1238,7 +1769,15 @@ export function RecipeManagerPage() {
         p.clientId === clientId ? { ...p, a: ta, b: tb, resultId: tr } : p,
       ),
     )
-    setEditingPair(null)
+    if (!creatureEdit) {
+      upsertVisualOverride(tr, {
+        primaryColor: pairVisualEditDraft.primaryColor,
+        secondaryColor: pairVisualEditDraft.secondaryColor,
+        opacity: pairVisualEditDraft.opacity,
+        texture: pairVisualEditDraft.texture,
+      })
+    }
+    requestCloseEditPair()
     pushAlert('Combination updated.', 'success')
   }, [
     editingPair,
@@ -1249,6 +1788,9 @@ export function RecipeManagerPage() {
     allKnownVialIds,
     knownVialIdSet,
     knownElementIdSet,
+    pairVisualEditDraft,
+    upsertVisualOverride,
+    requestCloseEditPair,
   ])
 
   const saveEditSolo = useCallback(() => {
@@ -1284,7 +1826,7 @@ export function RecipeManagerPage() {
         ...prev,
         { clientId: nextClientId(), id: newId },
       ])
-      setEditingSolo(null)
+      requestCloseEditSolo()
       pushAlert('Element saved.', 'success')
       return
     }
@@ -1301,7 +1843,7 @@ export function RecipeManagerPage() {
         s.clientId === editingSolo.clientId ? { ...s, id: newId } : s,
       ),
     )
-    setEditingSolo(null)
+    requestCloseEditSolo()
     pushAlert('Reference updated.', 'success')
   }, [
     editingSolo,
@@ -1311,6 +1853,7 @@ export function RecipeManagerPage() {
     pushAlert,
     displayName,
     allKnownVialIds,
+    requestCloseEditSolo,
   ])
 
   const typeClass = (t: VialType | 'unknown' | 'fioleSeule') => {
@@ -1362,7 +1905,16 @@ export function RecipeManagerPage() {
             >
               Save
             </button>
-            <Link className="ra-navLink" to="/">
+            <Link
+              ref={backNavLinkRef}
+              className="ra-navLink"
+              to="/"
+              onClick={(e) => {
+                if (!hasRegisterChanges) return
+                e.preventDefault()
+                setBackConfirmOpen(true)
+              }}
+            >
               Back to laboratory
             </Link>
           </div>
@@ -1370,8 +1922,6 @@ export function RecipeManagerPage() {
 
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-[0.65rem] overflow-hidden min-[901px]:grid-cols-[minmax(240px,0.95fr)_minmax(0,2fr)] min-[901px]:grid-rows-1 max-[900px]:grid-rows-[auto_minmax(0,1fr)]">
           <section className="ra-panel ra-panelForm flex min-h-0 min-w-0 flex-1 flex-col">
-            <h2 className="ra-panelTitle">New entry</h2>
-
             <div className="ra-modeTabs" role="tablist" aria-label="Creation type">
               {(
                 [
@@ -1396,8 +1946,9 @@ export function RecipeManagerPage() {
             <form className="ra-formStack" onSubmit={handleAddSubmit}>
               <div className="ra-formBody">
                 {createMode === 'element' && (
-                  <>
+                  <div className="ra-formRecipeLayout">
                     <VialOptionCombo
+                      compact
                       inputId="elA"
                       label={
                         <>
@@ -1407,9 +1958,10 @@ export function RecipeManagerPage() {
                       value={elA}
                       onChange={setElA}
                       options={vialOptions}
-                      placeholder="Type to search for an ingredient…"
+                      placeholder="Ingredient…"
                     />
                     <VialOptionCombo
+                      compact
                       inputId="elB"
                       label={
                         <>
@@ -1419,9 +1971,9 @@ export function RecipeManagerPage() {
                       value={elB}
                       onChange={setElB}
                       options={vialOptions}
-                      placeholder="Type to search for an ingredient…"
+                      placeholder="Ingredient…"
                     />
-                    <div className="ra-formGroup">
+                    <div className="ra-formGroup ra-formGroup--fieldRow">
                       <label htmlFor="elRes">
                         Result<span className="ra-required">*</span>
                       </label>
@@ -1434,20 +1986,70 @@ export function RecipeManagerPage() {
                         autoComplete="off"
                       />
                     </div>
-                  </>
+                    <div className="ra-formVisualStack">
+                      <RaColorPickerField
+                        id="elPrimaryColor"
+                        label={
+                          <>
+                            Primary<span className="ra-required">*</span>
+                          </>
+                        }
+                        value={elPrimaryColor}
+                        onChange={setElPrimaryColor}
+                        fallback="#ffffff"
+                        hexPlaceholder="#ffffff"
+                        aria-label="Primary color"
+                      />
+                      <RaColorPickerField
+                        id="elSecondaryColor"
+                        label="Secondary"
+                        value={elSecondaryColor}
+                        onChange={setElSecondaryColor}
+                        fallback="#000000"
+                        hexPlaceholder="optional"
+                        aria-label="Secondary color"
+                      />
+                      <div className="ra-formGroup ra-formGroup--fieldRow">
+                        <label htmlFor="elOpacity">
+                          Opacity<span className="ra-required">*</span>
+                        </label>
+                        <input
+                          id="elOpacity"
+                          className="ra-input"
+                          value={elOpacity}
+                          onChange={(e) => setElOpacity(e.target.value)}
+                          placeholder="0–1"
+                          autoComplete="off"
+                          inputMode="decimal"
+                        />
+                      </div>
+                      <div className="ra-formGroup ra-formGroup--fieldRow">
+                        <label htmlFor="elTexture">
+                          Texture<span className="ra-required">*</span>
+                        </label>
+                        <TextureSelect
+                          id="elTexture"
+                          value={elTexture}
+                          onChange={setElTexture}
+                          options={TEXTURE_OPTIONS}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 {createMode === 'creature' && (
-                  <>
+                  <div className="ra-formRecipeLayout">
                     <VialOptionCombo
+                      compact
                       inputId="crElement"
-                      label="Element offered"
+                      label="Element"
                       value={crElement}
                       onChange={setCrElement}
                       options={elementOptions}
-                      placeholder="Type to search for an element…"
+                      placeholder="Element…"
                     />
-                    <div className="ra-formGroup">
+                    <div className="ra-formGroup ra-formGroup--fieldRow">
                       <label htmlFor="crName">
                         Creature name<span className="ra-required">*</span>
                       </label>
@@ -1460,21 +2062,21 @@ export function RecipeManagerPage() {
                         autoComplete="off"
                       />
                     </div>
-                  </>
+                  </div>
                 )}
 
                 {createMode === 'solo' && (
-                  <>
-                    <div className="ra-formGroup">
+                  <div className="ra-formRecipeLayout">
+                    <div className="ra-formGroup ra-formGroup--fieldRow">
                       <label htmlFor="soloId">
-                        Vial reference<span className="ra-required">*</span>
+                        ELEMENT<span className="ra-required">*</span>
                       </label>
                       <input
                         id="soloId"
                         className="ra-input"
                         value={soloIdInput}
                         onChange={(e) => setSoloIdInput(e.target.value)}
-                        placeholder="Outside catalog recipes already listed"
+                        placeholder="New element"
                         autoComplete="off"
                       />
                     </div>
@@ -1482,12 +2084,16 @@ export function RecipeManagerPage() {
                       Catalog recipes are already listed. Here, add an element outside
                       the catalog (craft, etc.).
                     </p>
-                  </>
+                  </div>
                 )}
               </div>
 
               <div className="ra-formSubmitBar">
-                <button type="submit" className="ra-btn ra-btnPrimary">
+                <button
+                  ref={addBtnRef}
+                  type="submit"
+                  className="ra-btn ra-btnPrimary"
+                >
                   Add
                 </button>
               </div>
@@ -1665,7 +2271,8 @@ export function RecipeManagerPage() {
                                     className="ra-iconBtn"
                                     title="Edit"
                                     aria-label="Edit"
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                      rememberModalAnchor(e.currentTarget)
                                       setSoloEditDraft(toSoloEditDraft(s))
                                       setEditingSolo(
                                         s.fromCatalog
@@ -1681,12 +2288,13 @@ export function RecipeManagerPage() {
                                     className="ra-iconBtn ra-iconBtnDanger"
                                     title="Delete"
                                     aria-label="Delete"
-                                    onClick={() =>
+                                    onClick={(e) => {
+                                      rememberModalAnchor(e.currentTarget)
                                       setRegistreDeletePrompt({
                                         kind: 'solo',
                                         solo: { ...s },
                                       })
-                                    }
+                                    }}
                                   >
                                     <Trash2 size={16} strokeWidth={2.25} />
                                   </button>
@@ -1738,8 +2346,12 @@ export function RecipeManagerPage() {
                                   className="ra-iconBtn"
                                   title="Edit"
                                   aria-label="Edit"
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    rememberModalAnchor(e.currentTarget)
                                     setPairEditDraft(toPairEditDraft(p))
+                                    setPairVisualEditDraft(
+                                      visualOverrides[p.resultId] ?? visualFromTemplate(p.resultId),
+                                    )
                                     setEditingPair({ ...p })
                                   }}
                                 >
@@ -1750,12 +2362,13 @@ export function RecipeManagerPage() {
                                   className="ra-iconBtn ra-iconBtnDanger"
                                   title="Delete"
                                   aria-label="Delete"
-                                  onClick={() =>
+                                  onClick={(e) => {
+                                    rememberModalAnchor(e.currentTarget)
                                     setRegistreDeletePrompt({
                                       kind: 'pair',
                                       clientId: p.clientId,
                                     })
-                                  }
+                                  }}
                                 >
                                   <Trash2 size={16} strokeWidth={2.25} />
                                 </button>
@@ -1780,25 +2393,64 @@ export function RecipeManagerPage() {
             <strong>{stats.fiolesSeules}</strong> elements
           </span>
           <span className="ra-statInline">
-            <strong>{stats.elements}</strong> → recipe
+            <strong>{stats.elements}</strong> recipe
           </span>
           <span className="ra-statInline">
-            <strong>{stats.creatures}</strong> → creature
+            <strong>{stats.creatures}</strong> creature
           </span>
         </div>
       </div>
 
+      {backConfirmOpen && (
+        <div
+          ref={backConfirmOverlayRef}
+          className="ra-modalOverlay ra-modalOverlayConfirm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="back-lab-confirm-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) requestCloseBackConfirm()
+          }}
+        >
+          <div ref={backConfirmDialogRef} className="ra-modal">
+            <h3 id="back-lab-confirm-title">Leave recipe workshop</h3>
+            <p className="ra-modalBody">
+              You have unsaved register changes. Go back to laboratory anyway?
+            </p>
+            <div className="ra-modalActions">
+              <button
+                type="button"
+                className="ra-btn ra-btnSecondary"
+                onClick={() => requestCloseBackConfirm()}
+              >
+                Stay
+              </button>
+              <button
+                type="button"
+                className="ra-btn ra-btnDanger"
+                onClick={() => {
+                  requestCloseBackConfirm(() => navigate('/'))
+                }}
+              >
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {registreDeletePrompt && (
         <div
+          ref={deleteOverlayRef}
           className="ra-modalOverlay ra-modalOverlayConfirm"
           role="dialog"
           aria-modal="true"
           aria-labelledby="registre-delete-title"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setRegistreDeletePrompt(null)
+            if (e.target === e.currentTarget) requestCloseDeletePrompt()
           }}
         >
-          <div className="ra-modal">
+          <div ref={deleteDialogRef} className="ra-modal">
             <h3 id="registre-delete-title">Remove from register</h3>
             <p className="ra-modalBody">
               {registreDeletePrompt.kind === 'pair'
@@ -1824,7 +2476,7 @@ export function RecipeManagerPage() {
               <button
                 type="button"
                 className="ra-btn ra-btnSecondary"
-                onClick={() => setRegistreDeletePrompt(null)}
+                onClick={() => requestCloseDeletePrompt()}
               >
                 Cancel
               </button>
@@ -1834,12 +2486,13 @@ export function RecipeManagerPage() {
                 onClick={() => {
                   const payload = registreDeletePrompt
                   if (!payload) return
-                  setRegistreDeletePrompt(null)
-                  if (payload.kind === 'pair') {
-                    removeRegistrePair(payload.clientId)
-                  } else {
-                    removeRegistreSolo(payload.solo)
-                  }
+                  requestCloseDeletePrompt(() => {
+                    if (payload.kind === 'pair') {
+                      removeRegistrePair(payload.clientId)
+                    } else {
+                      removeRegistreSolo(payload.solo)
+                    }
+                  })
                 }}
               >
                 Delete
@@ -1851,15 +2504,16 @@ export function RecipeManagerPage() {
 
       {editingPair && (
         <div
+          ref={editPairOverlayRef}
           className="ra-modalOverlay"
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-pair-title"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setEditingPair(null)
+            if (e.target === e.currentTarget) requestCloseEditPair()
           }}
         >
-          <div className="ra-modal">
+          <div ref={editPairDialogRef} className="ra-modal">
             <h3 id="edit-pair-title">
               {isCreatureResultId(editingPair.resultId)
                 ? 'Edit creature'
@@ -1917,6 +2571,58 @@ export function RecipeManagerPage() {
                 autoComplete="off"
               />
             </div>
+            {!isCreatureResultId(editingPair.resultId) && (
+              <div className="ra-formVisualStack ra-formVisualStack--modal">
+                <RaColorPickerField
+                  id="edPrimaryColor"
+                  label="Primary"
+                  value={pairVisualEditDraft.primaryColor}
+                  onChange={(v) =>
+                    setPairVisualEditDraft((d) => ({ ...d, primaryColor: v }))
+                  }
+                  fallback="#ffffff"
+                  hexPlaceholder="#ffffff"
+                  aria-label="Primary color"
+                />
+                <RaColorPickerField
+                  id="edSecondaryColor"
+                  label="Secondary"
+                  value={pairVisualEditDraft.secondaryColor}
+                  onChange={(v) =>
+                    setPairVisualEditDraft((d) => ({ ...d, secondaryColor: v }))
+                  }
+                  fallback="#000000"
+                  hexPlaceholder="optional"
+                  aria-label="Secondary color"
+                />
+                <div className="ra-formGroup ra-formGroup--fieldRow">
+                  <label htmlFor="edOpacity">Opacity</label>
+                  <input
+                    id="edOpacity"
+                    className="ra-input"
+                    value={String(pairVisualEditDraft.opacity)}
+                    onChange={(e) =>
+                      setPairVisualEditDraft((d) => ({
+                        ...d,
+                        opacity: Number(e.target.value),
+                      }))
+                    }
+                    autoComplete="off"
+                  />
+                </div>
+                <div className="ra-formGroup ra-formGroup--fieldRow">
+                  <label htmlFor="edTexture">Texture</label>
+                  <TextureSelect
+                    id="edTexture"
+                    value={pairVisualEditDraft.texture}
+                    onChange={(texture) =>
+                      setPairVisualEditDraft((d) => ({ ...d, texture }))
+                    }
+                    options={TEXTURE_OPTIONS}
+                  />
+                </div>
+              </div>
+            )}
             <div className="ra-modalActions">
               <button
                 type="button"
@@ -1928,7 +2634,7 @@ export function RecipeManagerPage() {
               <button
                 type="button"
                 className="ra-btn ra-btnSecondary"
-                onClick={() => setEditingPair(null)}
+                onClick={() => requestCloseEditPair()}
               >
                 Cancel
               </button>
@@ -1939,15 +2645,16 @@ export function RecipeManagerPage() {
 
       {editingSolo && (
         <div
+          ref={editSoloOverlayRef}
           className="ra-modalOverlay"
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-solo-title"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setEditingSolo(null)
+            if (e.target === e.currentTarget) requestCloseEditSolo()
           }}
         >
-          <div className="ra-modal">
+          <div ref={editSoloDialogRef} className="ra-modal">
             <h3 id="edit-solo-title">
               {editingSolo.catalogSourceId
                 ? 'Save this element'
@@ -1974,7 +2681,7 @@ export function RecipeManagerPage() {
               <button
                 type="button"
                 className="ra-btn ra-btnSecondary"
-                onClick={() => setEditingSolo(null)}
+                onClick={() => requestCloseEditSolo()}
               >
                 Cancel
               </button>

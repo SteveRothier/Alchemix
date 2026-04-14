@@ -1,6 +1,21 @@
 export type VialType = 'element' | 'spell' | 'creature'
 
-export type LiquidTexture = 'bubbles' | 'smoke' | 'spark' | 'wave' | 'liquid'
+export type LiquidTexture =
+  | 'bubbles'
+  | 'crystal'
+  | 'drip'
+  | 'ember'
+  | 'flakes'
+  | 'glow'
+  | 'liquid'
+  | 'mist'
+  | 'ooze'
+  | 'sheen'
+  | 'smoke'
+  | 'spark'
+  | 'static'
+  | 'swirl'
+  | 'wave'
 
 export type VialRarity = 'common' | 'rare' | 'epic' | 'legendary'
 

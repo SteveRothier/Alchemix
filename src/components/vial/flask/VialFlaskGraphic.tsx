@@ -150,12 +150,20 @@ export function VialFlaskGraphic({ vial, className = '' }: VialFlaskGraphicProps
         {vial.type === 'element' || vial.type === 'creature' ? (
           <>
             {glassFill}
-            <VialTextureLayer texture={vial.liquid.texture} vialType={vial.type} />
+            <VialTextureLayer
+              texture={vial.liquid.texture}
+              vialType={vial.type}
+              defsId={reactId}
+            />
           </>
         ) : (
           <>
             <rect x="0" y="0" width="48" height="56" fill={`url(#${gradId})`} />
-            <VialTextureLayer texture={vial.liquid.texture} vialType={vial.type} />
+            <VialTextureLayer
+              texture={vial.liquid.texture}
+              vialType={vial.type}
+              defsId={reactId}
+            />
           </>
         )}
       </g>

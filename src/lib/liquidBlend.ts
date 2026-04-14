@@ -38,12 +38,23 @@ export function blendSecondaryColors(
   return undefined
 }
 
+/** En cas de mélange de deux textures différentes : la première présente ici l’emporte. */
 const TEXTURE_PRIORITY: LiquidTexture[] = [
   'spark',
+  'static',
+  'ember',
+  'flakes',
+  'drip',
+  'crystal',
+  'sheen',
+  'ooze',
+  'swirl',
   'wave',
-  'liquid',
+  'mist',
+  'glow',
   'smoke',
   'bubbles',
+  'liquid',
 ]
 
 export function mergeTextures(a: LiquidTexture, b: LiquidTexture): LiquidTexture {

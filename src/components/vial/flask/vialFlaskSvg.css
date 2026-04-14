@@ -55,6 +55,104 @@
   .lab-flaskSvg .lab-flask-spellGlow {
     animation: lab-flask-glow-o 2.4s ease-in-out infinite;
   }
+
+  .lab-flaskSvg .lab-flask-swirlSpin {
+    animation: lab-flask-swirl-rot 10s linear infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .lab-flaskSvg .lab-flask-mistPuff {
+    animation: lab-flask-mist-o 4.5s ease-in-out infinite;
+  }
+
+  .lab-flaskSvg .lab-flask-mistPuff2 {
+    animation-delay: -1.2s;
+    animation-duration: 3.8s;
+  }
+
+  .lab-flaskSvg .lab-flask-mistPuff3 {
+    animation-delay: -2.4s;
+    animation-duration: 5.2s;
+  }
+
+  .lab-flaskSvg .lab-flask-crystalShard {
+    animation: lab-flask-crystal-glim 2.8s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .lab-flaskSvg .lab-flask-crystalShard2 {
+    animation-delay: -0.6s;
+    animation-duration: 3.2s;
+  }
+
+  .lab-flaskSvg .lab-flask-crystalShard3 {
+    animation-delay: -1.4s;
+    animation-duration: 2.4s;
+  }
+
+  .lab-flaskSvg .lab-flask-oozeBlob {
+    animation: lab-flask-ooze-pulse 3.4s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .lab-flaskSvg .lab-flask-oozeBlob2 {
+    animation-delay: -0.9s;
+    animation-duration: 2.9s;
+  }
+
+  .lab-flaskSvg .lab-flask-oozeBlob3 {
+    animation-delay: -1.8s;
+    animation-duration: 3.8s;
+  }
+
+  .lab-flaskSvg .lab-flask-staticZap {
+    animation: lab-flask-static-flicker 0.28s steps(2, end) infinite;
+  }
+
+  .lab-flaskSvg .lab-flask-sheenArc {
+    animation: lab-flask-sheen-shift 3.2s ease-in-out infinite;
+  }
+
+  .lab-flaskSvg .lab-flask-dripDrop,
+  .lab-flaskSvg .lab-flask-dripTail {
+    animation: lab-flask-drip-y 1.8s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center top;
+  }
+
+  .lab-flaskSvg .lab-flask-dripTail {
+    animation-delay: -0.15s;
+  }
+
+  .lab-flaskSvg .lab-flask-glowCore {
+    animation: lab-flask-inner-glow 2.6s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .lab-flaskSvg .lab-flask-flake {
+    animation: lab-flask-flake-drift 4s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .lab-flaskSvg .lab-flask-flake2 {
+    animation-delay: -0.8s;
+    animation-duration: 3.4s;
+  }
+
+  .lab-flaskSvg .lab-flask-flake3 {
+    animation-delay: -1.6s;
+    animation-duration: 4.6s;
+  }
+
+  .lab-flaskSvg .lab-flask-flake4 {
+    animation-delay: -2.2s;
+    animation-duration: 3.1s;
+  }
 }
 
 @keyframes lab-flask-wave-y {
@@ -96,5 +194,104 @@
   }
   50% {
     opacity: 0.65;
+  }
+}
+
+@keyframes lab-flask-swirl-rot {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes lab-flask-mist-o {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+@keyframes lab-flask-crystal-glim {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes lab-flask-ooze-pulse {
+  0%,
+  100% {
+    transform: scale(1, 1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.05, 0.96);
+    opacity: 1;
+  }
+}
+
+@keyframes lab-flask-static-flicker {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes lab-flask-sheen-shift {
+  0%,
+  100% {
+    opacity: 0.65;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(1.5px);
+  }
+}
+
+@keyframes lab-flask-drip-y {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(2.8px);
+  }
+}
+
+@keyframes lab-flask-inner-glow {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes lab-flask-flake-drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(-2px) rotate(12deg);
+    opacity: 0.95;
   }
 }
