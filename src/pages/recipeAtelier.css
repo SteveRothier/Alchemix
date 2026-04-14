@@ -799,6 +799,43 @@
   font-size: 0.75rem;
 }
 
+.recipe-atelier .ra-loadingRegister {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 3.4rem;
+  color: var(--lab-muted);
+  font-size: 0.74rem;
+  font-family: var(--font-lab-mono);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  text-align: center;
+}
+
+.recipe-atelier .ra-loadingSpinner {
+  width: 1.2rem;
+  height: 1.2rem;
+  color: color-mix(in srgb, var(--lab-hover) 78%, var(--text-h));
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recipe-atelier .ra-loadingSpinner svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  transform: translateY(4px);
+}
+
+.recipe-atelier .ra-table tbody tr.ra-loadingRow td {
+  border-bottom: none;
+  padding-block: 0;
+}
+
 .recipe-atelier .ra-stats {
   display: flex;
   flex-wrap: wrap;

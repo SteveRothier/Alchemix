@@ -915,6 +915,8 @@ export function RecipeManagerPage() {
   const [pairVisualEditDraft, setPairVisualEditDraft] =
     useState<VisualOverrideDraft>(visualFromTemplate(''))
   const [backConfirmOpen, setBackConfirmOpen] = useState(false)
+  const [registerReady, setRegisterReady] = useState(false)
+  const registerLoadTokenRef = useRef(0)
   const addBtnRef = useRef<HTMLButtonElement>(null)
   const backNavLinkRef = useRef<HTMLAnchorElement>(null)
   const modalAnchorRef = useRef<HTMLElement | null>(null)
@@ -1117,6 +1119,36 @@ export function RecipeManagerPage() {
       gsap.set(btn, { clearProps: 'transform' })
     }
   }, [])
+
+  const triggerRegisterLoading = useCallback(() => {
+    type IdleCb = () => void
+    type IdleWin = Window & {
+      requestIdleCallback?: (cb: IdleCb, opts?: { timeout: number }) => number
+    }
+    setRegisterReady(false)
+    const token = ++registerLoadTokenRef.current
+    const done = () => {
+      if (registerLoadTokenRef.current !== token) return
+      setRegisterReady(true)
+    }
+    const w = window as IdleWin
+    if (typeof w.requestIdleCallback === 'function') {
+      w.requestIdleCallback(done, { timeout: 220 })
+      return
+    }
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        window.setTimeout(done, 80)
+      })
+    })
+  }, [])
+
+  useEffect(() => {
+    triggerRegisterLoading()
+    return () => {
+      registerLoadTokenRef.current += 1
+    }
+  }, [triggerRegisterLoading])
 
   const hasRegisterChanges = useMemo(() => {
     const pairsNow = JSON.stringify(pairs)
@@ -1540,11 +1572,12 @@ export function RecipeManagerPage() {
   )
 
   const resetDefaults = useCallback(() => {
+    triggerRegisterLoading()
     setPairs(seedPairs())
     setSoloRows(seedSolo())
     setHiddenCatalogSoloIds([])
     pushAlert('Data reset from source code.', 'success')
-  }, [pushAlert])
+  }, [pushAlert, triggerRegisterLoading])
 
   const saveToSourceFiles = useCallback(async () => {
     const pairsTs = buildManualPairsTs(pairs)
@@ -2234,7 +2267,69 @@ export function RecipeManagerPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.length === 0 ? (
+                    {!registerReady ? (
+                      <tr className="ra-loadingRow">
+                        <td colSpan={5}>
+                          <div className="ra-loadingRegister" role="status" aria-live="polite">
+                            <div className="ra-loadingSpinner" aria-hidden>
+                              <svg
+                                fill="currentColor"
+                                viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <ellipse cx="12" cy="5" rx="4" ry="4">
+                                  <animate
+                                    id="spinner_jbYs"
+                                    begin="0;spinner_JZdr.end"
+                                    attributeName="cy"
+                                    calcMode="spline"
+                                    dur="0.375s"
+                                    values="5;20"
+                                    keySplines=".33,0,.66,.33"
+                                    fill="freeze"
+                                  />
+                                  <animate
+                                    begin="spinner_jbYs.end"
+                                    attributeName="rx"
+                                    calcMode="spline"
+                                    dur="0.05s"
+                                    values="4;4.8;4"
+                                    keySplines=".33,0,.66,.33;.33,.66,.66,1"
+                                  />
+                                  <animate
+                                    begin="spinner_jbYs.end"
+                                    attributeName="ry"
+                                    calcMode="spline"
+                                    dur="0.05s"
+                                    values="4;3;4"
+                                    keySplines=".33,0,.66,.33;.33,.66,.66,1"
+                                  />
+                                  <animate
+                                    id="spinner_ADF4"
+                                    begin="spinner_jbYs.end"
+                                    attributeName="cy"
+                                    calcMode="spline"
+                                    dur="0.025s"
+                                    values="20;20.5"
+                                    keySplines=".33,0,.66,.33"
+                                  />
+                                  <animate
+                                    id="spinner_JZdr"
+                                    begin="spinner_ADF4.end"
+                                    attributeName="cy"
+                                    calcMode="spline"
+                                    dur="0.4s"
+                                    values="20.5;5"
+                                    keySplines=".33,.66,.66,1"
+                                  />
+                                </ellipse>
+                              </svg>
+                            </div>
+                            Loading register…
+                          </div>
+                        </td>
+                      </tr>
+                    ) : filtered.length === 0 ? (
                       <tr>
                         <td colSpan={5}>
                           <div className="ra-empty">
