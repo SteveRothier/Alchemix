@@ -83,6 +83,8 @@ const WORKSHOP_MESSAGES = {
   elementSaved: 'Element saved.',
   soloDuplicateAsElement: 'This reference already exists as an element.',
   referenceUpdated: 'Reference updated.',
+  registerEditWrongTab:
+    'This register row was opened under another tab. Click Edit again or pick the matching tab.',
 } as const
 
 export type EditablePair = {
@@ -728,18 +730,6 @@ function resolveRefFromDisplayInput(
   return { ref: t }
 }
 
-/** Ingrédient vide autorisé ; sinon résolution comme `resolveRefFromDisplayInput`. */
-function resolveIngredientDraft(
-  input: string,
-  displayName: (id: string) => string,
-  allIds: Set<string>,
-): { ref: string; error?: 'ambiguous' } {
-  if (!input.trim()) return { ref: '' }
-  const r = resolveRefFromDisplayInput(input, displayName, allIds)
-  if (r.error === 'empty') return { ref: '' }
-  return { ref: r.ref, error: r.error }
-}
-
 function buildVialOptions(): { id: string; name: string; type: VialType }[] {
   const map = new Map<string, { id: string; name: string; type: VialType }>()
   for (const v of STARTER_VIAL_DEFINITIONS) {
@@ -956,13 +946,7 @@ export function RecipeManagerPage() {
   const [activeSortKeys, setActiveSortKeys] = useState<SortKey[]>(['result'])
   const [alerts, setAlerts] = useState<AlertItem[]>([])
   const [editingPair, setEditingPair] = useState<EditablePair | null>(null)
-  const [pairEditDraft, setPairEditDraft] = useState({
-    a: '',
-    b: '',
-    resultId: '',
-  })
   const [editingSolo, setEditingSolo] = useState<EditingSoloState | null>(null)
-  const [soloEditDraft, setSoloEditDraft] = useState('')
   const [registreDeletePrompt, setRegistreDeletePrompt] =
     useState<RegistreDeletePrompt>(null)
   const [hiddenCatalogSoloIds, setHiddenCatalogSoloIds] = useState<string[]>(
@@ -978,7 +962,8 @@ export function RecipeManagerPage() {
   const [createMode, setCreateMode] = useState<CreateMode>('element')
   const [elA, setElA] = useState('')
   const [elB, setElB] = useState('')
-  const [elRes, setElRes] = useState('')
+  /** Nom affiché ou id technique ; résolu vers une référence à la soumission. */
+  const [elResultInput, setElResultInput] = useState('')
   const [elPrimaryColor, setElPrimaryColor] = useState('#ffffff')
   const [elSecondaryColor, setElSecondaryColor] = useState('')
   const [elOpacity, setElOpacity] = useState('0.85')
@@ -989,8 +974,6 @@ export function RecipeManagerPage() {
   const [visualOverrides, setVisualOverrides] = useState<
     Record<string, VisualOverrideDraft>
   >({})
-  const [pairVisualEditDraft, setPairVisualEditDraft] =
-    useState<VisualOverrideDraft>(visualFromTemplate(''))
   const [backConfirmOpen, setBackConfirmOpen] = useState(false)
   const [registerPage, setRegisterPage] = useState(1)
   const [registerReady, setRegisterReady] = useState(false)
@@ -1002,15 +985,9 @@ export function RecipeManagerPage() {
   const modalAnchorRef = useRef<HTMLElement | null>(null)
   const deleteOverlayRef = useRef<HTMLDivElement>(null)
   const deleteDialogRef = useRef<HTMLDivElement>(null)
-  const editPairOverlayRef = useRef<HTMLDivElement>(null)
-  const editPairDialogRef = useRef<HTMLDivElement>(null)
-  const editSoloOverlayRef = useRef<HTMLDivElement>(null)
-  const editSoloDialogRef = useRef<HTMLDivElement>(null)
   const backConfirmOverlayRef = useRef<HTMLDivElement>(null)
   const backConfirmDialogRef = useRef<HTMLDivElement>(null)
   const deleteClosingRef = useRef(false)
-  const editPairClosingRef = useRef(false)
-  const editSoloClosingRef = useRef(false)
   const backConfirmClosingRef = useRef(false)
 
   const rememberModalAnchor = useCallback((target: EventTarget | null) => {
@@ -1036,48 +1013,6 @@ export function RecipeManagerPage() {
       })
     },
     [registreDeletePrompt],
-  )
-
-  const requestCloseEditPair = useCallback(
-    (afterClose?: () => void) => {
-      if (editPairClosingRef.current || !editingPair) return
-      const overlay = editPairOverlayRef.current
-      const dialog = editPairDialogRef.current
-      const anchor = modalAnchorRef.current
-      if (!overlay || !dialog) {
-        setEditingPair(null)
-        afterClose?.()
-        return
-      }
-      editPairClosingRef.current = true
-      playActionModalClose(overlay, dialog, anchor, () => {
-        editPairClosingRef.current = false
-        setEditingPair(null)
-        afterClose?.()
-      })
-    },
-    [editingPair],
-  )
-
-  const requestCloseEditSolo = useCallback(
-    (afterClose?: () => void) => {
-      if (editSoloClosingRef.current || !editingSolo) return
-      const overlay = editSoloOverlayRef.current
-      const dialog = editSoloDialogRef.current
-      const anchor = modalAnchorRef.current
-      if (!overlay || !dialog) {
-        setEditingSolo(null)
-        afterClose?.()
-        return
-      }
-      editSoloClosingRef.current = true
-      playActionModalClose(overlay, dialog, anchor, () => {
-        editSoloClosingRef.current = false
-        setEditingSolo(null)
-        afterClose?.()
-      })
-    },
-    [editingSolo],
   )
 
   const requestCloseBackConfirm = useCallback(
@@ -1112,30 +1047,6 @@ export function RecipeManagerPage() {
       tl.kill()
     }
   }, [registreDeletePrompt])
-
-  useLayoutEffect(() => {
-    if (!editingPair) return
-    const anchor = modalAnchorRef.current
-    const overlay = editPairOverlayRef.current
-    const dialog = editPairDialogRef.current
-    if (!anchor || !overlay || !dialog) return
-    const tl = playActionModalOpen(overlay, dialog, anchor)
-    return () => {
-      tl.kill()
-    }
-  }, [editingPair])
-
-  useLayoutEffect(() => {
-    if (!editingSolo) return
-    const anchor = modalAnchorRef.current
-    const overlay = editSoloOverlayRef.current
-    const dialog = editSoloDialogRef.current
-    if (!anchor || !overlay || !dialog) return
-    const tl = playActionModalOpen(overlay, dialog, anchor)
-    return () => {
-      tl.kill()
-    }
-  }, [editingSolo])
 
   useLayoutEffect(() => {
     if (!backConfirmOpen) return
@@ -1306,33 +1217,6 @@ export function RecipeManagerPage() {
     (id: string) => vialNameById.get(id) ?? inferLabelFromRef(id),
     [vialNameById],
   )
-  const toPairEditDraft = useCallback(
-    (pair: EditablePair) => {
-      if (isCreatureResultId(pair.resultId)) {
-        const spellDisp =
-          !pair.a.trim() && !pair.b.trim()
-            ? ''
-            : pair.a.trim()
-              ? displayName(pair.a)
-              : displayName(pair.b)
-        return {
-          a: spellDisp,
-          b: spellDisp,
-          resultId: displayName(pair.resultId),
-        }
-      }
-      return {
-        a: displayName(pair.a),
-        b: displayName(pair.b),
-        resultId: displayName(pair.resultId),
-      }
-    },
-    [displayName],
-  )
-  const toSoloEditDraft = useCallback((solo: EditableSolo) => displayName(solo.id), [
-    displayName,
-  ])
-
   const toggleSortKey = useCallback((key: SortKey) => {
     setActiveSortKeys((prev) =>
       prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
@@ -1464,18 +1348,21 @@ export function RecipeManagerPage() {
     return Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 0.85
   }, [elOpacity])
 
-  const pairEditOpacityClamped = useMemo(() => {
-    const raw = Number(pairVisualEditDraft.opacity)
-    return Number.isFinite(raw) ? Math.min(1, Math.max(0, raw)) : 0.85
-  }, [pairVisualEditDraft.opacity])
-
   const elementPreviewVial = useMemo((): Vial | null => {
     if (createMode !== 'element') return null
     const parsedOpacity = Number(elOpacity)
     const opacity = Number.isFinite(parsedOpacity)
       ? Math.min(1, Math.max(0, parsedOpacity))
       : 0.85
-    const resultId = elRes.trim() || 'preview-element'
+    const resolved = resolveRefFromDisplayInput(
+      elResultInput,
+      displayName,
+      allKnownVialIds,
+    )
+    const resultId =
+      resolved.error === 'ambiguous' || !resolved.ref.trim()
+        ? 'preview-element'
+        : resolved.ref.trim()
     const secondary = elSecondaryColor.trim()
     return {
       id: resultId,
@@ -1492,7 +1379,16 @@ export function RecipeManagerPage() {
       discoveredAt: '1970-01-01T00:00:00.000Z',
       rarity: 'common',
     }
-  }, [createMode, elOpacity, elRes, elPrimaryColor, elSecondaryColor, elTexture])
+  }, [
+    createMode,
+    elOpacity,
+    elResultInput,
+    elPrimaryColor,
+    elSecondaryColor,
+    elTexture,
+    displayName,
+    allKnownVialIds,
+  ])
 
   const stats = useMemo(() => {
     let elements = 0
@@ -1565,12 +1461,20 @@ export function RecipeManagerPage() {
   )
 
   const tryAddSolo = useCallback(() => {
-    const id = soloIdInput.trim()
-    if (!id) {
+    const resolved = resolveRefFromDisplayInput(
+      soloIdInput,
+      displayName,
+      allKnownVialIds,
+    )
+    if (resolved.error === 'empty' || !resolved.ref.trim()) {
       pushAlert(WORKSHOP_MESSAGES.enterReference, 'error')
       return
     }
-    const norm = id
+    if (resolved.error === 'ambiguous') {
+      pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
+      return
+    }
+    const norm = resolved.ref.trim()
     if (catalogElementIdSet.has(norm)) {
       pushAlert(WORKSHOP_MESSAGES.catalogAlreadyListed, 'error')
       return
@@ -1592,19 +1496,108 @@ export function RecipeManagerPage() {
     pushAlert,
     catalogElementIdSet,
     hasSoloConflict,
+    displayName,
+    allKnownVialIds,
   ])
+
+  const resetMainFormFields = useCallback(() => {
+    setElA('')
+    setElB('')
+    setElResultInput('')
+    setElPrimaryColor('#ffffff')
+    setElSecondaryColor('')
+    setElOpacity('0.85')
+    setElTexture('liquid')
+    setCrElement('')
+    setCrName('')
+    setSoloIdInput('')
+  }, [])
+
+  const exitRegisterRowEdit = useCallback(() => {
+    setEditingPair(null)
+    setEditingSolo(null)
+    resetMainFormFields()
+  }, [resetMainFormFields])
 
   const handleAddSubmit = useCallback(
     (e: FormEvent) => {
       e.preventDefault()
       switch (createMode) {
-        case 'element':
+        case 'element': {
+          if (editingPair) {
+            if (isCreatureResultId(editingPair.resultId)) {
+              pushAlert(WORKSHOP_MESSAGES.registerEditWrongTab, 'error')
+              return
+            }
+            const ta = elA.trim()
+            const tb = elB.trim()
+            const rr = resolveRefFromDisplayInput(
+              elResultInput,
+              displayName,
+              allKnownVialIds,
+            )
+            if (rr.error === 'empty' || !rr.ref.trim()) {
+              pushAlert(WORKSHOP_MESSAGES.resultRequired, 'error')
+              return
+            }
+            if (rr.error === 'ambiguous') {
+              pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
+              return
+            }
+            const tr = rr.ref.trim()
+            if (!knownVialIdSet.has(ta) || !knownVialIdSet.has(tb)) {
+              pushAlert(WORKSHOP_MESSAGES.pickIngredientsFromList, 'error')
+              return
+            }
+            if (hasHalfFilledPair(ta, tb)) {
+              pushAlert(WORKSHOP_MESSAGES.halfPair, 'error')
+              return
+            }
+            if (hasPairConflict(pairs, ta, tb, tr, editingPair.clientId)) {
+              pushAlert(
+                ta === '' && tb === ''
+                  ? WORKSHOP_MESSAGES.pairRowClashEmpty
+                  : WORKSHOP_MESSAGES.pairRowClashIngredients,
+                'error',
+              )
+              return
+            }
+            const clientId = editingPair.clientId
+            setPairs((prev) =>
+              prev.map((p) =>
+                p.clientId === clientId ? { ...p, a: ta, b: tb, resultId: tr } : p,
+              ),
+            )
+            upsertVisualOverride(tr, {
+              primaryColor: elPrimaryColor,
+              secondaryColor: elSecondaryColor,
+              opacity: elOpacity,
+              texture: elTexture,
+            })
+            exitRegisterRowEdit()
+            pushAlert(WORKSHOP_MESSAGES.combinationUpdated, 'success')
+            return
+          }
           if (!knownVialIdSet.has(elA.trim()) || !knownVialIdSet.has(elB.trim())) {
             pushAlert(WORKSHOP_MESSAGES.pickIngredientsFromList, 'error')
             return
           }
-          if (tryAddPair(elA, elB, elRes, WORKSHOP_MESSAGES.recipeAdded)) {
-            upsertVisualOverride(elRes, {
+          const rrAdd = resolveRefFromDisplayInput(
+            elResultInput,
+            displayName,
+            allKnownVialIds,
+          )
+          if (rrAdd.error === 'empty' || !rrAdd.ref.trim()) {
+            pushAlert(WORKSHOP_MESSAGES.resultRequired, 'error')
+            return
+          }
+          if (rrAdd.error === 'ambiguous') {
+            pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
+            return
+          }
+          const trAdd = rrAdd.ref.trim()
+          if (tryAddPair(elA, elB, trAdd, WORKSHOP_MESSAGES.recipeAdded)) {
+            upsertVisualOverride(trAdd, {
               primaryColor: elPrimaryColor,
               secondaryColor: elSecondaryColor,
               opacity: elOpacity,
@@ -1612,14 +1605,65 @@ export function RecipeManagerPage() {
             })
             setElA('')
             setElB('')
-            setElRes('')
+            setElResultInput('')
             setElPrimaryColor('#ffffff')
             setElSecondaryColor('')
             setElOpacity('0.85')
             setElTexture('liquid')
           }
           break
+        }
         case 'creature': {
+          if (editingPair) {
+            if (!isCreatureResultId(editingPair.resultId)) {
+              pushAlert(WORKSHOP_MESSAGES.registerEditWrongTab, 'error')
+              return
+            }
+            const raw = crName.trim()
+            if (!raw) {
+              pushAlert(WORKSHOP_MESSAGES.creatureNameRequired, 'error')
+              return
+            }
+            const lower = raw.toLowerCase()
+            const base = lower.startsWith('creature-')
+              ? raw.slice('creature-'.length)
+              : raw
+            const slug = slugifyCreatureName(base)
+            if (!slug) {
+              pushAlert(WORKSHOP_MESSAGES.creatureNameInvalid, 'error')
+              return
+            }
+            const tr = `creature-${slug}`
+            const element = crElement.trim()
+            if (element && !knownElementIdSet.has(element)) {
+              pushAlert(WORKSHOP_MESSAGES.pickElementFromList, 'error')
+              return
+            }
+            const ta = element
+            const tb = element
+            if (hasHalfFilledPair(ta, tb)) {
+              pushAlert(WORKSHOP_MESSAGES.halfPair, 'error')
+              return
+            }
+            if (hasPairConflict(pairs, ta, tb, tr, editingPair.clientId)) {
+              pushAlert(
+                ta === '' && tb === ''
+                  ? WORKSHOP_MESSAGES.pairRowClashEmpty
+                  : WORKSHOP_MESSAGES.pairRowClashIngredients,
+                'error',
+              )
+              return
+            }
+            const clientId = editingPair.clientId
+            setPairs((prev) =>
+              prev.map((p) =>
+                p.clientId === clientId ? { ...p, a: ta, b: tb, resultId: tr } : p,
+              ),
+            )
+            exitRegisterRowEdit()
+            pushAlert(WORKSHOP_MESSAGES.combinationUpdated, 'success')
+            return
+          }
           const slug = slugifyCreatureName(crName)
           if (!slug) {
             pushAlert(WORKSHOP_MESSAGES.enterCreatureName, 'error')
@@ -1645,9 +1689,58 @@ export function RecipeManagerPage() {
           }
           break
         }
-        case 'solo':
+        case 'solo': {
+          if (editingSolo) {
+            const resolved = resolveRefFromDisplayInput(
+              soloIdInput,
+              displayName,
+              allKnownVialIds,
+            )
+            if (resolved.error === 'empty' || !resolved.ref.trim()) {
+              pushAlert(WORKSHOP_MESSAGES.soloNameEmpty, 'error')
+              return
+            }
+            if (resolved.error === 'ambiguous') {
+              pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
+              return
+            }
+            const newId = resolved.ref.trim()
+            const src = editingSolo.catalogSourceId
+
+            if (src) {
+              if (hasSoloConflict(soloRows, newId)) {
+                pushAlert(WORKSHOP_MESSAGES.soloDuplicateInEntries, 'error')
+                return
+              }
+              setHiddenCatalogSoloIds((prev) =>
+                prev.includes(src) ? prev : [...prev, src],
+              )
+              setSoloRows((prev) => [
+                ...prev,
+                { clientId: nextClientId(), id: newId },
+              ])
+              exitRegisterRowEdit()
+              pushAlert(WORKSHOP_MESSAGES.elementSaved, 'success')
+              return
+            }
+
+            const clash = hasSoloConflict(soloRows, newId, editingSolo.clientId)
+            if (clash) {
+              pushAlert(WORKSHOP_MESSAGES.soloDuplicateAsElement, 'error')
+              return
+            }
+            setSoloRows((prev) =>
+              prev.map((s) =>
+                s.clientId === editingSolo.clientId ? { ...s, id: newId } : s,
+              ),
+            )
+            exitRegisterRowEdit()
+            pushAlert(WORKSHOP_MESSAGES.referenceUpdated, 'success')
+            return
+          }
           tryAddSolo()
           break
+        }
       }
     },
     [
@@ -1656,17 +1749,26 @@ export function RecipeManagerPage() {
       tryAddSolo,
       elA,
       elB,
-      elRes,
+      elResultInput,
       elPrimaryColor,
       elSecondaryColor,
       elOpacity,
       elTexture,
       crElement,
       crName,
+      soloIdInput,
       pushAlert,
       knownVialIdSet,
       knownElementIdSet,
       upsertVisualOverride,
+      editingPair,
+      editingSolo,
+      pairs,
+      soloRows,
+      displayName,
+      allKnownVialIds,
+      nextClientId,
+      exitRegisterRowEdit,
     ],
   )
 
@@ -1731,186 +1833,6 @@ export function RecipeManagerPage() {
     visualOverrides,
     pushAlert,
     hiddenCatalogSoloIds,
-  ])
-
-  const saveEditPair = useCallback(() => {
-    if (!editingPair) return
-    const { clientId } = editingPair
-    const creatureEdit = isCreatureResultId(editingPair.resultId)
-    let tr = ''
-    if (creatureEdit) {
-      const raw = pairEditDraft.resultId.trim()
-      if (!raw) {
-        pushAlert(WORKSHOP_MESSAGES.creatureNameRequired, 'error')
-        return
-      }
-      const lower = raw.toLowerCase()
-      const base = lower.startsWith('creature-')
-        ? raw.slice('creature-'.length)
-        : raw
-      const slug = slugifyCreatureName(base)
-      if (!slug) {
-        pushAlert(WORKSHOP_MESSAGES.creatureNameInvalid, 'error')
-        return
-      }
-      tr = `creature-${slug}`
-    } else {
-      const rr = resolveRefFromDisplayInput(
-        pairEditDraft.resultId,
-        displayName,
-        allKnownVialIds,
-      )
-      if (rr.error === 'empty' || !rr.ref.trim()) {
-        pushAlert(WORKSHOP_MESSAGES.resultRequired, 'error')
-        return
-      }
-      if (rr.error === 'ambiguous') {
-        pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
-        return
-      }
-      tr = rr.ref.trim()
-    }
-
-    let ta: string
-    let tb: string
-    if (creatureEdit) {
-      const rs = resolveIngredientDraft(
-        pairEditDraft.a,
-        displayName,
-        allKnownVialIds,
-      )
-      if (rs.error === 'ambiguous') {
-        pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
-        return
-      }
-      const spellRef = rs.ref.trim()
-      if (spellRef && !knownElementIdSet.has(spellRef)) {
-        pushAlert(WORKSHOP_MESSAGES.pickElementFromList, 'error')
-        return
-      }
-      ta = spellRef
-      tb = spellRef
-    } else {
-      const ra = resolveIngredientDraft(
-        pairEditDraft.a,
-        displayName,
-        allKnownVialIds,
-      )
-      const rb = resolveIngredientDraft(
-        pairEditDraft.b,
-        displayName,
-        allKnownVialIds,
-      )
-      if (ra.error === 'ambiguous' || rb.error === 'ambiguous') {
-        pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
-        return
-      }
-      ta = ra.ref.trim()
-      tb = rb.ref.trim()
-      if ((ta && !knownVialIdSet.has(ta)) || (tb && !knownVialIdSet.has(tb))) {
-        pushAlert(WORKSHOP_MESSAGES.pickIngredientsFromList, 'error')
-        return
-      }
-      if (hasHalfFilledPair(ta, tb)) {
-        pushAlert(WORKSHOP_MESSAGES.halfPair, 'error')
-        return
-      }
-    }
-    const clash = hasPairConflict(pairs, ta, tb, tr, clientId)
-    if (clash) {
-      pushAlert(
-        ta === '' && tb === ''
-          ? WORKSHOP_MESSAGES.pairRowClashEmpty
-          : WORKSHOP_MESSAGES.pairRowClashIngredients,
-        'error',
-      )
-      return
-    }
-    setPairs((prev) =>
-      prev.map((p) =>
-        p.clientId === clientId ? { ...p, a: ta, b: tb, resultId: tr } : p,
-      ),
-    )
-    if (!creatureEdit) {
-      upsertVisualOverride(tr, {
-        primaryColor: pairVisualEditDraft.primaryColor,
-        secondaryColor: pairVisualEditDraft.secondaryColor,
-        opacity: pairVisualEditDraft.opacity,
-        texture: pairVisualEditDraft.texture,
-      })
-    }
-    requestCloseEditPair()
-    pushAlert(WORKSHOP_MESSAGES.combinationUpdated, 'success')
-  }, [
-    editingPair,
-    pairEditDraft,
-    pairs,
-    pushAlert,
-    displayName,
-    allKnownVialIds,
-    knownVialIdSet,
-    knownElementIdSet,
-    pairVisualEditDraft,
-    upsertVisualOverride,
-    requestCloseEditPair,
-  ])
-
-  const saveEditSolo = useCallback(() => {
-    if (!editingSolo) return
-    const resolved = resolveRefFromDisplayInput(
-      soloEditDraft,
-      displayName,
-      allKnownVialIds,
-    )
-    if (resolved.error === 'empty' || !resolved.ref.trim()) {
-      pushAlert(WORKSHOP_MESSAGES.soloNameEmpty, 'error')
-      return
-    }
-    if (resolved.error === 'ambiguous') {
-      pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
-      return
-    }
-    const newId = resolved.ref.trim()
-    const src = editingSolo.catalogSourceId
-
-    if (src) {
-      if (hasSoloConflict(soloRows, newId)) {
-        pushAlert(WORKSHOP_MESSAGES.soloDuplicateInEntries, 'error')
-        return
-      }
-      setHiddenCatalogSoloIds((prev) =>
-        prev.includes(src) ? prev : [...prev, src],
-      )
-      setSoloRows((prev) => [
-        ...prev,
-        { clientId: nextClientId(), id: newId },
-      ])
-      requestCloseEditSolo()
-      pushAlert(WORKSHOP_MESSAGES.elementSaved, 'success')
-      return
-    }
-
-    const clash = hasSoloConflict(soloRows, newId, editingSolo.clientId)
-    if (clash) {
-      pushAlert(WORKSHOP_MESSAGES.soloDuplicateAsElement, 'error')
-      return
-    }
-    setSoloRows((prev) =>
-      prev.map((s) =>
-        s.clientId === editingSolo.clientId ? { ...s, id: newId } : s,
-      ),
-    )
-    requestCloseEditSolo()
-    pushAlert(WORKSHOP_MESSAGES.referenceUpdated, 'success')
-  }, [
-    editingSolo,
-    soloEditDraft,
-    soloRows,
-    nextClientId,
-    pushAlert,
-    displayName,
-    allKnownVialIds,
-    requestCloseEditSolo,
   ])
 
   const typeClass = (t: VialType | 'unknown' | 'fioleSeule') => {
@@ -1993,7 +1915,15 @@ export function RecipeManagerPage() {
                   role="tab"
                   aria-selected={createMode === key}
                   className={`ra-modeTab ${createMode === key ? 'ra-modeTabActive' : ''}`}
-                  onClick={() => setCreateMode(key)}
+                  onClick={() => {
+                    if (createMode === key) return
+                    if (editingPair || editingSolo) {
+                      setEditingPair(null)
+                      setEditingSolo(null)
+                      resetMainFormFields()
+                    }
+                    setCreateMode(key)
+                  }}
                 >
                   {lab}
                 </button>
@@ -2031,15 +1961,15 @@ export function RecipeManagerPage() {
                       placeholder="Ingredient…"
                     />
                     <div className="ra-formGroup ra-formGroup--fieldRow">
-                      <label htmlFor="elRes">
+                      <label htmlFor="elResult">
                         Result<span className="ra-required">*</span>
                       </label>
                       <input
-                        id="elRes"
+                        id="elResult"
                         className="ra-input"
-                        value={elRes}
-                        onChange={(e) => setElRes(e.target.value)}
-                        placeholder="Produced reference"
+                        value={elResultInput}
+                        onChange={(e) => setElResultInput(e.target.value)}
+                        placeholder="Result name or technical id"
                         autoComplete="off"
                       />
                     </div>
@@ -2145,14 +2075,14 @@ export function RecipeManagerPage() {
                   <div className="ra-formRecipeLayout">
                     <div className="ra-formGroup ra-formGroup--fieldRow">
                       <label htmlFor="soloId">
-                        ELEMENT<span className="ra-required">*</span>
+                        Name<span className="ra-required">*</span>
                       </label>
                       <input
                         id="soloId"
                         className="ra-input"
                         value={soloIdInput}
                         onChange={(e) => setSoloIdInput(e.target.value)}
-                        placeholder="New element"
+                        placeholder="Element name or technical id"
                         autoComplete="off"
                       />
                     </div>
@@ -2170,8 +2100,17 @@ export function RecipeManagerPage() {
                   type="submit"
                   className="ra-btn ra-btnPrimary"
                 >
-                  Add
+                  {editingPair || editingSolo ? 'Update' : 'Add'}
                 </button>
+                {(editingPair || editingSolo) && (
+                  <button
+                    type="button"
+                    className="ra-btn ra-btnSecondary"
+                    onClick={exitRegisterRowEdit}
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             </form>
 
@@ -2410,9 +2349,11 @@ export function RecipeManagerPage() {
                                     className="ra-iconBtn"
                                     title="Edit"
                                     aria-label="Edit"
-                                    onClick={(e) => {
-                                      rememberModalAnchor(e.currentTarget)
-                                      setSoloEditDraft(toSoloEditDraft(s))
+                                    onClick={() => {
+                                      resetMainFormFields()
+                                      setEditingPair(null)
+                                      setCreateMode('solo')
+                                      setSoloIdInput(displayName(s.id))
                                       setEditingSolo(
                                         s.fromCatalog
                                           ? { ...s, catalogSourceId: s.id }
@@ -2485,12 +2426,31 @@ export function RecipeManagerPage() {
                                   className="ra-iconBtn"
                                   title="Edit"
                                   aria-label="Edit"
-                                  onClick={(e) => {
-                                    rememberModalAnchor(e.currentTarget)
-                                    setPairEditDraft(toPairEditDraft(p))
-                                    setPairVisualEditDraft(
-                                      visualOverrides[p.resultId] ?? visualFromTemplate(p.resultId),
-                                    )
+                                  onClick={() => {
+                                    resetMainFormFields()
+                                    setEditingSolo(null)
+                                    if (isCreatureResultId(p.resultId)) {
+                                      setCreateMode('creature')
+                                      const spell = p.a.trim()
+                                        ? p.a.trim()
+                                        : p.b.trim()
+                                          ? p.b.trim()
+                                          : ''
+                                      setCrElement(spell)
+                                      setCrName(displayName(p.resultId))
+                                    } else {
+                                      setCreateMode('element')
+                                      setElA(p.a)
+                                      setElB(p.b)
+                                      setElResultInput(displayName(p.resultId))
+                                      const vis =
+                                        visualOverrides[p.resultId] ??
+                                        visualFromTemplate(p.resultId)
+                                      setElPrimaryColor(vis.primaryColor)
+                                      setElSecondaryColor(vis.secondaryColor)
+                                      setElOpacity(String(vis.opacity))
+                                      setElTexture(vis.texture)
+                                    }
                                     setEditingPair({ ...p })
                                   }}
                                 >
@@ -2676,205 +2636,6 @@ export function RecipeManagerPage() {
         </div>
       )}
 
-      {editingPair && (
-        <div
-          ref={editPairOverlayRef}
-          className="ra-modalOverlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-pair-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) requestCloseEditPair()
-          }}
-        >
-          <div ref={editPairDialogRef} className="ra-modal">
-            <h3 id="edit-pair-title">
-              {isCreatureResultId(editingPair.resultId)
-                ? 'Edit creature'
-                : 'Edit combination'}
-            </h3>
-            {isCreatureResultId(editingPair.resultId) ? (
-              <VialOptionCombo
-                inputId="edCreatureElement"
-                label="Element offered"
-                value={pairEditDraft.a}
-                onChange={(id) =>
-                  setPairEditDraft((d) => ({
-                    ...d,
-                    a: id,
-                    b: id,
-                  }))
-                }
-                options={elementOptions}
-                placeholder="Type to search for an element…"
-                autoComplete="on"
-              />
-            ) : (
-              <>
-                <VialOptionCombo
-                  inputId="edA"
-                  label="Ingredient A"
-                  value={pairEditDraft.a}
-                  onChange={(id) =>
-                    setPairEditDraft((d) => ({ ...d, a: id }))
-                  }
-                  options={vialOptions}
-                  placeholder="Type to search for an ingredient…"
-                />
-                <VialOptionCombo
-                  inputId="edB"
-                  label="Ingredient B"
-                  value={pairEditDraft.b}
-                  onChange={(id) =>
-                    setPairEditDraft((d) => ({ ...d, b: id }))
-                  }
-                  options={vialOptions}
-                  placeholder="Type to search for an ingredient…"
-                />
-              </>
-            )}
-            <div className="ra-formGroup">
-              <label htmlFor="edR">Result</label>
-              <input
-                id="edR"
-                className="ra-input"
-                value={pairEditDraft.resultId}
-                onChange={(e) =>
-                  setPairEditDraft((d) => ({ ...d, resultId: e.target.value }))
-                }
-                autoComplete="off"
-              />
-            </div>
-            {!isCreatureResultId(editingPair.resultId) && (
-              <div className="ra-formVisualStack ra-formVisualStack--modal">
-                <RaColorPickerField
-                  id="edPrimaryColor"
-                  label="Primary"
-                  value={pairVisualEditDraft.primaryColor}
-                  onChange={(v) =>
-                    setPairVisualEditDraft((d) => ({ ...d, primaryColor: v }))
-                  }
-                  fallback="#ffffff"
-                  hexPlaceholder="#ffffff"
-                  aria-label="Primary color"
-                />
-                <RaColorPickerField
-                  id="edSecondaryColor"
-                  label="Secondary"
-                  value={pairVisualEditDraft.secondaryColor}
-                  onChange={(v) =>
-                    setPairVisualEditDraft((d) => ({ ...d, secondaryColor: v }))
-                  }
-                  fallback="#000000"
-                  hexPlaceholder="optional"
-                  aria-label="Secondary color"
-                />
-                <div className="ra-formGroup ra-formGroup--fieldRow">
-                  <label htmlFor="edTexture">Texture</label>
-                  <TextureSelect
-                    id="edTexture"
-                    value={pairVisualEditDraft.texture}
-                    onChange={(texture) =>
-                      setPairVisualEditDraft((d) => ({ ...d, texture }))
-                    }
-                    options={TEXTURE_OPTIONS}
-                  />
-                </div>
-                <div className="ra-formGroup ra-formGroup--fieldRow">
-                  <label htmlFor="edOpacity">Opacity</label>
-                  <div className="ra-opacityControl">
-                    <input
-                      id="edOpacity"
-                      type="range"
-                      className="ra-opacityRange"
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      value={pairEditOpacityClamped}
-                      onChange={(e) =>
-                        setPairVisualEditDraft((d) => ({
-                          ...d,
-                          opacity: Number(e.target.value),
-                        }))
-                      }
-                      aria-valuemin={0}
-                      aria-valuemax={1}
-                      aria-valuenow={pairEditOpacityClamped}
-                      aria-valuetext={`${Math.round(pairEditOpacityClamped * 100)}%`}
-                    />
-                    <output className="ra-opacityReadout" htmlFor="edOpacity">
-                      {pairEditOpacityClamped.toFixed(2)}
-                    </output>
-                  </div>
-                </div>
-              </div>
-            )}
-            <div className="ra-modalActions">
-              <button
-                type="button"
-                className="ra-btn ra-btnPrimary"
-                onClick={saveEditPair}
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                className="ra-btn ra-btnSecondary"
-                onClick={() => requestCloseEditPair()}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {editingSolo && (
-        <div
-          ref={editSoloOverlayRef}
-          className="ra-modalOverlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-solo-title"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) requestCloseEditSolo()
-          }}
-        >
-          <div ref={editSoloDialogRef} className="ra-modal">
-            <h3 id="edit-solo-title">
-              {editingSolo.catalogSourceId
-                ? 'Save this element'
-                : 'Edit element'}
-            </h3>
-            <div className="ra-formGroup">
-              <label htmlFor="edSolo">Element name</label>
-              <input
-                id="edSolo"
-                className="ra-input"
-                value={soloEditDraft}
-                onChange={(e) => setSoloEditDraft(e.target.value)}
-                autoComplete="off"
-              />
-            </div>
-            <div className="ra-modalActions">
-              <button
-                type="button"
-                className="ra-btn ra-btnPrimary"
-                onClick={saveEditSolo}
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                className="ra-btn ra-btnSecondary"
-                onClick={() => requestCloseEditSolo()}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

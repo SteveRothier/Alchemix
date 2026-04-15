@@ -175,8 +175,23 @@
   display: none;
 }
 
+.recipe-atelier .ra-formSubmitBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
 .recipe-atelier .ra-formSubmitBar .ra-btnPrimary {
-  width: 100%;
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+.recipe-atelier .ra-formSubmitBar .ra-btnSecondary {
+  flex: 0 0 auto;
 }
 
 .recipe-atelier .ra-formGroup {
@@ -948,12 +963,6 @@
 
 .recipe-atelier .ra-modalActions .ra-btn {
   flex: 1;
-}
-
-.recipe-atelier .ra-formSubmitBar {
-  flex-shrink: 0;
-  margin-top: auto;
-  padding-top: 0.25rem;
 }
 
 .recipe-atelier .ra-formStack {
