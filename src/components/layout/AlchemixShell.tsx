@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Trophy, X } from 'lucide-react'
-import { CharacterSipZone } from '../character/CharacterSipZone'
+import { FlaskConical, Trophy, X } from 'lucide-react'
 import { LabDragContext, type InventoryDragEndInfo } from '../game/LabDragContext'
 import {
   clampLabPlacementPercent,
@@ -303,6 +302,7 @@ export function AlchemixShell() {
   const [sipHint, setSipHint] = useState<string | null>(null)
   const [inventoryGhostActive, setInventoryGhostActive] = useState(false)
   const [trophyOpen, setTrophyOpen] = useState(false)
+  const offerDockRef = useRef<HTMLButtonElement>(null)
   const trophyFabRef = useRef<HTMLButtonElement>(null)
   const trophyDimRef = useRef<HTMLDivElement>(null)
   const trophyDialogRef = useRef<HTMLDivElement>(null)
@@ -312,7 +312,6 @@ export function AlchemixShell() {
   const sipTimerRef = useRef(0)
 
   const canvasRef = useRef<HTMLDivElement>(null)
-  const characterSipRef = useRef<HTMLDivElement>(null)
   const grabOffsetRef = useRef<{ dx: number; dy: number } | null>(null)
   const placedRef = useRef(placed)
   placedRef.current = placed
@@ -588,9 +587,9 @@ export function AlchemixShell() {
     [],
   )
 
-  const tryCharacterSip = useCallback(
+  const tryOfferAtDock = useCallback(
     (vialId: string, instanceId: string | undefined, chip: HTMLElement) => {
-      const sipEl = characterSipRef.current
+      const sipEl = offerDockRef.current
       const canvasEl = canvasRef.current
       if (!sipEl || !canvasEl) return false
       if (!Draggable.hitTest(chip, sipEl, '30%')) return false
@@ -676,7 +675,7 @@ export function AlchemixShell() {
         return
       }
 
-      if (tryCharacterSip(vialId, undefined, chip)) return
+      if (tryOfferAtDock(vialId, undefined, chip)) return
 
       /* Retour sur la colonne inventaire (drag annulé) : même animation que retirer une fiole du labo. */
       if (chipOverlapsInventoryColumn(chip)) {
@@ -704,7 +703,7 @@ export function AlchemixShell() {
         }
       }
     },
-    [findHitPlacedVial, pushLabUndoHistory, showSipHint, tryCharacterSip],
+    [findHitPlacedVial, pushLabUndoHistory, showSipHint, tryOfferAtDock],
   )
 
   const completeLabDrag = useCallback(
@@ -775,7 +774,7 @@ export function AlchemixShell() {
         return false
       }
 
-      if (!isGroupDrag && tryCharacterSip(vialId, instanceId, chip))
+      if (!isGroupDrag && tryOfferAtDock(vialId, instanceId, chip))
         return false
 
       if (chipOverlapsInventoryColumn(chip)) {
@@ -840,7 +839,7 @@ export function AlchemixShell() {
       }
       return false
     },
-    [findHitPlacedVial, pushLabUndoHistory, showSipHint, tryCharacterSip],
+    [findHitPlacedVial, pushLabUndoHistory, showSipHint, tryOfferAtDock],
   )
 
   const placeInventoryVialNearLabCenter = useCallback((vialId: string) => {
@@ -974,39 +973,48 @@ export function AlchemixShell() {
                 onDuplicatePlaced={duplicatePlaced}
               />
             </section>
-            <div
-              className="lab-leftHudCharacter pointer-events-none absolute inset-x-0 bottom-0 z-30 p-[0.85rem] pt-12"
-              aria-label="Character"
-            >
-              <div className="pointer-events-auto mx-auto w-full max-w-xl">
-                <CharacterSipZone ref={characterSipRef} hint={sipHint} />
-              </div>
-            </div>
             <LabControlsFloating
               onClearCanvas={clearLabCanvas}
               canClearCanvas={placed.length > 0}
+              leadingFabs={
+                <div className="lab-fabWithTooltip pointer-events-auto">
+                  <button
+                    ref={trophyFabRef}
+                    type="button"
+                    className="lab-controls-fab"
+                    onClick={() => {
+                      if (trophyClosingRef.current) return
+                      if (trophyOpenRef.current) requestCloseTrophy()
+                      else setTrophyOpen(true)
+                    }}
+                    aria-expanded={trophyOpen}
+                    aria-haspopup="dialog"
+                    aria-label="Creatures"
+                  >
+                    <Trophy size={22} strokeWidth={2} aria-hidden className="shrink-0" />
+                  </button>
+                  <span className="lab-fabTooltip" aria-hidden="true">
+                    Creatures
+                  </span>
+                </div>
+              }
             />
-            <div className="lab-trophyDock pointer-events-none absolute bottom-0 left-0 z-40 p-2 max-[560px]:p-1.5">
+            <div className="lab-offerDock pointer-events-none absolute bottom-0 left-0 z-40 p-2 max-[560px]:p-1.5">
               <div className="lab-fabWithTooltip pointer-events-auto">
                 <button
-                  ref={trophyFabRef}
+                  ref={offerDockRef}
                   type="button"
-                  className="lab-controls-fab"
-                  onClick={() => {
-                    if (trophyClosingRef.current) return
-                    if (trophyOpenRef.current) requestCloseTrophy()
-                    else setTrophyOpen(true)
-                  }}
-                  aria-expanded={trophyOpen}
-                  aria-haspopup="dialog"
-                  aria-label="Creatures"
+                  className="lab-controls-fab lab-offerFab"
+                  aria-label="Offer element for creature unlock"
                 >
-                  <Trophy size={22} strokeWidth={2} aria-hidden className="shrink-0" />
+                  <FlaskConical size={40} strokeWidth={2} aria-hidden className="shrink-0" />
                 </button>
-                <span className="lab-fabTooltip" aria-hidden="true">
-                  Creatures
-                </span>
               </div>
+              {sipHint ? (
+                <p className="lab-offerHint pointer-events-none" aria-live="polite">
+                  {sipHint}
+                </p>
+              ) : null}
             </div>
             {trophyOpen ? (
               <div

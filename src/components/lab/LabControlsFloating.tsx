@@ -1,6 +1,7 @@
 import { gsap } from 'gsap'
 import { Globe, Keyboard, Trash2, X } from 'lucide-react'
 import {
+  type ReactNode,
   useCallback,
   useEffect,
   useId,
@@ -40,6 +41,7 @@ const DIM_BLUR_MAX = `${DIM_BLUR_PX}px`
 export type LabControlsFloatingProps = {
   onClearCanvas: () => void
   canClearCanvas: boolean
+  leadingFabs?: ReactNode
 }
 
 function iconToDialogDelta(
@@ -139,6 +141,7 @@ function playIconModalClose(
 export function LabControlsFloating({
   onClearCanvas,
   canClearCanvas,
+  leadingFabs,
 }: LabControlsFloatingProps) {
   const [open, setOpen] = useState(false)
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
@@ -474,6 +477,7 @@ export function LabControlsFloating({
       {clearModal}
       {langModal}
       <div className="pointer-events-none absolute bottom-0 right-0 z-40 flex flex-row items-center gap-2 p-2 max-[560px]:gap-1.5 max-[560px]:p-1.5">
+        {leadingFabs}
         <div className="lab-fabWithTooltip pointer-events-auto">
           <button
             ref={clearFabRef}
