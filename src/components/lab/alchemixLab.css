@@ -892,6 +892,7 @@ html[data-lab-canvas-chip-drag]
   max-height: min(56dvh, 24rem);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   border-radius: 0.85rem;
   border: 1px solid color-mix(in srgb, var(--border) 85%, var(--lab-hover) 15%);
   background: linear-gradient(
@@ -930,12 +931,81 @@ html[data-lab-canvas-chip-drag]
 }
 
 .lab-trophyList {
+  flex: 1;
+  min-height: 0;
   margin: 0;
   padding: 0.35rem 0.55rem 0.55rem;
   list-style: none;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--text-h) 18%, transparent) transparent;
+}
+
+.lab-trophyList:hover {
+  scrollbar-color: color-mix(in srgb, var(--text-h) 26%, transparent) transparent;
+}
+
+@supports selector(::-webkit-scrollbar) {
+  .lab-trophyList {
+    scrollbar-width: auto;
+    scrollbar-color: unset;
+  }
+
+  .lab-trophyList:hover {
+    scrollbar-color: unset;
+  }
+}
+
+.lab-trophyList::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* Masque explicitement les flèches haut/bas sur Windows Chromium. */
+.lab-trophyList::-webkit-scrollbar-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 0 !important;
+  max-height: 0 !important;
+  border: none;
+  background: transparent;
+}
+
+.lab-trophyList::-webkit-scrollbar-button:vertical:start:decrement,
+.lab-trophyList::-webkit-scrollbar-button:vertical:end:increment,
+.lab-trophyList::-webkit-scrollbar-button:horizontal:start:decrement,
+.lab-trophyList::-webkit-scrollbar-button:horizontal:end:increment {
+  display: block;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.lab-trophyList::-webkit-scrollbar-button:single-button,
+.lab-trophyList::-webkit-scrollbar-button:double-button {
+  display: block;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.lab-trophyList::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.lab-trophyList::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lab-trophyList::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-h) 14%, transparent);
+  border-radius: 999px;
+}
+
+.lab-trophyList:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-h) 26%, transparent);
 }
 
 .lab-trophyRow {
