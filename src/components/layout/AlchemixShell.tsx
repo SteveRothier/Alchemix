@@ -29,6 +29,50 @@ import '../lab/alchemixLab.css'
 registerGsapDraggable()
 
 const LAB_UNDO_MAX = 80
+const STORAGE_KEY_LAB_PLACED = 'alchemix-lab-placed'
+
+function parseLabPlaced(raw: unknown): LabPlacedVial[] {
+  if (!Array.isArray(raw)) return []
+  const out: LabPlacedVial[] = []
+  for (const row of raw) {
+    if (!row || typeof row !== 'object') continue
+    const r = row as Record<string, unknown>
+    if (
+      typeof r.instanceId === 'string' &&
+      typeof r.vialId === 'string' &&
+      typeof r.xPct === 'number' &&
+      typeof r.yPct === 'number' &&
+      Number.isFinite(r.xPct) &&
+      Number.isFinite(r.yPct)
+    ) {
+      out.push({
+        instanceId: r.instanceId,
+        vialId: r.vialId,
+        xPct: r.xPct,
+        yPct: r.yPct,
+      })
+    }
+  }
+  return out
+}
+
+function loadLabPlaced(): LabPlacedVial[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_LAB_PLACED)
+    if (!raw) return []
+    return parseLabPlaced(JSON.parse(raw) as unknown)
+  } catch {
+    return []
+  }
+}
+
+function saveLabPlaced(placed: LabPlacedVial[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY_LAB_PLACED, JSON.stringify(placed))
+  } catch {
+    /* quota / navigation privée */
+  }
+}
 
 type LabHistorySnapshot = {
   placed: LabPlacedVial[]
@@ -239,7 +283,7 @@ export function AlchemixShell() {
     return ids
   }, [vialsById])
 
-  const [placed, setPlaced] = useState<LabPlacedVial[]>([])
+  const [placed, setPlaced] = useState<LabPlacedVial[]>(() => loadLabPlaced())
   const [selectedIdsArr, setSelectedIdsArr] = useState<string[]>([])
   const selectedIds = useMemo(() => new Set(selectedIdsArr), [selectedIdsArr])
   const selectedIdsRef = useRef<ReadonlySet<string>>(selectedIds)
@@ -261,6 +305,17 @@ export function AlchemixShell() {
   const grabOffsetRef = useRef<{ dx: number; dy: number } | null>(null)
   const placedRef = useRef(placed)
   placedRef.current = placed
+
+  useEffect(() => {
+    saveLabPlaced(placed)
+  }, [placed])
+
+  useEffect(() => {
+    setPlaced((prev) => {
+      const next = prev.filter((p) => vialsById[p.vialId])
+      return next.length === prev.length ? prev : next
+    })
+  }, [vialsById])
 
   const labUndoPastRef = useRef<LabHistorySnapshot[]>([])
   const labUndoFutureRef = useRef<LabHistorySnapshot[]>([])
