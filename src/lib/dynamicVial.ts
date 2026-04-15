@@ -1,5 +1,6 @@
 import type { NewVialDraft, Vial, VialRarity, VialType } from '../types'
 import { buildDynamicElementDraft } from './dynamicElement'
+import { buildDynamicSpellDraft } from './dynamicSpell'
 import {
   ELEMENT_AFFINITY_ORDER,
   getIngredientProfile,
@@ -21,14 +22,43 @@ function bumpRarity(r: VialRarity): VialRarity {
   return RARITY_ORDER[Math.min(RARITY_ORDER.length - 1, i + 1)] as VialRarity
 }
 
+function isSpellLikeVial(v: Vial): boolean {
+  return v.type === 'spell' || v.id.startsWith('sp-') || v.id.startsWith('dyn-sp-')
+}
+
 function resultType(va: Vial, vb: Vial): VialType {
-  void va
-  void vb
+  if (isSpellLikeVial(va) || isSpellLikeVial(vb)) return 'spell'
   return 'element'
+}
+
+const DYN_SP_ID =
+  /^dyn-sp-(air|arcane|earth|fire|light|nature|shadow|water)-(mono|air|arcane|earth|fire|light|nature|shadow|water)$/
+
+function isCanonicalDynamicSpellId(id: string): boolean {
+  return DYN_SP_ID.test(id)
+}
+
+/** Id canonique pour une fusion sort (stable si on inverse les ingrédients). */
+export function canonicalDynamicSpellId(ingredientA: Vial, ingredientB: Vial): string {
+  const pa = getIngredientProfile(ingredientA)
+  const pb = getIngredientProfile(ingredientB)
+  const affA = pa.affinity
+  const affB = pb.affinity
+  if (affA === affB) {
+    return `dyn-sp-${affA}-mono`
+  }
+  const [lo, hi] = [affA, affB].sort(
+    (u, v) =>
+      ELEMENT_AFFINITY_ORDER.indexOf(u) - ELEMENT_AFFINITY_ORDER.indexOf(v),
+  )
+  return `dyn-sp-${lo}-${hi}`
 }
 
 /** Id canonique : plusieurs paires d’ingrédients peuvent mener à la même fiole. */
 export function canonicalDynamicVialId(ingredientA: Vial, ingredientB: Vial): string {
+  if (resultType(ingredientA, ingredientB) === 'spell') {
+    return canonicalDynamicSpellId(ingredientA, ingredientB)
+  }
   const pa = getIngredientProfile(ingredientA)
   const pb = getIngredientProfile(ingredientB)
   const ia = ELEMENT_AFFINITY_ORDER.indexOf(pa.affinity)
@@ -46,6 +76,13 @@ export function dynamicVialIdForPair(vialIdA: string, vialIdB: string): string {
 }
 
 export function isInertUnseededFusion(ingredientA: Vial, ingredientB: Vial): boolean {
+  if (
+    isCanonicalDynamicSpellId(ingredientA.id) &&
+    isCanonicalDynamicSpellId(ingredientB.id)
+  ) {
+    return true
+  }
+
   const rt = resultType(ingredientA, ingredientB)
   const pa = getIngredientProfile(ingredientA)
   const pb = getIngredientProfile(ingredientB)
@@ -80,10 +117,5 @@ export function buildDynamicVialDraft(
       canonicalId,
     )
   }
-  return buildDynamicElementDraft(
-    ingredientA,
-    ingredientB,
-    rarity,
-    canonicalId,
-  )
+  return buildDynamicSpellDraft(ingredientA, ingredientB, rarity, canonicalId)
 }

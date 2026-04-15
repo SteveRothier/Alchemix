@@ -105,7 +105,7 @@ export function buildDynamicSpellDraft(
     : `Improvised essence anchored in ${dominant}.`
 
   return {
-    type: 'element',
+    type: 'spell',
     name,
     description,
     liquid: {

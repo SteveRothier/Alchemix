@@ -180,8 +180,9 @@ describe('resolveFusionProduct (dynamique)', () => {
     })
     const outcome = resolveFusionProduct(a, b, {})
     expect(outcome.ok).toBe(false)
-    if (outcome.ok) return
-    expect(outcome.reason).toBe('inert')
+    if (outcome.ok === false) {
+      expect(outcome.reason).toBe('inert')
+    }
   })
 
   it('fusion inerte : deux amalgames dyn-el', () => {

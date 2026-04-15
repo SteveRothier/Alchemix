@@ -134,12 +134,11 @@ export function CanvasVialItem({
           sel.has(placed.instanceId) &&
           root instanceof HTMLElement
         ) {
-          for (const id of sel) {
-            if (id === placed.instanceId) continue
-            const host = root.querySelector(
-              `[data-lab-canvas-vial="${CSS.escape(id)}"]`,
-            )
-            const layer = host?.querySelector('.lab-canvasVialDragLayer')
+          for (const host of root.querySelectorAll('[data-lab-canvas-vial]')) {
+            if (!(host instanceof HTMLElement)) continue
+            const id = host.getAttribute('data-lab-canvas-vial')
+            if (!id || id === placed.instanceId || !sel.has(id)) continue
+            const layer = host.querySelector('.lab-canvasVialDragLayer')
             if (layer instanceof HTMLElement) groupPeerDragLayers.push(layer)
           }
         }

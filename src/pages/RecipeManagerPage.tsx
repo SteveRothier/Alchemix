@@ -42,6 +42,49 @@ const STORAGE_KEY_SOLO = 'alchemix-recipe-manager-solo'
 const STORAGE_KEY_HIDDEN_CATALOG_SOLO =
   'alchemix-recipe-manager-hidden-catalog-solo'
 
+const WORKSHOP_MESSAGES = {
+  ambiguousSameName: AMBIGUOUS_NAME_ERROR,
+  halfPair: HALF_PAIR_ERROR,
+  enterAtLeastResult: 'Enter at least the result.',
+  enterBothIngredientsAndResult: 'Enter both ingredients and the result.',
+  duplicateEmptyIngredients:
+    'This entry already exists: same result with no combination.',
+  duplicatePair:
+    'This combination already exists: same ingredient pair (order does not matter).',
+  enterReference: 'Enter a reference.',
+  catalogAlreadyListed:
+    'This reference is already covered: all catalog recipes are listed for it.',
+  refAlreadyInElements: 'This reference is already in your element entries.',
+  elementAdded: 'Element added.',
+  pickIngredientsFromList: 'Pick ingredients that exist in the list.',
+  enterCreatureName: 'Enter a creature name.',
+  pickElementFromList: 'Pick an element that exists in the list.',
+  recipeAdded: 'Recipe added.',
+  creatureAdded: 'Creature added.',
+  combinationRemoved: 'Combination removed.',
+  catalogElementRemoved:
+    'Element removed from the register (reload the store to see everything again).',
+  entryRemoved: 'Entry removed.',
+  dataResetFromSource: 'Data reset from source code.',
+  craftedUpdated:
+    'craftedVials updated directly in src/data. Restart the dev server if needed.',
+  saveFailed:
+    'Could not save in this context. Run with the local save API enabled.',
+  creatureNameRequired: 'Creature name is required.',
+  creatureNameInvalid: 'Creature name is invalid.',
+  resultRequired: 'Result is required.',
+  pairRowClashEmpty:
+    'Another row already has this result with no combination.',
+  pairRowClashIngredients: 'Another row already uses this ingredient pair.',
+  combinationUpdated: 'Combination updated.',
+  soloNameEmpty: 'Name or reference is empty.',
+  soloDuplicateInEntries:
+    'This reference already exists in your element entries.',
+  elementSaved: 'Element saved.',
+  soloDuplicateAsElement: 'This reference already exists as an element.',
+  referenceUpdated: 'Reference updated.',
+} as const
+
 export type EditablePair = {
   clientId: number
   a: string
@@ -1471,8 +1514,8 @@ export function RecipeManagerPage() {
       if (!tr) {
         pushAlert(
           allowEmpty
-            ? 'Enter at least the result.'
-            : 'Enter both ingredients and the result.',
+            ? WORKSHOP_MESSAGES.enterAtLeastResult
+            : WORKSHOP_MESSAGES.enterBothIngredientsAndResult,
           'error',
         )
         return false
@@ -1480,11 +1523,11 @@ export function RecipeManagerPage() {
 
       if (!allowEmpty) {
         if (!ta || !tb) {
-          pushAlert('Enter both ingredients and the result.', 'error')
+          pushAlert(WORKSHOP_MESSAGES.enterBothIngredientsAndResult, 'error')
           return false
         }
       } else if (hasHalfFilledPair(ta, tb)) {
-        pushAlert(HALF_PAIR_ERROR, 'error')
+        pushAlert(WORKSHOP_MESSAGES.halfPair, 'error')
         return false
       }
 
@@ -1492,8 +1535,8 @@ export function RecipeManagerPage() {
       if (dup) {
         pushAlert(
           ta === '' && tb === ''
-            ? 'This entry already exists: same result with no combination.'
-            : 'This combination already exists: same ingredient pair (order does not matter).',
+            ? WORKSHOP_MESSAGES.duplicateEmptyIngredients
+            : WORKSHOP_MESSAGES.duplicatePair,
           'error',
         )
         return false
@@ -1511,19 +1554,16 @@ export function RecipeManagerPage() {
   const tryAddSolo = useCallback(() => {
     const id = soloIdInput.trim()
     if (!id) {
-      pushAlert('Enter a reference.', 'error')
+      pushAlert(WORKSHOP_MESSAGES.enterReference, 'error')
       return
     }
     const norm = id
     if (catalogElementIdSet.has(norm)) {
-      pushAlert(
-        'This reference is already covered: all catalog recipes are listed for it.',
-        'error',
-      )
+      pushAlert(WORKSHOP_MESSAGES.catalogAlreadyListed, 'error')
       return
     }
-    if (soloRows.some((s) => s.id === norm)) {
-      pushAlert('This reference is already in your element entries.', 'error')
+    if (hasSoloConflict(soloRows, norm)) {
+      pushAlert(WORKSHOP_MESSAGES.refAlreadyInElements, 'error')
       return
     }
     setSoloRows((prev) => [
@@ -1531,13 +1571,14 @@ export function RecipeManagerPage() {
       { clientId: nextClientId(), id: norm },
     ])
     setSoloIdInput('')
-    pushAlert('Element added.', 'success')
+    pushAlert(WORKSHOP_MESSAGES.elementAdded, 'success')
   }, [
     soloIdInput,
     soloRows,
     nextClientId,
     pushAlert,
     catalogElementIdSet,
+    hasSoloConflict,
   ])
 
   const handleAddSubmit = useCallback(
@@ -1546,10 +1587,10 @@ export function RecipeManagerPage() {
       switch (createMode) {
         case 'element':
           if (!knownVialIdSet.has(elA.trim()) || !knownVialIdSet.has(elB.trim())) {
-            pushAlert('Pick ingredients that exist in the list.', 'error')
+            pushAlert(WORKSHOP_MESSAGES.pickIngredientsFromList, 'error')
             return
           }
-          if (tryAddPair(elA, elB, elRes, 'Recipe added.')) {
+          if (tryAddPair(elA, elB, elRes, WORKSHOP_MESSAGES.recipeAdded)) {
             upsertVisualOverride(elRes, {
               primaryColor: elPrimaryColor,
               secondaryColor: elSecondaryColor,
@@ -1568,12 +1609,12 @@ export function RecipeManagerPage() {
         case 'creature': {
           const slug = slugifyCreatureName(crName)
           if (!slug) {
-            pushAlert('Enter a creature name.', 'error')
+            pushAlert(WORKSHOP_MESSAGES.enterCreatureName, 'error')
             return
           }
           const element = crElement.trim()
           if (element && !knownElementIdSet.has(element)) {
-            pushAlert('Pick an element that exists in the list.', 'error')
+            pushAlert(WORKSHOP_MESSAGES.pickElementFromList, 'error')
             return
           }
           const resultId = `creature-${slug}`
@@ -1582,7 +1623,7 @@ export function RecipeManagerPage() {
               element,
               element,
               resultId,
-              'Creature added.',
+              WORKSHOP_MESSAGES.creatureAdded,
               { allowEmptyIngredients: true },
             )
           ) {
@@ -1619,7 +1660,7 @@ export function RecipeManagerPage() {
   const removeRegistrePair = useCallback(
     (clientId: number) => {
       setPairs((prev) => prev.filter((row) => row.clientId !== clientId))
-      pushAlert('Combination removed.', 'success')
+      pushAlert(WORKSHOP_MESSAGES.combinationRemoved, 'success')
     },
     [pushAlert],
   )
@@ -1630,14 +1671,11 @@ export function RecipeManagerPage() {
         setHiddenCatalogSoloIds((prev) =>
           prev.includes(s.id) ? prev : [...prev, s.id],
         )
-        pushAlert(
-          'Element removed from the register (reload the store to see everything again).',
-          'success',
-        )
+        pushAlert(WORKSHOP_MESSAGES.catalogElementRemoved, 'success')
         return
       }
       setSoloRows((prev) => prev.filter((r) => r.clientId !== s.clientId))
-      pushAlert('Entry removed.', 'success')
+      pushAlert(WORKSHOP_MESSAGES.entryRemoved, 'success')
     },
     [pushAlert],
   )
@@ -1647,7 +1685,7 @@ export function RecipeManagerPage() {
     setPairs(seedPairs())
     setSoloRows(seedSolo())
     setHiddenCatalogSoloIds([])
-    pushAlert('Data reset from source code.', 'success')
+    pushAlert(WORKSHOP_MESSAGES.dataResetFromSource, 'success')
   }, [pushAlert, triggerRegisterLoading])
 
   const saveToSourceFiles = useCallback(async () => {
@@ -1665,20 +1703,14 @@ export function RecipeManagerPage() {
           solo: soloVersion,
           hidden: hiddenVersion,
         })
-        pushAlert(
-          'craftedVials updated directly in src/data. Restart the dev server if needed.',
-          'success',
-        )
+        pushAlert(WORKSHOP_MESSAGES.craftedUpdated, 'success')
         return
       }
     } catch {
       // Fallback handled below for non-dev contexts.
     }
 
-    pushAlert(
-      'Could not save in this context. Run with the local save API enabled.',
-      'error',
-    )
+    pushAlert(WORKSHOP_MESSAGES.saveFailed, 'error')
   }, [
     pairs,
     soloRows,
@@ -1697,7 +1729,7 @@ export function RecipeManagerPage() {
     if (creatureEdit) {
       const raw = pairEditDraft.resultId.trim()
       if (!raw) {
-        pushAlert('Creature name is required.', 'error')
+        pushAlert(WORKSHOP_MESSAGES.creatureNameRequired, 'error')
         return
       }
       const lower = raw.toLowerCase()
@@ -1706,7 +1738,7 @@ export function RecipeManagerPage() {
         : raw
       const slug = slugifyCreatureName(base)
       if (!slug) {
-        pushAlert('Creature name is invalid.', 'error')
+        pushAlert(WORKSHOP_MESSAGES.creatureNameInvalid, 'error')
         return
       }
       tr = `creature-${slug}`
@@ -1717,11 +1749,11 @@ export function RecipeManagerPage() {
         allKnownVialIds,
       )
       if (rr.error === 'empty' || !rr.ref.trim()) {
-        pushAlert('Result is required.', 'error')
+        pushAlert(WORKSHOP_MESSAGES.resultRequired, 'error')
         return
       }
       if (rr.error === 'ambiguous') {
-        pushAlert(AMBIGUOUS_NAME_ERROR, 'error')
+        pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
         return
       }
       tr = rr.ref.trim()
@@ -1736,12 +1768,12 @@ export function RecipeManagerPage() {
         allKnownVialIds,
       )
       if (rs.error === 'ambiguous') {
-        pushAlert(AMBIGUOUS_NAME_ERROR, 'error')
+        pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
         return
       }
       const spellRef = rs.ref.trim()
       if (spellRef && !knownElementIdSet.has(spellRef)) {
-        pushAlert('Pick an element that exists in the list.', 'error')
+        pushAlert(WORKSHOP_MESSAGES.pickElementFromList, 'error')
         return
       }
       ta = spellRef
@@ -1758,17 +1790,17 @@ export function RecipeManagerPage() {
         allKnownVialIds,
       )
       if (ra.error === 'ambiguous' || rb.error === 'ambiguous') {
-        pushAlert(AMBIGUOUS_NAME_ERROR, 'error')
+        pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
         return
       }
       ta = ra.ref.trim()
       tb = rb.ref.trim()
       if ((ta && !knownVialIdSet.has(ta)) || (tb && !knownVialIdSet.has(tb))) {
-        pushAlert('Pick ingredients that exist in the list.', 'error')
+        pushAlert(WORKSHOP_MESSAGES.pickIngredientsFromList, 'error')
         return
       }
       if (hasHalfFilledPair(ta, tb)) {
-        pushAlert(HALF_PAIR_ERROR, 'error')
+        pushAlert(WORKSHOP_MESSAGES.halfPair, 'error')
         return
       }
     }
@@ -1776,8 +1808,8 @@ export function RecipeManagerPage() {
     if (clash) {
       pushAlert(
         ta === '' && tb === ''
-          ? 'Another row already has this result with no combination.'
-          : 'Another row already uses this ingredient pair.',
+          ? WORKSHOP_MESSAGES.pairRowClashEmpty
+          : WORKSHOP_MESSAGES.pairRowClashIngredients,
         'error',
       )
       return
@@ -1796,7 +1828,7 @@ export function RecipeManagerPage() {
       })
     }
     requestCloseEditPair()
-    pushAlert('Combination updated.', 'success')
+    pushAlert(WORKSHOP_MESSAGES.combinationUpdated, 'success')
   }, [
     editingPair,
     pairEditDraft,
@@ -1819,11 +1851,11 @@ export function RecipeManagerPage() {
       allKnownVialIds,
     )
     if (resolved.error === 'empty' || !resolved.ref.trim()) {
-      pushAlert('Name or reference is empty.', 'error')
+      pushAlert(WORKSHOP_MESSAGES.soloNameEmpty, 'error')
       return
     }
     if (resolved.error === 'ambiguous') {
-      pushAlert(AMBIGUOUS_NAME_ERROR, 'error')
+      pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
       return
     }
     const newId = resolved.ref.trim()
@@ -1831,7 +1863,7 @@ export function RecipeManagerPage() {
 
     if (src) {
       if (hasSoloConflict(soloRows, newId)) {
-        pushAlert('This reference already exists in your element entries.', 'error')
+        pushAlert(WORKSHOP_MESSAGES.soloDuplicateInEntries, 'error')
         return
       }
       setHiddenCatalogSoloIds((prev) =>
@@ -1842,13 +1874,13 @@ export function RecipeManagerPage() {
         { clientId: nextClientId(), id: newId },
       ])
       requestCloseEditSolo()
-      pushAlert('Element saved.', 'success')
+      pushAlert(WORKSHOP_MESSAGES.elementSaved, 'success')
       return
     }
 
     const clash = hasSoloConflict(soloRows, newId, editingSolo.clientId)
     if (clash) {
-      pushAlert('This reference already exists as an element.', 'error')
+      pushAlert(WORKSHOP_MESSAGES.soloDuplicateAsElement, 'error')
       return
     }
     setSoloRows((prev) =>
@@ -1857,7 +1889,7 @@ export function RecipeManagerPage() {
       ),
     )
     requestCloseEditSolo()
-    pushAlert('Reference updated.', 'success')
+    pushAlert(WORKSHOP_MESSAGES.referenceUpdated, 'success')
   }, [
     editingSolo,
     soloEditDraft,

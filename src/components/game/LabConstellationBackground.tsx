@@ -1,22 +1,19 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 
-type MousePosition = { x: number; y: number }
-
-function useMousePosition(): MousePosition {
-  const [mousePosition, setMousePosition] = useState<MousePosition>({
-    x: 0,
-    y: 0,
-  })
+/** Coordonnées souris client (pas de setState sur chaque mousemove — lue dans la boucle canvas). */
+function useClientMouseRef() {
+  const clientRef = useRef({ x: 0, y: 0 })
 
   useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      setMousePosition({ x: event.clientX, y: event.clientY })
+    const onMove = (event: MouseEvent) => {
+      clientRef.current.x = event.clientX
+      clientRef.current.y = event.clientY
     }
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mousemove', onMove, { passive: true })
+    return () => window.removeEventListener('mousemove', onMove)
   }, [])
 
-  return mousePosition
+  return clientRef
 }
 
 function hexToRgb(hex: string): [number, number, number] {
@@ -77,7 +74,7 @@ export function LabConstellationBackground({
   const containerRef = useRef<HTMLDivElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const circlesRef = useRef<Circle[]>([])
-  const mousePosition = useMousePosition()
+  const clientMouseRef = useClientMouseRef()
   const mouseRef = useRef({ x: 0, y: 0 })
   const sizeRef = useRef({ w: 0, h: 0 })
   const rafRef = useRef<number>(0)
@@ -194,24 +191,20 @@ export function LabConstellationBackground({
     }
   }, [circleParams, clear, drawCircle, quantity])
 
-  const onMouseMove = useCallback(() => {
+  const syncMouseFromClient = useCallback(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const rect = canvas.getBoundingClientRect()
     const { w, h } = sizeRef.current
-    const x = mousePosition.x - rect.left - w / 2
-    const y = mousePosition.y - rect.top - h / 2
-    const inside =
-      x < w / 2 && x > -w / 2 && y < h / 2 && y > -h / 2
+    const { x: cx, y: cy } = clientMouseRef.current
+    const x = cx - rect.left - w / 2
+    const y = cy - rect.top - h / 2
+    const inside = x < w / 2 && x > -w / 2 && y < h / 2 && y > -h / 2
     if (inside) {
       mouseRef.current.x = x
       mouseRef.current.y = y
     }
-  }, [mousePosition.x, mousePosition.y])
-
-  useEffect(() => {
-    onMouseMove()
-  }, [onMouseMove])
+  }, [clientMouseRef])
 
   useEffect(() => {
     initCanvas()
@@ -233,6 +226,7 @@ export function LabConstellationBackground({
         return
       }
 
+      syncMouseFromClient()
       clear()
       const circles = circlesRef.current
 
@@ -281,7 +275,17 @@ export function LabConstellationBackground({
     }
     rafRef.current = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(rafRef.current)
-  }, [circleParams, clear, drawCircle, drawLinks, ease, staticity, vx, vy])
+  }, [
+    circleParams,
+    clear,
+    drawCircle,
+    drawLinks,
+    ease,
+    staticity,
+    vx,
+    vy,
+    syncMouseFromClient,
+  ])
 
   return (
     <div ref={containerRef} className="lab-canvasConstellation" aria-hidden>

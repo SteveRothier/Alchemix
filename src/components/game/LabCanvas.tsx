@@ -1,5 +1,5 @@
 import type { RefObject } from 'react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Vial } from '../../types'
 import { CanvasVialItem } from './CanvasVialItem'
@@ -9,6 +9,11 @@ import { useLabSelection } from './LabSelectionContext'
 import type { LabPlacedVial } from './labTypes'
 
 type MarqueeBox = { x1: number; y1: number; x2: number; y2: number }
+
+type MarqueeHitTarget = {
+  instanceId: string
+  chip: HTMLElement
+}
 
 type LabCanvasProps = {
   placed: LabPlacedVial[]
@@ -31,28 +36,39 @@ export function LabCanvas({
   const [marquee, setMarquee] = useState<MarqueeBox | null>(null)
   const marqueeActiveRef = useRef(false)
   const marqueeStartRef = useRef({ x: 0, y: 0 })
+  const marqueeTargetsRef = useRef<MarqueeHitTarget[]>([])
 
-  const collectIdsIntersectingMarquee = useCallback(
-    (canvasEl: HTMLElement, box: MarqueeBox): string[] => {
-      const left = Math.min(box.x1, box.x2)
-      const top = Math.min(box.y1, box.y2)
-      const w = Math.abs(box.x2 - box.x1)
-      const h = Math.abs(box.y2 - box.y1)
-      if (w < 1 || h < 1) return []
-      const mr = new DOMRect(left, top, w, h)
-      const out: string[] = []
-      for (const host of canvasEl.querySelectorAll('[data-lab-canvas-vial]')) {
-        if (!(host instanceof HTMLElement)) continue
-        const id = host.getAttribute('data-lab-canvas-vial')
-        if (!id) continue
-        const chip = host.querySelector('.lab-chipInventory')
-        if (!(chip instanceof HTMLElement)) continue
-        if (rectsIntersect(mr, chip.getBoundingClientRect())) out.push(id)
-      }
-      return out
-    },
-    [],
-  )
+  useLayoutEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) {
+      marqueeTargetsRef.current = []
+      return
+    }
+    const next: MarqueeHitTarget[] = []
+    for (const host of canvas.querySelectorAll('[data-lab-canvas-vial]')) {
+      if (!(host instanceof HTMLElement)) continue
+      const id = host.getAttribute('data-lab-canvas-vial')
+      if (!id) continue
+      const chip = host.querySelector('.lab-chipInventory')
+      if (!(chip instanceof HTMLElement)) continue
+      next.push({ instanceId: id, chip })
+    }
+    marqueeTargetsRef.current = next
+  }, [placed, canvasRef])
+
+  const collectIdsIntersectingMarquee = useCallback((box: MarqueeBox): string[] => {
+    const left = Math.min(box.x1, box.x2)
+    const top = Math.min(box.y1, box.y2)
+    const w = Math.abs(box.x2 - box.x1)
+    const h = Math.abs(box.y2 - box.y1)
+    if (w < 1 || h < 1) return []
+    const mr = new DOMRect(left, top, w, h)
+    const out: string[] = []
+    for (const { instanceId, chip } of marqueeTargetsRef.current) {
+      if (rectsIntersect(mr, chip.getBoundingClientRect())) out.push(instanceId)
+    }
+    return out
+  }, [])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -107,7 +123,7 @@ export function LabCanvas({
         return
       }
 
-      const ids = collectIdsIntersectingMarquee(canvas, {
+      const ids = collectIdsIntersectingMarquee({
         x1: s.x,
         y1: s.y,
         x2: e.clientX,
