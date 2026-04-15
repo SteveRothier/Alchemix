@@ -1560,6 +1560,54 @@ export function RecipeManagerPage() {
       e.preventDefault()
       switch (createMode) {
         case 'element': {
+          if (editingSolo) {
+            const resolved = resolveRefFromDisplayInput(
+              elResultInput,
+              displayName,
+              allKnownVialIds,
+            )
+            if (resolved.error === 'empty' || !resolved.ref.trim()) {
+              pushAlert(WORKSHOP_MESSAGES.soloNameEmpty, 'error')
+              return
+            }
+            if (resolved.error === 'ambiguous') {
+              pushAlert(WORKSHOP_MESSAGES.ambiguousSameName, 'error')
+              return
+            }
+            const newId = resolved.ref.trim()
+            const src = editingSolo.catalogSourceId
+
+            if (src) {
+              if (hasSoloConflict(soloRows, newId)) {
+                pushAlert(WORKSHOP_MESSAGES.soloDuplicateInEntries, 'error')
+                return
+              }
+              setHiddenCatalogSoloIds((prev) =>
+                prev.includes(src) ? prev : [...prev, src],
+              )
+              setSoloRows((prev) => [
+                ...prev,
+                { clientId: nextClientId(), id: newId },
+              ])
+              exitRegisterRowEdit()
+              pushAlert(WORKSHOP_MESSAGES.elementSaved, 'success')
+              return
+            }
+
+            const clash = hasSoloConflict(soloRows, newId, editingSolo.clientId)
+            if (clash) {
+              pushAlert(WORKSHOP_MESSAGES.soloDuplicateAsElement, 'error')
+              return
+            }
+            setSoloRows((prev) =>
+              prev.map((s) =>
+                s.clientId === editingSolo.clientId ? { ...s, id: newId } : s,
+              ),
+            )
+            exitRegisterRowEdit()
+            pushAlert(WORKSHOP_MESSAGES.referenceUpdated, 'success')
+            return
+          }
           if (editingPair) {
             if (isCreatureResultId(editingPair.resultId)) {
               pushAlert(WORKSHOP_MESSAGES.registerEditWrongTab, 'error')
@@ -1581,7 +1629,7 @@ export function RecipeManagerPage() {
               return
             }
             const tr = rr.ref.trim()
-            if (!knownVialIdSet.has(ta) || !knownVialIdSet.has(tb)) {
+            if ((ta && !knownVialIdSet.has(ta)) || (tb && !knownVialIdSet.has(tb))) {
               pushAlert(WORKSHOP_MESSAGES.pickIngredientsFromList, 'error')
               return
             }
@@ -1614,7 +1662,9 @@ export function RecipeManagerPage() {
             pushAlert(WORKSHOP_MESSAGES.combinationUpdated, 'success')
             return
           }
-          if (!knownVialIdSet.has(elA.trim()) || !knownVialIdSet.has(elB.trim())) {
+          const taAdd = elA.trim()
+          const tbAdd = elB.trim()
+          if ((taAdd && !knownVialIdSet.has(taAdd)) || (tbAdd && !knownVialIdSet.has(tbAdd))) {
             pushAlert(WORKSHOP_MESSAGES.pickIngredientsFromList, 'error')
             return
           }
@@ -1632,7 +1682,11 @@ export function RecipeManagerPage() {
             return
           }
           const trAdd = rrAdd.ref.trim()
-          if (tryAddPair(elA, elB, trAdd, WORKSHOP_MESSAGES.recipeAdded)) {
+          if (
+            tryAddPair(elA, elB, trAdd, WORKSHOP_MESSAGES.recipeAdded, {
+              allowEmptyIngredients: true,
+            })
+          ) {
             upsertVisualOverride(trAdd, {
               primaryColor: elPrimaryColor,
               secondaryColor: elSecondaryColor,
@@ -1880,7 +1934,7 @@ export function RecipeManagerPage() {
   }
 
   const typeLabel = (t: VialType | 'unknown' | 'fioleSeule') => {
-    if (t === 'fioleSeule') return 'Element'
+    if (t === 'fioleSeule') return 'Recipe'
     if (t === 'element') return 'Recipe'
     if (t === 'creature') return 'Creature'
     return 'Unknown'
@@ -1942,7 +1996,6 @@ export function RecipeManagerPage() {
                 [
                   ['element', 'Recipe'],
                   ['creature', 'Creature'],
-                  ['solo', 'Element'],
                 ] as const
               ).map(([key, lab]) => (
                 <button
@@ -1970,112 +2023,135 @@ export function RecipeManagerPage() {
               <div className="ra-formBody">
                 {createMode === 'element' && (
                   <div className="ra-formRecipeLayout">
-                    <VialOptionCombo
-                      compact
-                      inputId="elA"
-                      label={
-                        <>
-                          Ingredient A<span className="ra-required">*</span>
-                        </>
-                      }
-                      value={elA}
-                      onChange={setElA}
-                      options={vialOptions}
-                      placeholder="Ingredient…"
-                    />
-                    <VialOptionCombo
-                      compact
-                      inputId="elB"
-                      label={
-                        <>
-                          Ingredient B<span className="ra-required">*</span>
-                        </>
-                      }
-                      value={elB}
-                      onChange={setElB}
-                      options={vialOptions}
-                      placeholder="Ingredient…"
-                    />
-                    <div className="ra-formGroup ra-formGroup--fieldRow">
-                      <label htmlFor="elResult">
-                        Result<span className="ra-required">*</span>
-                      </label>
-                      <input
-                        id="elResult"
-                        className="ra-input"
-                        value={elResultInput}
-                        onChange={(e) => setElResultInput(e.target.value)}
-                        placeholder="Result name or technical id"
-                        autoComplete="off"
-                      />
-                    </div>
-                    <div className="ra-formVisualStack">
-                      <RaColorPickerField
-                        id="elPrimaryColor"
-                        label={
-                          <>
-                            Primary<span className="ra-required">*</span>
-                          </>
-                        }
-                        value={elPrimaryColor}
-                        onChange={setElPrimaryColor}
-                        fallback="#ffffff"
-                        hexPlaceholder="#ffffff"
-                        aria-label="Primary color"
-                      />
-                      <RaColorPickerField
-                        id="elSecondaryColor"
-                        label="Secondary"
-                        value={elSecondaryColor}
-                        onChange={setElSecondaryColor}
-                        fallback="#000000"
-                        hexPlaceholder="optional"
-                        aria-label="Secondary color"
-                      />
-                      <div className="ra-formGroup ra-formGroup--fieldRow">
-                        <label htmlFor="elTexture">
-                          Texture<span className="ra-required">*</span>
-                        </label>
-                        <TextureSelect
-                          id="elTexture"
-                          value={elTexture}
-                          onChange={setElTexture}
-                          options={TEXTURE_OPTIONS}
-                        />
-                      </div>
-                      <div className="ra-formGroup ra-formGroup--fieldRow">
-                        <label htmlFor="elOpacity">
-                          Opacity<span className="ra-required">*</span>
-                        </label>
-                        <div className="ra-opacityControl">
+                    {editingSolo ? (
+                      <>
+                        <div className="ra-formGroup ra-formGroup--fieldRow">
+                          <label htmlFor="elResult">
+                            Element<span className="ra-required">*</span>
+                          </label>
                           <input
-                            id="elOpacity"
-                            type="range"
-                            className="ra-opacityRange"
-                            min={0}
-                            max={1}
-                            step={0.01}
-                            value={elOpacitySliderValue}
-                            onChange={(e) => setElOpacity(String(Number(e.target.value)))}
-                            aria-valuemin={0}
-                            aria-valuemax={1}
-                            aria-valuenow={elOpacitySliderValue}
-                            aria-valuetext={`${Math.round(elOpacitySliderValue * 100)}%`}
+                            id="elResult"
+                            className="ra-input"
+                            value={elResultInput}
+                            onChange={(e) => setElResultInput(e.target.value)}
+                            placeholder="Element name or technical id"
+                            autoComplete="off"
                           />
-                          <output className="ra-opacityReadout" htmlFor="elOpacity">
-                            {elOpacitySliderValue.toFixed(2)}
-                          </output>
                         </div>
-                      </div>
-                    </div>
-                    {elementPreviewVial && (
-                      <div className="ra-previewFlaskWrap">
-                        <span className="ra-previewFlaskLabel">Preview</span>
-                        <VialFlaskGraphic
-                          vial={elementPreviewVial}
-                          className="ra-previewFlaskSvg"
+                        <p className="ra-hint">
+                          Editing an element register entry from the Recipe tab.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <VialOptionCombo
+                          compact
+                          inputId="elA"
+                          label={
+                            <>
+                              Ingredient A<span className="ra-required">*</span>
+                            </>
+                          }
+                          value={elA}
+                          onChange={setElA}
+                          options={vialOptions}
+                          placeholder="Ingredient…"
                         />
-                      </div>
+                        <VialOptionCombo
+                          compact
+                          inputId="elB"
+                          label={
+                            <>
+                              Ingredient B<span className="ra-required">*</span>
+                            </>
+                          }
+                          value={elB}
+                          onChange={setElB}
+                          options={vialOptions}
+                          placeholder="Ingredient…"
+                        />
+                        <div className="ra-formGroup ra-formGroup--fieldRow">
+                          <label htmlFor="elResult">
+                            Element<span className="ra-required">*</span>
+                          </label>
+                          <input
+                            id="elResult"
+                            className="ra-input"
+                            value={elResultInput}
+                            onChange={(e) => setElResultInput(e.target.value)}
+                            placeholder="Element name or technical id"
+                            autoComplete="off"
+                          />
+                        </div>
+                        <div className="ra-formVisualStack">
+                          <RaColorPickerField
+                            id="elPrimaryColor"
+                            label={
+                              <>
+                                Primary<span className="ra-required">*</span>
+                              </>
+                            }
+                            value={elPrimaryColor}
+                            onChange={setElPrimaryColor}
+                            fallback="#ffffff"
+                            hexPlaceholder="#ffffff"
+                            aria-label="Primary color"
+                          />
+                          <RaColorPickerField
+                            id="elSecondaryColor"
+                            label="Secondary"
+                            value={elSecondaryColor}
+                            onChange={setElSecondaryColor}
+                            fallback="#000000"
+                            hexPlaceholder="optional"
+                            aria-label="Secondary color"
+                          />
+                          <div className="ra-formGroup ra-formGroup--fieldRow">
+                            <label htmlFor="elTexture">
+                              Texture<span className="ra-required">*</span>
+                            </label>
+                            <TextureSelect
+                              id="elTexture"
+                              value={elTexture}
+                              onChange={setElTexture}
+                              options={TEXTURE_OPTIONS}
+                            />
+                          </div>
+                          <div className="ra-formGroup ra-formGroup--fieldRow">
+                            <label htmlFor="elOpacity">
+                              Opacity<span className="ra-required">*</span>
+                            </label>
+                            <div className="ra-opacityControl">
+                              <input
+                                id="elOpacity"
+                                type="range"
+                                className="ra-opacityRange"
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                value={elOpacitySliderValue}
+                                onChange={(e) => setElOpacity(String(Number(e.target.value)))}
+                                aria-valuemin={0}
+                                aria-valuemax={1}
+                                aria-valuenow={elOpacitySliderValue}
+                                aria-valuetext={`${Math.round(elOpacitySliderValue * 100)}%`}
+                              />
+                              <output className="ra-opacityReadout" htmlFor="elOpacity">
+                                {elOpacitySliderValue.toFixed(2)}
+                              </output>
+                            </div>
+                          </div>
+                        </div>
+                        {elementPreviewVial && (
+                          <div className="ra-previewFlaskWrap">
+                            <span className="ra-previewFlaskLabel">Preview</span>
+                            <VialFlaskGraphic
+                              vial={elementPreviewVial}
+                              className="ra-previewFlaskSvg"
+                            />
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
@@ -2219,16 +2295,16 @@ export function RecipeManagerPage() {
                       </th>
                       <th>
                         <div className="ra-thWithSort">
-                          <span>Result</span>
+                          <span>Element</span>
                           <button
                             type="button"
                             className={`ra-sortHeaderBtn${activeSortKeys.includes('result') ? ' ra-sortHeaderBtnActive' : ''}`}
                             title={
                               activeSortKeys.length > 1
-                                ? `Sort result A–Z — priority ${activeSortKeys.indexOf('result') + 1} of ${activeSortKeys.length} (click to remove)`
-                                : 'Enable sort by result name (stackable with others; order = priority)'
+                                ? `Sort element A–Z — priority ${activeSortKeys.indexOf('result') + 1} of ${activeSortKeys.length} (click to remove)`
+                                : 'Enable sort by element name (stackable with others; order = priority)'
                             }
-                            aria-label="Sort by result name"
+                            aria-label="Sort by element name"
                             aria-pressed={activeSortKeys.includes('result')}
                             onClick={() => toggleSortKey('result')}
                           >
@@ -2388,8 +2464,10 @@ export function RecipeManagerPage() {
                                     onClick={() => {
                                       resetMainFormFields()
                                       setEditingPair(null)
-                                      setCreateMode('solo')
-                                      setSoloIdInput(displayName(s.id))
+                                      setCreateMode('element')
+                                      setElResultInput(displayName(s.id))
+                                      setElA('')
+                                      setElB('')
                                       setEditingSolo(
                                         s.fromCatalog
                                           ? { ...s, catalogSourceId: s.id }
