@@ -939,13 +939,6 @@ export function AlchemixShell() {
   }, [pushLabUndoHistory])
 
   const handleReset = () => {
-    if (
-      !window.confirm(
-        'Reset progress? Inventory will return to the 5 starter elements and the laboratory will be cleared.',
-      )
-    ) {
-      return
-    }
     clearLabUndoHistory()
     resetToStarters()
     setPlaced([])
@@ -976,6 +969,7 @@ export function AlchemixShell() {
             <LabControlsFloating
               onClearCanvas={clearLabCanvas}
               canClearCanvas={placed.length > 0}
+              onResetProgress={handleReset}
               leadingFabs={
                 <div className="lab-fabWithTooltip pointer-events-auto">
                   <button
@@ -1067,20 +1061,6 @@ export function AlchemixShell() {
             className="lab-inventoryColumn relative z-0 flex h-full min-h-0 min-w-0 flex-col overflow-hidden"
             aria-label="Inventory"
           >
-            <header className="lab-inventoryColumn-header flex shrink-0 items-center justify-between gap-2 border-b px-[0.65rem] py-2">
-              <h2 className="lab-inventoryTitle">Inventory</h2>
-              <div className="flex shrink-0 items-center gap-[0.35rem]">
-                <button
-                  type="button"
-                  className="lab-resetBtn"
-                  onClick={handleReset}
-                  title="Reset progress"
-                  aria-label="Reset: starter inventory and empty laboratory"
-                >
-                  Reset
-                </button>
-              </div>
-            </header>
             <InventoryPanel
               elements={inventoryGroups.elements}
             />

@@ -18,6 +18,42 @@
   background-color: transparent;
 }
 
+.alchemix-lab .lab-invSearchWrap {
+  flex-shrink: 0;
+}
+
+.alchemix-lab .lab-invSectionHeadingRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding-bottom: 0.5rem;
+}
+
+.alchemix-lab .lab-invSectionHeadingRow .lab-invSearchWrap {
+  margin-left: auto;
+  width: min(9.2rem, 48%);
+}
+
+.alchemix-lab .lab-invSearchInput {
+  width: 100%;
+  padding: 0.3rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text-h);
+  font-family: var(--font-lab-mono);
+  font-size: 0.7rem;
+  line-height: 1.2;
+}
+
+.alchemix-lab .lab-invSearchInput::placeholder {
+  color: color-mix(in srgb, var(--text-muted) 82%, var(--text) 18%);
+}
+
+.alchemix-lab .lab-invSearchInput:focus-visible {
+  outline: none;
+}
+
 /*
  * Scroll inventaire : Firefox = thin + couleur.
  * Chrome/Edge Windows : `scrollbar-width: thin` + propriétés standard peut produire une barre

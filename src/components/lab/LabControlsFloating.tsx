@@ -1,5 +1,5 @@
 import { gsap } from 'gsap'
-import { Globe, Keyboard, Trash2, X } from 'lucide-react'
+import { Globe, Keyboard, Save, Trash2, X } from 'lucide-react'
 import {
   type ReactNode,
   useCallback,
@@ -41,6 +41,7 @@ const DIM_BLUR_MAX = `${DIM_BLUR_PX}px`
 export type LabControlsFloatingProps = {
   onClearCanvas: () => void
   canClearCanvas: boolean
+  onResetProgress: () => void
   leadingFabs?: ReactNode
 }
 
@@ -141,10 +142,12 @@ function playIconModalClose(
 export function LabControlsFloating({
   onClearCanvas,
   canClearCanvas,
+  onResetProgress,
   leadingFabs,
 }: LabControlsFloatingProps) {
   const [open, setOpen] = useState(false)
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
   const [langMenuOpen, setLangMenuOpen] = useState(false)
   const fabRef = useRef<HTMLButtonElement>(null)
   const langFabRef = useRef<HTMLButtonElement>(null)
@@ -162,6 +165,13 @@ export function LabControlsFloating({
   const clearClosingRef = useRef(false)
   const clearConfirmOpenRef = useRef(clearConfirmOpen)
   clearConfirmOpenRef.current = clearConfirmOpen
+  const resetDimRef = useRef<HTMLDivElement>(null)
+  const resetDialogRef = useRef<HTMLDivElement>(null)
+  const resetFabRef = useRef<HTMLButtonElement>(null)
+  const resetYesRef = useRef<HTMLButtonElement>(null)
+  const resetClosingRef = useRef(false)
+  const resetConfirmOpenRef = useRef(resetConfirmOpen)
+  resetConfirmOpenRef.current = resetConfirmOpen
 
   const langDimRef = useRef<HTMLDivElement>(null)
   const langDialogRef = useRef<HTMLDivElement>(null)
@@ -171,6 +181,7 @@ export function LabControlsFloating({
 
   const titleId = useId()
   const clearQuestionId = useId()
+  const resetQuestionId = useId()
 
   const runCloseAnimation = useCallback((onDone: () => void) => {
     const dim = dimRef.current
@@ -214,6 +225,29 @@ export function LabControlsFloating({
     onClearCanvas()
     requestCloseClear()
   }, [onClearCanvas, requestCloseClear])
+
+  const requestCloseReset = useCallback(() => {
+    if (!resetConfirmOpenRef.current || resetClosingRef.current) return
+    resetClosingRef.current = true
+    const dim = resetDimRef.current
+    const dlg = resetDialogRef.current
+    const fab = resetFabRef.current
+    if (!dim || !dlg || !fab) {
+      setResetConfirmOpen(false)
+      resetClosingRef.current = false
+      return
+    }
+    playIconModalClose(dim, dlg, fab, () => {
+      setResetConfirmOpen(false)
+      resetClosingRef.current = false
+    })
+  }, [])
+
+  const confirmResetProgress = useCallback(() => {
+    if (resetClosingRef.current) return
+    onResetProgress()
+    requestCloseReset()
+  }, [onResetProgress, requestCloseReset])
 
   const requestCloseLang = useCallback(() => {
     if (!langMenuOpenRef.current || langClosingRef.current) return
@@ -290,14 +324,30 @@ export function LabControlsFloating({
     }
   }, [langMenuOpen])
 
+  useLayoutEffect(() => {
+    if (!resetConfirmOpen) return
+    const dim = resetDimRef.current
+    const dlg = resetDialogRef.current
+    const fab = resetFabRef.current
+    if (!dim || !dlg || !fab) return
+    const tl = playIconModalOpen(dim, dlg, fab, () => {
+      resetYesRef.current?.focus()
+    })
+    return () => {
+      tl.kill()
+      gsap.killTweensOf([dim, dlg])
+    }
+  }, [resetConfirmOpen])
+
   useEffect(() => {
-    if (!open && !clearConfirmOpen && !langMenuOpen) return
+    if (!open && !clearConfirmOpen && !langMenuOpen && !resetConfirmOpen) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       const t = e.target as HTMLElement | null
       if (t?.closest('input, textarea, select, [contenteditable="true"]')) return
       e.preventDefault()
       if (clearConfirmOpen) requestCloseClear()
+      else if (resetConfirmOpen) requestCloseReset()
       else if (open) requestClose()
       else if (langMenuOpen) {
         requestCloseLang()
@@ -308,10 +358,12 @@ export function LabControlsFloating({
     return () => window.removeEventListener('keydown', onKey)
   }, [
     clearConfirmOpen,
+    resetConfirmOpen,
     open,
     langMenuOpen,
     requestClose,
     requestCloseClear,
+    requestCloseReset,
     requestCloseLang,
   ])
 
@@ -329,6 +381,10 @@ export function LabControlsFloating({
       const ldlg = langDialogRef.current
       if (ld) gsap.killTweensOf(ld)
       if (ldlg) gsap.killTweensOf(ldlg)
+      const rd = resetDimRef.current
+      const rdlg = resetDialogRef.current
+      if (rd) gsap.killTweensOf(rd)
+      if (rdlg) gsap.killTweensOf(rdlg)
     }
   }, [])
 
@@ -471,13 +527,81 @@ export function LabControlsFloating({
       document.body,
     )
 
+  const resetModal =
+    resetConfirmOpen &&
+    createPortal(
+      <>
+        <div
+          ref={resetDimRef}
+          className="lab-controls-dim lab-clear-dim"
+          role="presentation"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) requestCloseReset()
+          }}
+        />
+        <div className="lab-controls-dialog-layer lab-clear-dialog-layer">
+          <div
+            ref={resetDialogRef}
+            className="lab-controls-dialog lab-clear-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={resetQuestionId}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="lab-clear-confirm-body">
+              <p id={resetQuestionId} className="lab-controls-detail lab-clear-question">
+                Reset progress? Inventory will return to the 5 starter elements and the
+                laboratory will be cleared.
+              </p>
+              <div className="lab-clear-actions">
+                <button
+                  ref={resetYesRef}
+                  type="button"
+                  className="lab-clear-btn lab-clear-btn-yes"
+                  onClick={confirmResetProgress}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  className="lab-clear-btn lab-clear-btn-no"
+                  onClick={requestCloseReset}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </>,
+      document.body,
+    )
+
   return (
     <>
       {controlsModal}
       {clearModal}
       {langModal}
+      {resetModal}
       <div className="pointer-events-none absolute bottom-0 right-0 z-40 flex flex-row items-center gap-2 p-2 max-[560px]:gap-1.5 max-[560px]:p-1.5">
         {leadingFabs}
+        <div className="lab-fabWithTooltip pointer-events-auto">
+          <button
+            ref={resetFabRef}
+            type="button"
+            className="lab-controls-fab"
+            onClick={() => {
+              if (resetClosingRef.current) return
+              setResetConfirmOpen(true)
+            }}
+            aria-label="Reset progress"
+          >
+            <Save size={22} strokeWidth={2} aria-hidden className="shrink-0" />
+          </button>
+          <span className="lab-fabTooltip" aria-hidden="true">
+            Reset progress
+          </span>
+        </div>
         <div className="lab-fabWithTooltip pointer-events-auto">
           <button
             ref={clearFabRef}

@@ -9,6 +9,16 @@ export type CraftedVialTemplate = Omit<
 
 /** Fioles du catalogue seed (sans `discoveredAt`). */
 export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
+  'blood': {
+    id: "blood",
+    type: "element",
+    name: "Blood",
+    liquid: {
+      primaryColor: "#ffffff",
+      opacity: 0.85,
+      texture: "liquid",
+    },
+  },
   'craft-abyss': {
     id: "craft-abyss",
     type: "element",
@@ -828,11 +838,6 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     type: "creature",
     name: "Banshee",
   },
-  'creature-brownies': {
-    id: "creature-brownies",
-    type: "creature",
-    name: "Brownies",
-  },
   'creature-chimera': {
     id: "creature-chimera",
     type: "creature",
@@ -914,11 +919,6 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     type: "creature",
     name: "Mermaid",
   },
-  'creature-minotaur': {
-    id: "creature-minotaur",
-    type: "creature",
-    name: "Minotaur",
-  },
   'creature-ogre': {
     id: "creature-ogre",
     type: "creature",
@@ -928,16 +928,6 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     id: "creature-pegasus",
     type: "creature",
     name: "Pegasus",
-  },
-  'creature-reaper': {
-    id: "creature-reaper",
-    type: "creature",
-    name: "Reaper",
-  },
-  'creature-seraphim': {
-    id: "creature-seraphim",
-    type: "creature",
-    name: "Seraphim",
   },
   'creature-sphinx': {
     id: "creature-sphinx",
@@ -958,6 +948,16 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     id: "creature-yeti",
     type: "creature",
     name: "Yeti",
+  },
+  'death': {
+    id: "death",
+    type: "element",
+    name: "Death",
+    liquid: {
+      primaryColor: "#ffffff",
+      opacity: 0.85,
+      texture: "liquid",
+    },
   },
   'el-light': {
     id: "el-light",
@@ -994,5 +994,15 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "crystal",
     },
     recipe: { ingredientA: "el-fire", ingredientB: "craft-sand" },
+  },
+  'hell': {
+    id: "hell",
+    type: "element",
+    name: "Hell",
+    liquid: {
+      primaryColor: "#ffffff",
+      opacity: 0.85,
+      texture: "liquid",
+    },
   },
 }
