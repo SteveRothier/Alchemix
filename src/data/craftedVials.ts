@@ -393,15 +393,140 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipe: { ingredientA: "craft-wind", ingredientB: "el-earth" },
   },
+  'creature-anubis': {
+    id: "creature-anubis",
+    type: "creature",
+    name: "Anubis",
+  },
+  'creature-bahamut': {
+    id: "creature-bahamut",
+    type: "creature",
+    name: "Bahamut",
+  },
+  'creature-banshee': {
+    id: "creature-banshee",
+    type: "creature",
+    name: "Banshee",
+  },
+  'creature-brownies': {
+    id: "creature-brownies",
+    type: "creature",
+    name: "Brownies",
+  },
+  'creature-chimera': {
+    id: "creature-chimera",
+    type: "creature",
+    name: "Chimera",
+  },
+  'creature-dryad': {
+    id: "creature-dryad",
+    type: "creature",
+    name: "Dryad",
+  },
+  'creature-ent': {
+    id: "creature-ent",
+    type: "creature",
+    name: "Ent",
+  },
+  'creature-fairy-queen': {
+    id: "creature-fairy-queen",
+    type: "creature",
+    name: "Fairy Queen",
+  },
+  'creature-fenrir': {
+    id: "creature-fenrir",
+    type: "creature",
+    name: "Fenrir",
+  },
   'creature-goblin': {
     id: "creature-goblin",
     type: "creature",
     name: "Goblin",
   },
+  'creature-golem': {
+    id: "creature-golem",
+    type: "creature",
+    name: "Golem",
+  },
+  'creature-ifrit': {
+    id: "creature-ifrit",
+    type: "creature",
+    name: "Ifrit",
+  },
+  'creature-kappa': {
+    id: "creature-kappa",
+    type: "creature",
+    name: "Kappa",
+  },
+  'creature-kitsune': {
+    id: "creature-kitsune",
+    type: "creature",
+    name: "Kitsune",
+  },
   'creature-kobold': {
     id: "creature-kobold",
     type: "creature",
     name: "Kobold",
+  },
+  'creature-kraken': {
+    id: "creature-kraken",
+    type: "creature",
+    name: "Kraken",
+  },
+  'creature-leviathan': {
+    id: "creature-leviathan",
+    type: "creature",
+    name: "Leviathan",
+  },
+  'creature-lich': {
+    id: "creature-lich",
+    type: "creature",
+    name: "Lich",
+  },
+  'creature-medusa': {
+    id: "creature-medusa",
+    type: "creature",
+    name: "Medusa",
+  },
+  'creature-mermaid': {
+    id: "creature-mermaid",
+    type: "creature",
+    name: "Mermaid",
+  },
+  'creature-ogre': {
+    id: "creature-ogre",
+    type: "creature",
+    name: "Ogre",
+  },
+  'creature-pegasus': {
+    id: "creature-pegasus",
+    type: "creature",
+    name: "Pegasus",
+  },
+  'creature-reaper': {
+    id: "creature-reaper",
+    type: "creature",
+    name: "Reaper",
+  },
+  'creature-seraphim': {
+    id: "creature-seraphim",
+    type: "creature",
+    name: "Seraphim",
+  },
+  'creature-sphinx': {
+    id: "creature-sphinx",
+    type: "creature",
+    name: "Sphinx",
+  },
+  'creature-succubus': {
+    id: "creature-succubus",
+    type: "creature",
+    name: "Succubus",
+  },
+  'creature-undine': {
+    id: "creature-undine",
+    type: "creature",
+    name: "Undine",
   },
   'creature-yeti': {
     id: "creature-yeti",

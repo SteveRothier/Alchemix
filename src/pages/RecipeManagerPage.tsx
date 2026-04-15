@@ -656,6 +656,19 @@ function saveHiddenCatalogSoloIds(ids: string[]) {
   localStorage.setItem(STORAGE_KEY_HIDDEN_CATALOG_SOLO, JSON.stringify(ids))
 }
 
+/** Empreinte du registre (pairs + solo + masques catalogue) pour détecter les changements sans faux positifs Strict Mode. */
+function registerStateFingerprint(
+  pairs: EditablePair[],
+  soloRows: EditableSolo[],
+  hiddenCatalogSoloIds: string[],
+): string {
+  return JSON.stringify({
+    pairs,
+    soloRows,
+    hidden: [...hiddenCatalogSoloIds].sort(),
+  })
+}
+
 function collectAllRecipeRefs(
   pairs: EditablePair[],
   soloRows: EditableSolo[],
@@ -963,18 +976,8 @@ export function RecipeManagerPage() {
   const [backConfirmOpen, setBackConfirmOpen] = useState(false)
   const [registerPage, setRegisterPage] = useState(1)
   const [registerReady, setRegisterReady] = useState(false)
-  const [pairsVersion, setPairsVersion] = useState(0)
-  const [soloVersion, setSoloVersion] = useState(0)
-  const [hiddenVersion, setHiddenVersion] = useState(0)
-  const [baselineVersions, setBaselineVersions] = useState({
-    pairs: 0,
-    solo: 0,
-    hidden: 0,
-  })
+  const registerBaselineRef = useRef<string | null>(null)
   const registerLoadTokenRef = useRef(0)
-  const didMountPairsRef = useRef(false)
-  const didMountSoloRef = useRef(false)
-  const didMountHiddenRef = useRef(false)
   const addBtnRef = useRef<HTMLButtonElement>(null)
   const registerTableScrollRef = useRef<HTMLDivElement>(null)
   const backNavLinkRef = useRef<HTMLAnchorElement>(null)
@@ -1203,13 +1206,20 @@ export function RecipeManagerPage() {
     }
   }, [triggerRegisterLoading])
 
-  const hasRegisterChanges = useMemo(
-    () =>
-      pairsVersion !== baselineVersions.pairs ||
-      soloVersion !== baselineVersions.solo ||
-      hiddenVersion !== baselineVersions.hidden,
-    [pairsVersion, soloVersion, hiddenVersion, baselineVersions],
+  const registerFingerprint = useMemo(
+    () => registerStateFingerprint(pairs, soloRows, hiddenCatalogSoloIds),
+    [pairs, soloRows, hiddenCatalogSoloIds],
   )
+
+  useLayoutEffect(() => {
+    if (registerBaselineRef.current === null) {
+      registerBaselineRef.current = registerFingerprint
+    }
+  }, [registerFingerprint])
+
+  const baseline = registerBaselineRef.current
+  const hasRegisterChanges =
+    baseline !== null && registerFingerprint !== baseline
 
   const pushAlert = useCallback((message: string, kind: AlertItem['kind']) => {
     const id = Date.now()
@@ -1249,29 +1259,14 @@ export function RecipeManagerPage() {
 
   useEffect(() => {
     savePairs(pairs)
-    if (!didMountPairsRef.current) {
-      didMountPairsRef.current = true
-      return
-    }
-    setPairsVersion((v) => v + 1)
   }, [pairs])
 
   useEffect(() => {
     saveSolo(soloRows)
-    if (!didMountSoloRef.current) {
-      didMountSoloRef.current = true
-      return
-    }
-    setSoloVersion((v) => v + 1)
   }, [soloRows])
 
   useEffect(() => {
     saveHiddenCatalogSoloIds(hiddenCatalogSoloIds)
-    if (!didMountHiddenRef.current) {
-      didMountHiddenRef.current = true
-      return
-    }
-    setHiddenVersion((v) => v + 1)
   }, [hiddenCatalogSoloIds])
 
   useEffect(() => {
@@ -1681,6 +1676,7 @@ export function RecipeManagerPage() {
   )
 
   const resetDefaults = useCallback(() => {
+    registerBaselineRef.current = null
     triggerRegisterLoading()
     setPairs(seedPairs())
     setSoloRows(seedSolo())
@@ -1698,11 +1694,11 @@ export function RecipeManagerPage() {
         body: JSON.stringify({ craftedTs }),
       })
       if (res.ok) {
-        setBaselineVersions({
-          pairs: pairsVersion,
-          solo: soloVersion,
-          hidden: hiddenVersion,
-        })
+        registerBaselineRef.current = registerStateFingerprint(
+          pairs,
+          soloRows,
+          hiddenCatalogSoloIds,
+        )
         pushAlert(WORKSHOP_MESSAGES.craftedUpdated, 'success')
         return
       }
@@ -1716,9 +1712,7 @@ export function RecipeManagerPage() {
     soloRows,
     visualOverrides,
     pushAlert,
-    pairsVersion,
-    soloVersion,
-    hiddenVersion,
+    hiddenCatalogSoloIds,
   ])
 
   const saveEditPair = useCallback(() => {
