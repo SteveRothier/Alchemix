@@ -1,4 +1,5 @@
 import type { Vial, VialIcon, VialRarity } from '../types'
+import { dynamicElementCraftPairKey } from './dynamicElementCraftIds'
 
 export type ElementAffinity =
   | 'fire'
@@ -17,7 +18,7 @@ export type IngredientKind =
   | 'creature'
   | 'unknown'
 
-/** Ordre fixe pour ids canoniques `dyn-el-{i}-{j}` (i ≤ j). */
+/** Ordre fixe pour ids canoniques d’amalgames (indices i ≤ j dans cette liste). */
 export const ELEMENT_AFFINITY_ORDER: ElementAffinity[] = [
   'air',
   'arcane',
@@ -192,10 +193,19 @@ export function getIngredientProfile(vial: Vial): IngredientProfile {
   const intensity = RARITY_TO_INTENSITY[vial.rarity] ?? 0
   const { id } = vial
 
-  const elCanon = /^dyn-el-(\d+)-(\d+)$/.exec(id)
-  if (elCanon) {
-    const lo = Number(elCanon[1])
-    const hi = Number(elCanon[2])
+  const pairKeyStr =
+    dynamicElementCraftPairKey(id) ??
+    (() => {
+      const elCanon = /^dyn-el-(\d+)-(\d+)$/.exec(id)
+      if (!elCanon) return null
+      const lo = Math.min(Number(elCanon[1]), Number(elCanon[2]))
+      const hi = Math.max(Number(elCanon[1]), Number(elCanon[2]))
+      return `${lo}-${hi}`
+    })()
+  if (pairKeyStr) {
+    const [loS, hiS] = pairKeyStr.split('-')
+    const lo = Number(loS)
+    const hi = Number(hiS)
     const affLo = ELEMENT_AFFINITY_ORDER[lo]
     const affHi = ELEMENT_AFFINITY_ORDER[hi]
     if (affLo && affHi) {

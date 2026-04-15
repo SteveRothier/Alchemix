@@ -12,8 +12,9 @@ describe('simpleElementNames', () => {
   })
 
   it('résout les exemples canoniques', () => {
+    expect(simpleElementNameFromCanonicalId('craft-loam')).toBe('Loam')
+    expect(simpleElementNameFromCanonicalId('craft-obsidian')).toBe('Obsidian')
+    expect(simpleElementNameFromCanonicalId('craft-space')).toBe('Space')
     expect(simpleElementNameFromCanonicalId('dyn-el-2-2')).toBe('Loam')
-    expect(simpleElementNameFromCanonicalId('dyn-el-2-6')).toBe('Obsidian')
-    expect(simpleElementNameFromCanonicalId('dyn-el-0-1')).toBe('Space')
   })
 })

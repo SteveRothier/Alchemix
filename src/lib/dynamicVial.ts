@@ -2,6 +2,10 @@ import type { NewVialDraft, Vial, VialRarity, VialType } from '../types'
 import { buildDynamicElementDraft } from './dynamicElement'
 import { buildDynamicSpellDraft } from './dynamicSpell'
 import {
+  canonicalDynamicElementCraftId,
+  isCanonicalDynamicElementCraftId,
+} from './dynamicElementCraftIds'
+import {
   ELEMENT_AFFINITY_ORDER,
   getIngredientProfile,
 } from './ingredientProfile'
@@ -65,7 +69,7 @@ export function canonicalDynamicVialId(ingredientA: Vial, ingredientB: Vial): st
   const ib = ELEMENT_AFFINITY_ORDER.indexOf(pb.affinity)
   const lo = Math.min(ia, ib)
   const hi = Math.max(ia, ib)
-  return `dyn-el-${lo}-${hi}`
+  return canonicalDynamicElementCraftId(lo, hi)
 }
 
 /**
@@ -89,6 +93,12 @@ export function isInertUnseededFusion(ingredientA: Vial, ingredientB: Vial): boo
 
   if (rt === 'element') {
     if (pa.affinity === 'arcane' && pb.affinity === 'arcane') return true
+    if (
+      isCanonicalDynamicElementCraftId(ingredientA.id) &&
+      isCanonicalDynamicElementCraftId(ingredientB.id)
+    ) {
+      return true
+    }
     if (
       /^dyn-el-\d+-\d+$/.test(ingredientA.id) &&
       /^dyn-el-\d+-\d+$/.test(ingredientB.id)

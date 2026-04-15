@@ -576,7 +576,7 @@ function TextureSelect({
   )
 }
 
-function seedPairs(): EditablePair[] {
+function seedCraftedTemplatePairs(): EditablePair[] {
   const rows = Object.entries(CRAFTED_VIAL_TEMPLATES)
     .filter(([id, t]) => t.recipe || t.type === 'creature' || id.startsWith('creature-'))
     .sort(([a], [b]) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
@@ -587,6 +587,16 @@ function seedPairs(): EditablePair[] {
     b: t.recipe?.ingredientB ?? '',
     resultId,
   }))
+}
+
+/** Registre : uniquement les paires définies dans `craftedVials.ts` (catalogue seed). */
+function seedPairs(): EditablePair[] {
+  return seedCraftedTemplatePairs()
+    .map(({ clientId: _c, ...rest }) => rest)
+    .sort((x, y) =>
+      x.resultId.localeCompare(y.resultId, 'en', { sensitivity: 'base' }),
+    )
+    .map((p, i) => ({ ...p, clientId: i + 1 }))
 }
 
 function seedSolo(): EditableSolo[] {
@@ -607,12 +617,20 @@ function loadPairs(): EditablePair[] {
     if (!raw) return seedPairs()
     const parsed = JSON.parse(raw) as EditablePair[]
     if (!Array.isArray(parsed)) return seedPairs()
-    return parsed.map((row, i) => ({
+    const normalized = parsed.map((row, i) => ({
       clientId: typeof row.clientId === 'number' ? row.clientId : i + 1,
       a: String(row.a),
       b: String(row.b),
       resultId: String(row.resultId),
     }))
+    const defaults = seedPairs()
+    const existing = new Set(normalized.map((p) => p.resultId))
+    const nextClientId =
+      normalized.reduce((m, p) => Math.max(m, p.clientId), 0) + 1
+    const extra = defaults.filter((p) => !existing.has(p.resultId))
+    if (extra.length === 0) return normalized
+    let cid = nextClientId
+    return [...normalized, ...extra.map((p) => ({ ...p, clientId: cid++ }))]
   } catch {
     return seedPairs()
   }
