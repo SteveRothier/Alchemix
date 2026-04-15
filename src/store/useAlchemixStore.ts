@@ -1,11 +1,15 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { stampStarterVials } from '../data/starterVials'
+import {
+  migrateElNatureToGrassInStore,
+  reconcileStarterVialsWithDefinitions,
+} from '../lib/legacyVialIdRenames'
 import { resolveDrinkSpell, type DrinkSpellResult } from '../lib/drinkSpell'
 import type { Vial } from '../types'
 
 const PERSIST_KEY = 'alchemix-save'
-const PERSIST_VERSION = 2
+const PERSIST_VERSION = 4
 
 function freshStarterState(isoTime: string) {
   return {
@@ -101,6 +105,12 @@ export const useAlchemixStore = create<AlchemixState>()(
               if (v) data.vials[id] = { ...v, type: 'creature' }
             }
           }
+        }
+        if (data.vials) {
+          migrateElNatureToGrassInStore(data.vials, data.offeringUseCount)
+        }
+        if (version < 4 && data.vials) {
+          reconcileStarterVialsWithDefinitions(data.vials)
         }
         return data
       },

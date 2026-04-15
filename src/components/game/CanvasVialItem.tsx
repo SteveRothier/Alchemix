@@ -1,6 +1,7 @@
 import { gsap } from 'gsap'
 import type { Draggable as DraggableInstance } from 'gsap/Draggable'
 import { useEffect, useRef } from 'react'
+import { resolveLabVialDisplayName } from '../../lib/legacyVialIdRenames'
 import type { Vial } from '../../types'
 import { Draggable, registerGsapDraggable } from '../../lib/registerGsapDraggable'
 import {
@@ -221,7 +222,7 @@ export function CanvasVialItem({
           >
             <div
               className="lab-invItemWrap lab-dragSurface"
-              aria-label={`${vial.name} — drag to move, double-click to duplicate, right-click to remove from the bench (multi-select: drag on the background, then right-click a selected card to remove all)`}
+              aria-label={`${resolveLabVialDisplayName(vial)} — drag to move, double-click to duplicate, right-click to remove from the bench (multi-select: drag on the background, then right-click a selected card to remove all)`}
               onDoubleClick={(e) => {
                 e.preventDefault()
                 e.stopPropagation()

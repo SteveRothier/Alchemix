@@ -14,6 +14,7 @@ import type { LabPlacedVial } from '../game/labTypes'
 import { LabCanvas } from '../game/LabCanvas'
 import { InventoryPanel } from '../inventory/InventoryPanel'
 import { resolveFusionProduct } from '../../lib/fusion'
+import { applyLegacyVialIdRename } from '../../lib/legacyVialIdRenames'
 import type { DrinkSpellResult } from '../../lib/drinkSpell'
 import { CRAFTED_VIAL_TEMPLATES } from '../../data/craftedVials'
 import {
@@ -60,7 +61,17 @@ function loadLabPlaced(): LabPlacedVial[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY_LAB_PLACED)
     if (!raw) return []
-    return parseLabPlaced(JSON.parse(raw) as unknown)
+    const parsed = parseLabPlaced(JSON.parse(raw) as unknown)
+    let changed = false
+    const migrated = parsed.map((row) => {
+      const vialId = applyLegacyVialIdRename(row.vialId)
+      if (vialId !== row.vialId) changed = true
+      return { ...row, vialId }
+    })
+    if (changed) {
+      saveLabPlaced(migrated)
+    }
+    return migrated
   } catch {
     return []
   }

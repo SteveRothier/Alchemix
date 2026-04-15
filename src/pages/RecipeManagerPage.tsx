@@ -24,6 +24,7 @@ import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
 import { STARTER_VIAL_DEFINITIONS } from '../data/starterVials'
 import { gsap } from '../lib/gsap'
 import { inferLabelFromRef } from '../lib/inferVialLabel'
+import { applyLegacyVialIdRename } from '../lib/legacyVialIdRenames'
 import { buildCraftedVialsTs } from '../lib/buildCraftedVialsSource'
 import {
   AMBIGUOUS_NAME_ERROR,
@@ -621,18 +622,36 @@ function loadPairs(): EditablePair[] {
     if (!Array.isArray(parsed)) return seedPairs()
     const normalized = parsed.map((row, i) => ({
       clientId: typeof row.clientId === 'number' ? row.clientId : i + 1,
-      a: String(row.a),
-      b: String(row.b),
-      resultId: String(row.resultId),
+      a: applyLegacyVialIdRename(String(row.a)),
+      b: applyLegacyVialIdRename(String(row.b)),
+      resultId: applyLegacyVialIdRename(String(row.resultId)),
     }))
+    const hadLegacyIds = parsed.some((row) => {
+      const a = String((row as EditablePair).a ?? '')
+      const b = String((row as EditablePair).b ?? '')
+      const r = String((row as EditablePair).resultId ?? '')
+      return (
+        applyLegacyVialIdRename(a) !== a ||
+        applyLegacyVialIdRename(b) !== b ||
+        applyLegacyVialIdRename(r) !== r
+      )
+    })
     const defaults = seedPairs()
     const existing = new Set(normalized.map((p) => p.resultId))
     const nextClientId =
       normalized.reduce((m, p) => Math.max(m, p.clientId), 0) + 1
     const extra = defaults.filter((p) => !existing.has(p.resultId))
-    if (extra.length === 0) return normalized
-    let cid = nextClientId
-    return [...normalized, ...extra.map((p) => ({ ...p, clientId: cid++ }))]
+    const merged =
+      extra.length === 0
+        ? normalized
+        : (() => {
+            let cid = nextClientId
+            return [...normalized, ...extra.map((p) => ({ ...p, clientId: cid++ }))]
+          })()
+    if (hadLegacyIds) {
+      savePairs(merged)
+    }
+    return merged
   } catch {
     return seedPairs()
   }
@@ -644,10 +663,21 @@ function loadSolo(): EditableSolo[] {
     if (!raw) return seedSolo()
     const parsed = JSON.parse(raw) as EditableSolo[]
     if (!Array.isArray(parsed)) return seedSolo()
-    return parsed.map((row, i) => ({
-      clientId: typeof row.clientId === 'number' ? row.clientId : 10_000 + i,
-      id: String(row.id ?? ''),
-    })).filter((r) => r.id)
+    const hadLegacyIds = parsed.some(
+      (row) =>
+        applyLegacyVialIdRename(String((row as EditableSolo).id ?? '')) !==
+        String((row as EditableSolo).id ?? ''),
+    )
+    const rows = parsed
+      .map((row, i) => ({
+        clientId: typeof row.clientId === 'number' ? row.clientId : 10_000 + i,
+        id: applyLegacyVialIdRename(String(row.id ?? '')),
+      }))
+      .filter((r) => r.id)
+    if (hadLegacyIds) {
+      saveSolo(rows)
+    }
+    return rows
   } catch {
     return seedSolo()
   }
@@ -666,7 +696,13 @@ function loadHiddenCatalogSoloIds(): string[] {
     const raw = localStorage.getItem(STORAGE_KEY_HIDDEN_CATALOG_SOLO)
     if (!raw) return []
     const parsed = JSON.parse(raw) as string[]
-    return Array.isArray(parsed) ? parsed.map(String) : []
+    if (!Array.isArray(parsed)) return []
+    const strs = parsed.map(String)
+    const migrated = strs.map(applyLegacyVialIdRename)
+    if (migrated.some((id, i) => id !== strs[i])) {
+      saveHiddenCatalogSoloIds(migrated)
+    }
+    return migrated
   } catch {
     return []
   }

@@ -59,9 +59,9 @@ export const STARTER_VIAL_DEFINITIONS: Omit<Vial, 'discoveredAt'>[] = [
     rarity: 'common',
   },
   {
-    id: 'el-nature',
+    id: 'el-grass',
     type: 'element',
-    name: 'Nature',
+    name: 'Grass',
     description: 'Vie sauvage et croissance.',
     liquid: {
       primaryColor: '#2d6a4f',
