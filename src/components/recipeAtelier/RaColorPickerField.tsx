@@ -10,7 +10,16 @@ import { createPortal } from 'react-dom'
 
 function normalizeHex6(raw: string, fallback: string): string {
   const t = raw.trim()
+  if (/^(?:[0-9a-fA-F]{6})$/.test(t)) return `#${t}`
   return /^#(?:[0-9a-fA-F]{6})$/.test(t) ? t : fallback
+}
+
+function normalizeHex6InputMaybePrefix(raw: string): string {
+  // Permet à l'utilisateur de taper/paster `ffffff` et de stocker/afficher `#ffffff`.
+  // On ne modifie rien tant que ce n'est pas exactement 6 hex digits.
+  const t = raw.trim()
+  if (/^(?:[0-9a-fA-F]{6})$/.test(t)) return `#${t}`
+  return raw
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
@@ -450,7 +459,7 @@ export function RaColorPickerField({
           value={hexInputValue}
           onChange={(e) => {
             setPreviewHex(null)
-            onChange(e.target.value)
+            onChange(normalizeHex6InputMaybePrefix(e.target.value))
           }}
           placeholder={hexPlaceholder}
           spellCheck={false}
