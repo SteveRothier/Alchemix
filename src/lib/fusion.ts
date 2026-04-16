@@ -28,6 +28,9 @@ export function resolveFusionProduct(
   if (!template) {
     return { ok: false, reason: 'inert' }
   }
+  if (template.type === 'creature') {
+    return { ok: false, reason: 'inert' }
+  }
   const liquid = template.liquid ?? DEFAULT_LIQUID
   const vial: Vial = {
     ...template,

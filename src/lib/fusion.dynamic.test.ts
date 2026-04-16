@@ -218,6 +218,25 @@ describe('resolveFusionProduct (catalogue / registre)', () => {
     expect(outcome.ok).toBe(false)
   })
 
+  it('fusion inerte : une recette seed créature ne se craft pas dans le laboratoire', () => {
+    const a = stubVial({
+      id: 'craft-stone',
+      type: 'element',
+      name: 'Stone',
+      liquid: { primaryColor: '#5c4d3c', opacity: 0.92, texture: 'liquid' },
+    })
+    const b = stubVial({
+      id: 'craft-stone',
+      type: 'element',
+      name: 'Stone',
+      liquid: { primaryColor: '#5c4d3c', opacity: 0.92, texture: 'liquid' },
+    })
+    const outcome = resolveFusionProduct(a, b, {})
+    expect(outcome.ok).toBe(false)
+    if (outcome.ok) return
+    expect(outcome.reason).toBe('inert')
+  })
+
   it('fusion inerte : ids dyn-sp (legacy) sans recette', () => {
     const a = stubVial({
       id: 'dyn-sp-fire-mono',

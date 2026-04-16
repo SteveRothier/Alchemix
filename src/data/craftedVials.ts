@@ -880,6 +880,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     id: "creature-ifrit",
     type: "creature",
     name: "Ifrit",
+    recipe: { ingredientA: "craft-inferno", ingredientB: "craft-inferno" },
   },
   'creature-kappa': {
     id: "creature-kappa",
