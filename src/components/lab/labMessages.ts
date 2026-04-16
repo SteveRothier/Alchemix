@@ -51,4 +51,18 @@ export const LAB_MESSAGES = {
     english: 'English',
     french: 'Français',
   },
+  inventory: {
+    elementsSectionTitle: 'Elements',
+    searchPlaceholder: 'Search...',
+    searchAriaLabel: 'Search elements',
+    unitSingular: 'vial',
+    unitPlural: 'vials',
+  },
+  canvas: {
+    laboratoryTitle: 'Laboratory',
+    recipesLinkLabel: 'Recipes',
+    recipesLinkTitle: 'Manage vial combinations',
+    placementAreaAriaLabel:
+      'Vial placement area — drag on the background to select multiple vials',
+  },
 } as const

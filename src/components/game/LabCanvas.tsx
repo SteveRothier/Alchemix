@@ -1,6 +1,7 @@
 import type { RefObject } from 'react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { LAB_MESSAGES } from '../lab/labMessages'
 import type { Vial } from '../../types'
 import { CanvasVialItem } from './CanvasVialItem'
 import { LabConstellationBackground } from './LabConstellationBackground'
@@ -170,14 +171,16 @@ export function LabCanvas({
   return (
     <div className="relative h-full min-h-0 min-w-0">
       <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 flex min-w-0 items-start justify-between gap-2 px-[0.85rem] pt-[0.65rem]">
-        <h2 className="lab-canvasTitle pointer-events-auto">Laboratory</h2>
+        <h2 className="lab-canvasTitle pointer-events-auto">
+          {LAB_MESSAGES.canvas.laboratoryTitle}
+        </h2>
         <div className="pointer-events-auto flex shrink-0 items-center gap-2">
           <Link
             className="lab-recipesBtn"
             to="/recipes"
-            title="Manage vial combinations"
+            title={LAB_MESSAGES.canvas.recipesLinkTitle}
           >
-            Recipes
+            {LAB_MESSAGES.canvas.recipesLinkLabel}
           </Link>
         </div>
       </div>
@@ -185,7 +188,7 @@ export function LabCanvas({
       <div
         ref={canvasRef}
         className="lab-canvas lab-canvas--fill"
-        aria-label="Vial placement area — drag on the background to select multiple vials"
+        aria-label={LAB_MESSAGES.canvas.placementAreaAriaLabel}
       >
         <LabConstellationBackground />
         {placed.map((p, i) => {

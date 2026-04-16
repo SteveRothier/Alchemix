@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { LAB_MESSAGES } from '../lab/labMessages'
 import type { Vial } from '../../types'
 import { InventoryVialItem } from './InventoryVialItem'
 
@@ -21,7 +22,7 @@ function InventorySection({
   return (
     <section
       className="lab-invSectionScroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden"
-      aria-label={`${title}, ${n} ${n === 1 ? 'vial' : 'vials'}`}
+      aria-label={`${title}, ${n} ${n === 1 ? LAB_MESSAGES.inventory.unitSingular : LAB_MESSAGES.inventory.unitPlural}`}
     >
       <div className="lab-invSectionHeadingRow pr-[0.65rem]">
         <h3 className="lab-invSectionHeading m-0">
@@ -34,8 +35,8 @@ function InventorySection({
             className="lab-invSearchInput"
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search..."
-            aria-label="Search elements"
+            placeholder={LAB_MESSAGES.inventory.searchPlaceholder}
+            aria-label={LAB_MESSAGES.inventory.searchAriaLabel}
           />
         </div>
       </div>
@@ -70,7 +71,7 @@ export function InventoryPanel({ elements }: InventoryPanelProps) {
   return (
     <div className="lab-invPanelRoot flex min-h-0 flex-1 flex-col gap-[0.45rem] overflow-hidden pl-[0.65rem] pr-0 pb-2 pt-1">
       <InventorySection
-        title="Elements"
+        title={LAB_MESSAGES.inventory.elementsSectionTitle}
         vials={filteredElements}
         search={search}
         onSearchChange={setSearch}
