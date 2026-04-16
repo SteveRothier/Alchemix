@@ -18,6 +18,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "liquid",
     },
+    recipe: { ingredientA: "el-water", ingredientB: "hell" },
   },
   'craft-abyss': {
     id: "craft-abyss",
@@ -997,6 +998,16 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipe: { ingredientA: "el-fire", ingredientB: "craft-sand" },
   },
+  'gravity': {
+    id: "gravity",
+    type: "element",
+    name: "Gravity",
+    liquid: {
+      primaryColor: "#ffffff",
+      opacity: 0.85,
+      texture: "liquid",
+    },
+  },
   'hell': {
     id: "hell",
     type: "element",
@@ -1006,5 +1017,6 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "liquid",
     },
+    recipe: { ingredientA: "death", ingredientB: "el-shadow" },
   },
 }
