@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
 import type { Vial } from '../types'
-import { canonicalDynamicVialId } from './dynamicVial'
 import { resolveFusionProduct } from './fusion'
 import { lookupSeedResultId } from './recipeMap'
 
@@ -23,8 +22,8 @@ function stubVial(
   }
 }
 
-describe('resolveFusionProduct (dynamique)', () => {
-  it('Vapor : eau + lave alignés catalogue, seed et canonique', () => {
+describe('resolveFusionProduct (catalogue / registre)', () => {
+  it('Vapor : eau + lave depuis le catalogue', () => {
     const tpl = CRAFTED_VIAL_TEMPLATES['craft-vapor']
     expect(tpl?.recipe).toEqual({
       ingredientA: 'el-water',
@@ -48,14 +47,13 @@ describe('resolveFusionProduct (dynamique)', () => {
       },
     })
     expect(lookupSeedResultId('el-water', 'craft-lava')).toBe('craft-vapor')
-    expect(canonicalDynamicVialId(elWater, lava)).toBe('craft-vapor')
     const outcome = resolveFusionProduct(elWater, lava, {})
     expect(outcome.ok).toBe(true)
     if (!outcome.ok) return
     expect(outcome.vial.id).toBe('craft-vapor')
   })
 
-  it('produit un élément canonique hors seed (ids partagés par plusieurs paires)', () => {
+  it('paire sans recette enregistrée → inerte', () => {
     const a = stubVial({
       id: 'craft-wildspark',
       type: 'element',
@@ -68,45 +66,14 @@ describe('resolveFusionProduct (dynamique)', () => {
       name: 'Spindrift',
       liquid: { primaryColor: '#8ecae6', opacity: 0.62, texture: 'wave' },
     })
+    expect(lookupSeedResultId(a.id, b.id)).toBeNull()
     const outcome = resolveFusionProduct(a, b, {})
-    expect(outcome.ok).toBe(true)
-    if (!outcome.ok) return
-    expect(outcome.wasNew).toBe(true)
-    expect(outcome.vial.type).toBe('element')
-    expect(outcome.vial.origin).toBe('dynamic')
-    expect(outcome.vial.id).toBe(canonicalDynamicVialId(a, b))
-    expect(outcome.vial.id).toMatch(/^craft-/)
-    expect(outcome.vial.effect).toBeUndefined()
-    expect(outcome.vial.name).toBe('Lagoon')
-    expect(outcome.vial.name).not.toMatch(/\s/)
+    expect(outcome.ok).toBe(false)
+    if (outcome.ok) return
+    expect(outcome.reason).toBe('inert')
   })
 
-  it('deux paires différentes peuvent donner la même fiole (même id)', () => {
-    const soil = stubVial({
-      id: 'craft-soil',
-      type: 'element',
-      name: 'Soil',
-      liquid: { primaryColor: '#6b4423', opacity: 0.9, texture: 'liquid' },
-    })
-    const swamp = stubVial({
-      id: 'craft-swamp',
-      type: 'element',
-      name: 'Swamp',
-      liquid: { primaryColor: '#386641', opacity: 0.88, texture: 'bubbles' },
-    })
-    const bloom = stubVial({
-      id: 'craft-bloom',
-      type: 'element',
-      name: 'Bloom',
-      liquid: { primaryColor: '#95d5b2', opacity: 0.85, texture: 'bubbles' },
-    })
-    const id1 = canonicalDynamicVialId(soil, swamp)
-    const id2 = canonicalDynamicVialId(soil, bloom)
-    expect(id1).toBe(id2)
-    expect(id1).toBe('craft-thicket')
-  })
-
-  it('sort dynamique avec effet (élément + sort)', () => {
+  it('élément + sort sans recette seed → inerte', () => {
     const el = stubVial({
       id: 'el-water',
       type: 'element',
@@ -122,17 +89,12 @@ describe('resolveFusionProduct (dynamique)', () => {
       effect: { animation: 'burst', color: '#ff0000' },
     })
     const outcome = resolveFusionProduct(el, sp, {})
-    expect(outcome.ok).toBe(true)
-    if (!outcome.ok) return
-    expect(outcome.vial.type).toBe('spell')
-    expect(outcome.vial.origin).toBe('dynamic')
-    expect(outcome.vial.effect).toBeDefined()
-    expect(outcome.vial.effect?.animation).toBeTruthy()
-    expect(outcome.vial.effect?.color).toMatch(/^#/)
-    expect(outcome.vial.id).toMatch(/^dyn-sp-/)
+    expect(outcome.ok).toBe(false)
+    if (outcome.ok) return
+    expect(outcome.reason).toBe('inert')
   })
 
-  it('deux sorts seed → sort dynamique', () => {
+  it('deux sorts sans recette seed → inerte', () => {
     const s1 = stubVial({
       id: 'sp-fireball',
       type: 'spell',
@@ -148,57 +110,78 @@ describe('resolveFusionProduct (dynamique)', () => {
       effect: { animation: 'burst', color: '#ff0' },
     })
     const outcome = resolveFusionProduct(s1, s2, {})
-    expect(outcome.ok).toBe(true)
-    if (!outcome.ok) return
-    expect(outcome.vial.type).toBe('spell')
-    expect(outcome.vial.effect).toBeDefined()
+    expect(outcome.ok).toBe(false)
+    if (outcome.ok) return
+    expect(outcome.reason).toBe('inert')
   })
 
-  it('ordre des ingrédients : même id canonique', () => {
-    const a = stubVial({
-      id: 'craft-wildspark',
+  it('ordre des ingrédients : même résultat si recette symétrique', () => {
+    const elWater = stubVial({
+      id: 'el-water',
       type: 'element',
-      name: 'W',
-      liquid: { primaryColor: '#52b788', opacity: 0.88, texture: 'spark' },
+      name: 'Water',
+      liquid: { primaryColor: '#219ebc', opacity: 0.88, texture: 'wave' },
     })
-    const b = stubVial({
-      id: 'craft-spindrift',
+    const lavaTpl = CRAFTED_VIAL_TEMPLATES['craft-lava']
+    const lava = stubVial({
+      id: 'craft-lava',
       type: 'element',
-      name: 'S',
-      liquid: { primaryColor: '#8ecae6', opacity: 0.62, texture: 'wave' },
+      name: lavaTpl?.name ?? 'Lava',
+      liquid: lavaTpl?.liquid ?? {
+        primaryColor: '#e85d04',
+        opacity: 0.9,
+        texture: 'liquid',
+      },
     })
-    const o1 = resolveFusionProduct(a, b, {})
-    const o2 = resolveFusionProduct(b, a, {})
+    const o1 = resolveFusionProduct(elWater, lava, {})
+    const o2 = resolveFusionProduct(lava, elWater, {})
     expect(o1.ok && o2.ok).toBe(true)
     if (!o1.ok || !o2.ok) return
     expect(o1.vial.id).toBe(o2.vial.id)
   })
 
   it('réutilise la fiole existante dans vialsById', () => {
-    const a = stubVial({
-      id: 'craft-wildspark',
+    const elWater = stubVial({
+      id: 'el-water',
       type: 'element',
-      name: 'W',
-      liquid: { primaryColor: '#52b788', opacity: 0.88, texture: 'spark' },
+      name: 'Water',
+      liquid: { primaryColor: '#219ebc', opacity: 0.88, texture: 'wave' },
     })
-    const b = stubVial({
-      id: 'craft-spindrift',
+    const lavaTpl = CRAFTED_VIAL_TEMPLATES['craft-lava']
+    const lava = stubVial({
+      id: 'craft-lava',
       type: 'element',
-      name: 'S',
-      liquid: { primaryColor: '#8ecae6', opacity: 0.62, texture: 'wave' },
+      name: lavaTpl?.name ?? 'Lava',
+      liquid: lavaTpl?.liquid ?? {
+        primaryColor: '#e85d04',
+        opacity: 0.9,
+        texture: 'liquid',
+      },
     })
-    const first = resolveFusionProduct(a, b, {})
-    expect(first.ok).toBe(true)
-    if (!first.ok) return
-    const existing = { ...first.vial }
-    const second = resolveFusionProduct(a, b, { [existing.id]: existing })
+    const vaporTpl = CRAFTED_VIAL_TEMPLATES['craft-vapor']
+    const existing: Vial = {
+      id: 'craft-vapor',
+      type: 'element',
+      name: vaporTpl.name,
+      description: 'already owned',
+      liquid: vaporTpl.liquid ?? {
+        primaryColor: '#fff',
+        opacity: 0.85,
+        texture: 'liquid',
+      },
+      icon: 'rune',
+      rarity: 'common',
+      discoveredAt: '2020-01-01T00:00:00.000Z',
+      ...(vaporTpl.recipe ? { recipe: vaporTpl.recipe } : {}),
+    }
+    const second = resolveFusionProduct(elWater, lava, { 'craft-vapor': existing })
     expect(second.ok).toBe(true)
     if (!second.ok) return
     expect(second.wasNew).toBe(false)
     expect(second.vial).toBe(existing)
   })
 
-  it('fusion inerte : arcane + arcane (éléments)', () => {
+  it('fusion inerte : ids éléments inconnus', () => {
     const a = stubVial({
       id: 'z-unk-a',
       type: 'element',
@@ -218,7 +201,7 @@ describe('resolveFusionProduct (dynamique)', () => {
     }
   })
 
-  it('fusion inerte : deux amalgames dynamiques (craft-*)', () => {
+  it('fusion inerte : deux crafts sans recette seed pour cette paire', () => {
     const a = stubVial({
       id: 'craft-vapor',
       type: 'element',
@@ -235,7 +218,7 @@ describe('resolveFusionProduct (dynamique)', () => {
     expect(outcome.ok).toBe(false)
   })
 
-  it('fusion inerte : deux sorts dyn-sp', () => {
+  it('fusion inerte : ids dyn-sp (legacy) sans recette', () => {
     const a = stubVial({
       id: 'dyn-sp-fire-mono',
       type: 'spell',

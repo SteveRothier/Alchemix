@@ -6,7 +6,7 @@ const LEGACY_CRAFT_SLUGS = new Set(['abyss', 'crystal', 'twilight'])
 const CRAFT_ID_TO_PAIR_KEY = new Map<string, string>()
 
 /** Id stable `craft-{mot}` (ou `craft-amalgam-{mot}` si collision avec un craft catalogue). */
-export function canonicalDynamicElementCraftId(lo: number, hi: number): string {
+export function canonicalAmalgamCraftId(lo: number, hi: number): string {
   const L = Math.min(lo, hi)
   const H = Math.max(lo, hi)
   const word = SIMPLE_ELEMENT_BY_INDEX_PAIR[`${L}-${H}`] ?? 'Dross'
@@ -19,20 +19,19 @@ export function canonicalDynamicElementCraftId(lo: number, hi: number): string {
 
 for (let lo = 0; lo < 8; lo++) {
   for (let hi = lo; hi < 8; hi++) {
-    const id = canonicalDynamicElementCraftId(lo, hi)
+    const id = canonicalAmalgamCraftId(lo, hi)
     CRAFT_ID_TO_PAIR_KEY.set(id, `${lo}-${hi}`)
   }
 }
 
-/** Ids `craft-*` réservés aux amalgames dynamiques (profil d’ingrédient dérivé des indices). */
-export const CANONICAL_DYNAMIC_ELEMENT_CRAFT_IDS: readonly string[] =
-  Array.from(CRAFT_ID_TO_PAIR_KEY.keys())
+/** Tous les ids `craft-*` dérivés de la table d’amalgames (indices d’affinités). */
+export const AMALGAM_CRAFT_IDS: readonly string[] = Array.from(CRAFT_ID_TO_PAIR_KEY.keys())
 
-export function isCanonicalDynamicElementCraftId(id: string): boolean {
+export function isAmalgamCraftId(id: string): boolean {
   return CRAFT_ID_TO_PAIR_KEY.has(id)
 }
 
-/** Clé d’indices `"lo-hi"` (affinités), ou `null` si ce n’est pas un amalgam dynamique canonique. */
-export function dynamicElementCraftPairKey(id: string): string | null {
+/** Clé d’indices `"lo-hi"` (affinités), ou `null` si ce n’est pas un amalgam canonique. */
+export function amalgamCraftPairKey(id: string): string | null {
   return CRAFT_ID_TO_PAIR_KEY.get(id) ?? null
 }

@@ -1,11 +1,11 @@
-import { isCanonicalDynamicElementCraftId } from './dynamicElementCraftIds'
+import { isAmalgamCraftId } from './amalgamCraftIds'
 import { simpleElementNameFromCanonicalId } from './simpleElementNames'
 
 /** Libellé lisible dérivé d’une référence technique (el-fire → Fire, craft-steam → Steam). */
 export function inferLabelFromRef(ref: string): string {
   const s = ref.trim()
   if (!s) return ''
-  if (isCanonicalDynamicElementCraftId(s) || /^dyn-el-\d+-\d+$/.test(s)) {
+  if (isAmalgamCraftId(s) || /^dyn-el-\d+-\d+$/.test(s)) {
     return simpleElementNameFromCanonicalId(s)
   }
   const core = s.replace(/^(el|craft|sp|creature|leg)-/i, '')

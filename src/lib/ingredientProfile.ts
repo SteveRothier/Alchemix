@@ -1,5 +1,5 @@
 import type { Vial, VialIcon, VialRarity } from '../types'
-import { dynamicElementCraftPairKey } from './dynamicElementCraftIds'
+import { amalgamCraftPairKey } from './amalgamCraftIds'
 
 export type ElementAffinity =
   | 'fire'
@@ -47,11 +47,9 @@ const RARITY_TO_INTENSITY: Record<VialRarity, number> = {
 function kindFromVial(vial: Vial): IngredientKind {
   const { id, type } = vial
   if (id.startsWith('creature-') || type === 'creature') return 'creature'
-  if (id.startsWith('dyn-sp-')) return 'spell'
   if (id.startsWith('sp-')) return 'spell'
   if (id.startsWith('el-')) return 'primordial'
-  if (id.startsWith('dyn-el-')) return 'crafted'
-  if (id.startsWith('craft-') || id.startsWith('dyn-')) return 'crafted'
+  if (id.startsWith('craft-')) return 'crafted'
   if (type === 'element') return 'crafted'
   return 'unknown'
 }
@@ -194,7 +192,7 @@ export function getIngredientProfile(vial: Vial): IngredientProfile {
   const { id } = vial
 
   const pairKeyStr =
-    dynamicElementCraftPairKey(id) ??
+    amalgamCraftPairKey(id) ??
     (() => {
       const elCanon = /^dyn-el-(\d+)-(\d+)$/.exec(id)
       if (!elCanon) return null
@@ -218,18 +216,6 @@ export function getIngredientProfile(vial: Vial): IngredientProfile {
     return {
       affinity: affLo ?? affHi ?? 'arcane',
       kind: 'crafted',
-      intensity,
-    }
-  }
-
-  const spCanon =
-    /^dyn-sp-(air|arcane|earth|fire|light|nature|shadow|water)-(mono|air|arcane|earth|fire|light|nature|shadow|water)$/.exec(
-      id,
-    )
-  if (spCanon) {
-    return {
-      affinity: spCanon[1] as ElementAffinity,
-      kind: 'spell',
       intensity,
     }
   }

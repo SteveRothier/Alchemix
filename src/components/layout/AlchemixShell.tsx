@@ -14,6 +14,7 @@ import { LabCanvas } from '../game/LabCanvas'
 import { InventoryPanel } from '../inventory/InventoryPanel'
 import { resolveFusionProduct } from '../../lib/fusion'
 import { applyLegacyVialIdRename } from '../../lib/legacyVialIdRenames'
+import { isProceduralLegacyFusionVialId } from '../../lib/proceduralFusionMigration'
 import type { DrinkSpellResult } from '../../lib/drinkSpell'
 import { CRAFTED_VIAL_TEMPLATES } from '../../data/craftedVials'
 import {
@@ -68,10 +69,17 @@ function loadLabPlaced(): LabPlacedVial[] {
       if (vialId !== row.vialId) changed = true
       return { ...row, vialId }
     })
+    const withoutProcedural = migrated.filter((row) => {
+      if (isProceduralLegacyFusionVialId(row.vialId)) {
+        changed = true
+        return false
+      }
+      return true
+    })
     if (changed) {
-      saveLabPlaced(migrated)
+      saveLabPlaced(withoutProcedural)
     }
-    return migrated
+    return withoutProcedural
   } catch {
     return []
   }

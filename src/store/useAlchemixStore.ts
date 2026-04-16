@@ -5,11 +5,12 @@ import {
   migrateElNatureToGrassInStore,
   reconcileStarterVialsWithDefinitions,
 } from '../lib/legacyVialIdRenames'
+import { migrateProceduralFusionVialsFromStore } from '../lib/proceduralFusionMigration'
 import { resolveDrinkSpell, type DrinkSpellResult } from '../lib/drinkSpell'
 import type { Vial } from '../types'
 
 const PERSIST_KEY = 'alchemix-save'
-const PERSIST_VERSION = 4
+const PERSIST_VERSION = 5
 
 function freshStarterState(isoTime: string) {
   return {
@@ -111,6 +112,9 @@ export const useAlchemixStore = create<AlchemixState>()(
         }
         if (version < 4 && data.vials) {
           reconcileStarterVialsWithDefinitions(data.vials)
+        }
+        if (version < 5 && data.vials) {
+          migrateProceduralFusionVialsFromStore(data.vials, data.offeringUseCount)
         }
         return data
       },

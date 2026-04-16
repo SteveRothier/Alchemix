@@ -1,14 +1,14 @@
 import {
-  dynamicElementCraftPairKey,
-  isCanonicalDynamicElementCraftId,
-} from './dynamicElementCraftIds'
+  amalgamCraftPairKey,
+  isAmalgamCraftId,
+} from './amalgamCraftIds'
 import { SIMPLE_ELEMENT_BY_INDEX_PAIR } from './simpleElementData'
 
 export { SIMPLE_ELEMENT_BY_INDEX_PAIR } from './simpleElementData'
 
 export function simpleElementNameFromCanonicalId(canonicalId: string): string {
-  if (isCanonicalDynamicElementCraftId(canonicalId)) {
-    const k = dynamicElementCraftPairKey(canonicalId)
+  if (isAmalgamCraftId(canonicalId)) {
+    const k = amalgamCraftPairKey(canonicalId)
     if (k) return SIMPLE_ELEMENT_BY_INDEX_PAIR[k] ?? 'Dross'
   }
   const m = /^dyn-el-(\d+)-(\d+)$/.exec(canonicalId)
