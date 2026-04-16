@@ -1008,10 +1008,13 @@ html[data-lab-canvas-chip-drag]
 }
 
 .lab-trophyName {
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-lab-mono);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.03em;
+  line-height: 1;
   color: var(--text-h);
 }
 
@@ -1019,9 +1022,17 @@ html[data-lab-canvas-chip-drag]
   width: 1.35rem;
   height: 1.35rem;
   flex: 0 0 1.35rem;
-  border-radius: 0.25rem;
-  background: #000;
-  border: 1px solid color-mix(in srgb, var(--border) 85%, #000 15%);
+  border-radius: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: transparent;
+  border: none;
+}
+
+.lab-trophyThumbFlask {
+  height: 1.16rem;
 }
 
 /* Voile (opacité animée par GSAP, séparé de la boîte pour ne pas la faire disparaître deux fois). */

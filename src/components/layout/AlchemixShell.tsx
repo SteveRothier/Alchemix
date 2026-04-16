@@ -17,6 +17,8 @@ import { applyLegacyVialIdRename } from '../../lib/legacyVialIdRenames'
 import { isProceduralLegacyFusionVialId } from '../../lib/proceduralFusionMigration'
 import type { DrinkSpellResult } from '../../lib/drinkSpell'
 import { CRAFTED_VIAL_TEMPLATES } from '../../data/craftedVials'
+import { STARTER_VIAL_DEFINITIONS } from '../../data/starterVials'
+import { OFFERING_ID_TO_CREATURE_ID } from '../../data/spellDrinkCreatures'
 import {
   Draggable,
   gsap,
@@ -26,6 +28,7 @@ import type { Vial } from '../../types'
 import { useAlchemixStore } from '../../store/useAlchemixStore'
 import { LabControlsFloating } from '../lab/LabControlsFloating'
 import { LAB_MESSAGES } from '../lab/labMessages'
+import { VialFlaskGraphic } from '../vial/flask/VialFlaskGraphic'
 import '../lab/alchemixLab.css'
 
 registerGsapDraggable()
@@ -294,6 +297,57 @@ export function AlchemixShell() {
         .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' })),
     [],
   )
+  const starterVialsById = useMemo(
+    () =>
+      Object.fromEntries(
+        STARTER_VIAL_DEFINITIONS.map((v) => [
+          v.id,
+          { ...v, discoveredAt: '1970-01-01T00:00:00.000Z' } as Vial,
+        ]),
+      ) as Record<string, Vial>,
+    [],
+  )
+  const creatureOfferingVialById = useMemo(() => {
+    const offeringByCreatureId: Record<string, string> = {}
+    for (const creature of creatureCatalog) {
+      const recipe = creature.recipe
+      if (recipe?.ingredientA && recipe.ingredientA === recipe.ingredientB) {
+        offeringByCreatureId[creature.id] = recipe.ingredientA
+      }
+    }
+    for (const [offeringId, creatureId] of Object.entries(OFFERING_ID_TO_CREATURE_ID)) {
+      if (!creatureId) continue
+      if (!offeringByCreatureId[creatureId]) {
+        offeringByCreatureId[creatureId] = offeringId
+      }
+    }
+    const out: Record<string, Vial | null> = {}
+    for (const creature of creatureCatalog) {
+      const offeringId = offeringByCreatureId[creature.id]
+      if (!offeringId) {
+        out[creature.id] = null
+        continue
+      }
+      out[creature.id] =
+        vialsById[offeringId] ??
+        starterVialsById[offeringId] ??
+        (CRAFTED_VIAL_TEMPLATES[offeringId]
+          ? ({
+              ...CRAFTED_VIAL_TEMPLATES[offeringId],
+              liquid: CRAFTED_VIAL_TEMPLATES[offeringId].liquid ?? {
+                primaryColor: '#ffffff',
+                opacity: 0.85,
+                texture: 'liquid',
+              },
+              description: '',
+              icon: 'rune',
+              rarity: 'common',
+              discoveredAt: '1970-01-01T00:00:00.000Z',
+            } as Vial)
+          : null)
+    }
+    return out
+  }, [creatureCatalog, starterVialsById, vialsById])
   const discoveredCreatureIds = useMemo(() => {
     const ids = new Set<string>()
     for (const v of Object.values(vialsById)) {
@@ -301,6 +355,25 @@ export function AlchemixShell() {
     }
     return ids
   }, [vialsById])
+  const undiscoveredBlackPreviewVial = useMemo(
+    () =>
+      ({
+        id: 'preview-undiscovered-black',
+        type: 'element',
+        name: 'Unknown',
+        description: '',
+        liquid: {
+          primaryColor: '#000000',
+          secondaryColor: '#000000',
+          opacity: 1,
+          texture: 'liquid',
+        },
+        icon: 'rune',
+        rarity: 'common',
+        discoveredAt: '1970-01-01T00:00:00.000Z',
+      }) as Vial,
+    [],
+  )
 
   const [placed, setPlaced] = useState<LabPlacedVial[]>(() => loadLabPlaced())
   const [selectedIdsArr, setSelectedIdsArr] = useState<string[]>([])
@@ -1083,9 +1156,20 @@ export function AlchemixShell() {
                     <ul className="lab-trophyList" role="list">
                       {creatureCatalog.map((creature) => {
                         const discovered = discoveredCreatureIds.has(creature.id)
+                        const previewVial = creatureOfferingVialById[creature.id]
+                        const thumbVial = discovered
+                          ? previewVial
+                          : undiscoveredBlackPreviewVial
                         return (
                           <li key={creature.id} className="lab-trophyRow">
-                          <span className="lab-trophyThumb" aria-hidden />
+                            <span className="lab-trophyThumb" aria-hidden>
+                              {thumbVial ? (
+                                <VialFlaskGraphic
+                                  vial={thumbVial}
+                                  className="lab-trophyThumbFlask"
+                                />
+                              ) : null}
+                            </span>
                             <span className="lab-trophyName">
                               {discovered ? creature.name : '???'}
                             </span>
