@@ -243,6 +243,7 @@ function VialOptionCombo({
   value,
   onChange,
   options,
+  allowCustom = false,
   placeholder = 'Type to filter or pick…',
   autoComplete = 'on',
   compact = false,
@@ -252,6 +253,7 @@ function VialOptionCombo({
   value: string
   onChange: (id: string) => void
   options: VialPickOption[]
+  allowCustom?: boolean
   placeholder?: string
   autoComplete?: string
   compact?: boolean
@@ -304,6 +306,11 @@ function VialOptionCombo({
         setText(byId.name)
         return
       }
+      if (allowCustom) {
+        onChange(t)
+        setText(t)
+        return
+      }
       if (value) {
         const keep = options.find((o) => o.id === value)
         setText(keep?.name ?? inferLabelFromRef(value))
@@ -311,7 +318,7 @@ function VialOptionCombo({
         setText('')
       }
     },
-    [options, value, onChange],
+    [allowCustom, options, value, onChange],
   )
 
   const pick = useCallback(
@@ -936,6 +943,25 @@ function stableCatalogSoloClientId(id: string): number {
 
 function visualFromTemplate(id: string): VisualOverrideDraft {
   const t = CRAFTED_VIAL_TEMPLATES[id]
+  if (t?.type === 'element' && t.liquid) {
+    return {
+      primaryColor: t.liquid.primaryColor ?? '#ffffff',
+      secondaryColor: t.liquid.secondaryColor ?? '',
+      opacity: t.liquid.opacity ?? 0.85,
+      texture: t.liquid.texture ?? 'liquid',
+    }
+  }
+  const starter = STARTER_VIAL_DEFINITIONS.find(
+    (v) => v.id === id && v.type === 'element',
+  )
+  if (starter?.liquid) {
+    return {
+      primaryColor: starter.liquid.primaryColor ?? '#ffffff',
+      secondaryColor: starter.liquid.secondaryColor ?? '',
+      opacity: starter.liquid.opacity ?? 0.85,
+      texture: starter.liquid.texture ?? 'liquid',
+    }
+  }
   return {
     primaryColor: t?.liquid?.primaryColor ?? '#ffffff',
     secondaryColor: t?.liquid?.secondaryColor ?? '',
@@ -1553,6 +1579,26 @@ export function RecipeManagerPage() {
     setSoloIdInput('')
   }, [])
 
+  const handleElementResultChange = useCallback(
+    (value: string) => {
+      setElResultInput(value)
+      const resolved = resolveRefFromDisplayInput(
+        value,
+        displayName,
+        allKnownVialIds,
+      )
+      if (resolved.error || !resolved.ref.trim()) return
+      const ref = resolved.ref.trim()
+      if (!knownElementIdSet.has(ref)) return
+      const vis = visualOverrides[ref] ?? visualFromTemplate(ref)
+      setElPrimaryColor(vis.primaryColor)
+      setElSecondaryColor(vis.secondaryColor)
+      setElOpacity(String(vis.opacity))
+      setElTexture(vis.texture)
+    },
+    [allKnownVialIds, displayName, knownElementIdSet, visualOverrides],
+  )
+
   const exitRegisterRowEdit = useCallback(() => {
     setEditingPair(null)
     setEditingSolo(null)
@@ -2029,19 +2075,20 @@ export function RecipeManagerPage() {
                   <div className="ra-formRecipeLayout">
                     {editingSolo ? (
                       <>
-                        <div className="ra-formGroup ra-formGroup--fieldRow">
-                          <label htmlFor="elResult">
-                            Element<span className="ra-required">*</span>
-                          </label>
-                          <input
-                            id="elResult"
-                            className="ra-input"
-                            value={elResultInput}
-                            onChange={(e) => setElResultInput(e.target.value)}
-                            placeholder="Element name or technical id"
-                            autoComplete="off"
-                          />
-                        </div>
+                        <VialOptionCombo
+                          compact
+                          inputId="elResult"
+                          label={
+                            <>
+                              Element<span className="ra-required">*</span>
+                            </>
+                          }
+                          value={elResultInput}
+                          onChange={handleElementResultChange}
+                          options={elementOptions}
+                          allowCustom
+                          placeholder="Element…"
+                        />
                         <p className="ra-hint">
                           Editing an element register entry from the Recipe tab.
                         </p>
@@ -2074,19 +2121,20 @@ export function RecipeManagerPage() {
                           options={ingredientOptions}
                           placeholder="Ingredient…"
                         />
-                        <div className="ra-formGroup ra-formGroup--fieldRow">
-                          <label htmlFor="elResult">
-                            Element<span className="ra-required">*</span>
-                          </label>
-                          <input
-                            id="elResult"
-                            className="ra-input"
-                            value={elResultInput}
-                            onChange={(e) => setElResultInput(e.target.value)}
-                            placeholder="Element name or technical id"
-                            autoComplete="off"
-                          />
-                        </div>
+                        <VialOptionCombo
+                          compact
+                          inputId="elResult"
+                          label={
+                            <>
+                              Element<span className="ra-required">*</span>
+                            </>
+                          }
+                          value={elResultInput}
+                          onChange={handleElementResultChange}
+                          options={elementOptions}
+                          allowCustom
+                          placeholder="Element…"
+                        />
                         <div className="ra-formVisualStack">
                           <RaColorPickerField
                             id="elPrimaryColor"
