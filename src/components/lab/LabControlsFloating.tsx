@@ -10,29 +10,9 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { LAB_MESSAGES } from './labMessages'
 
-const ROWS: { keys: string; detail: string }[] = [
-  {
-    keys: 'Left click',
-    detail: 'Select item',
-  },
-  {
-    keys: 'Right click',
-    detail: 'Delete item',
-  },
-  {
-    keys: 'Double click',
-    detail: 'Duplicate item',
-  },
-  {
-    keys: 'Ctrl+Z',
-    detail: 'Undo',
-  },
-  {
-    keys: 'Ctrl+Y',
-    detail: 'Redo',
-  },
-]
+const ROWS = LAB_MESSAGES.controlsRows
 
 /** Flou max du voile (px) — réduit vs avant ; montée / descente animée par GSAP. */
 const DIM_BLUR_PX = 1.5
@@ -412,7 +392,7 @@ export function LabControlsFloating({
             <header className="lab-controls-header">
               <div>
                 <h2 id={titleId} className="lab-controls-title">
-                  Controls
+                  {LAB_MESSAGES.dialogs.controlsTitle}
                 </h2>
               </div>
               <button
@@ -420,7 +400,7 @@ export function LabControlsFloating({
                 type="button"
                 className="lab-controls-close"
                 onClick={requestClose}
-                aria-label="Close controls"
+                aria-label={LAB_MESSAGES.dialogs.controlsCloseAriaLabel}
               >
                 <X size={16} strokeWidth={2} aria-hidden />
               </button>
@@ -462,7 +442,7 @@ export function LabControlsFloating({
           >
             <div className="lab-clear-confirm-body">
               <p id={clearQuestionId} className="lab-controls-detail lab-clear-question">
-                Clear all items on the canvas?
+                {LAB_MESSAGES.dialogs.clearQuestion}
               </p>
               <div className="lab-clear-actions">
                 <button
@@ -471,14 +451,14 @@ export function LabControlsFloating({
                   className="lab-clear-btn lab-clear-btn-yes"
                   onClick={confirmClearCanvas}
                 >
-                  Yes
+                  {LAB_MESSAGES.common.yes}
                 </button>
                 <button
                   type="button"
                   className="lab-clear-btn lab-clear-btn-no"
                   onClick={requestCloseClear}
                 >
-                  No
+                  {LAB_MESSAGES.common.no}
                 </button>
               </div>
             </div>
@@ -505,7 +485,7 @@ export function LabControlsFloating({
           className="lab-langPopover"
           role="dialog"
           aria-modal="true"
-          aria-label="Choose language"
+          aria-label={LAB_MESSAGES.dialogs.chooseLanguageAriaLabel}
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -513,14 +493,14 @@ export function LabControlsFloating({
             className="lab-langOption"
             onClick={requestCloseLang}
           >
-            English
+            {LAB_MESSAGES.languageOptions.english}
           </button>
           <button
             type="button"
             className="lab-langOption"
             onClick={requestCloseLang}
           >
-            Français
+            {LAB_MESSAGES.languageOptions.french}
           </button>
         </div>
       </>,
@@ -550,8 +530,7 @@ export function LabControlsFloating({
           >
             <div className="lab-clear-confirm-body">
               <p id={resetQuestionId} className="lab-controls-detail lab-clear-question">
-                Reset progress? Inventory will return to the 5 starter elements and the
-                laboratory will be cleared.
+                {LAB_MESSAGES.dialogs.resetQuestion}
               </p>
               <div className="lab-clear-actions">
                 <button
@@ -560,14 +539,14 @@ export function LabControlsFloating({
                   className="lab-clear-btn lab-clear-btn-yes"
                   onClick={confirmResetProgress}
                 >
-                  Yes
+                  {LAB_MESSAGES.common.yes}
                 </button>
                 <button
                   type="button"
                   className="lab-clear-btn lab-clear-btn-no"
                   onClick={requestCloseReset}
                 >
-                  No
+                  {LAB_MESSAGES.common.no}
                 </button>
               </div>
             </div>
@@ -594,12 +573,12 @@ export function LabControlsFloating({
               if (resetClosingRef.current) return
               setResetConfirmOpen(true)
             }}
-            aria-label="Reset progress"
+            aria-label={LAB_MESSAGES.dock.resetAriaLabel}
           >
             <Save size={22} strokeWidth={2} aria-hidden className="shrink-0" />
           </button>
           <span className="lab-fabTooltip" aria-hidden="true">
-            Reset progress
+            {LAB_MESSAGES.dock.resetTooltip}
           </span>
         </div>
         <div className="lab-fabWithTooltip pointer-events-auto">
@@ -611,12 +590,12 @@ export function LabControlsFloating({
               if (!canClearCanvas || clearClosingRef.current) return
               setClearConfirmOpen(true)
             }}
-            aria-label="Clear canvas"
+            aria-label={LAB_MESSAGES.dock.clearAriaLabel}
           >
             <Trash2 size={22} strokeWidth={2} aria-hidden className="shrink-0" />
           </button>
           <span className="lab-fabTooltip" aria-hidden="true">
-            Clear canvas
+            {LAB_MESSAGES.dock.clearTooltip}
           </span>
         </div>
         <div className="lab-fabWithTooltip pointer-events-auto">
@@ -630,12 +609,12 @@ export function LabControlsFloating({
             }}
             aria-expanded={open}
             aria-haspopup="dialog"
-            aria-label="Controls"
+            aria-label={LAB_MESSAGES.dock.controlsAriaLabel}
           >
             <Keyboard size={22} strokeWidth={2} aria-hidden className="shrink-0" />
           </button>
           <span className="lab-fabTooltip" aria-hidden="true">
-            Controls
+            {LAB_MESSAGES.dock.controlsTooltip}
           </span>
         </div>
         <div className="lab-fabWithTooltip lab-langFabWrap pointer-events-auto">
@@ -645,7 +624,7 @@ export function LabControlsFloating({
             className="lab-controls-fab"
             aria-expanded={langMenuOpen}
             aria-haspopup="dialog"
-            aria-label="Choose language"
+            aria-label={LAB_MESSAGES.dock.languageAriaLabel}
             onClick={() => {
               if (langClosingRef.current) return
               if (langMenuOpenRef.current) requestCloseLang()
@@ -655,7 +634,7 @@ export function LabControlsFloating({
             <Globe size={22} strokeWidth={2} aria-hidden className="shrink-0" />
           </button>
           <span className="lab-fabTooltip lab-langFabTooltip" aria-hidden="true">
-            EN / FR
+            {LAB_MESSAGES.dock.languageTooltip}
           </span>
         </div>
       </div>

@@ -24,6 +24,7 @@ import {
 import type { Vial } from '../../types'
 import { useAlchemixStore } from '../../store/useAlchemixStore'
 import { LabControlsFloating } from '../lab/LabControlsFloating'
+import { LAB_MESSAGES } from '../lab/labMessages'
 import '../lab/alchemixLab.css'
 
 registerGsapDraggable()
@@ -597,7 +598,7 @@ export function AlchemixShell() {
       const store = useAlchemixStore.getState()
       const vial = store.vials[vialId]
       if (!vial || vial.type !== 'element') {
-        showSipHint('Only elements can be offered.')
+        showSipHint(LAB_MESSAGES.offer.onlyElements)
         return true
       }
       const priorUses = store.offeringUseCount[vialId] ?? 0
@@ -612,7 +613,7 @@ export function AlchemixShell() {
             id: deathTpl.id,
             type: deathTpl.type,
             name: deathTpl.name,
-            description: 'An ominous essence born from forbidden offering.',
+            description: LAB_MESSAGES.offer.deathDescription,
             liquid: deathTpl.liquid ?? {
               primaryColor: '#000000',
               opacity: 0.85,
@@ -628,23 +629,23 @@ export function AlchemixShell() {
         setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
       }
       if (grassOfferStep === 1) {
-        showSipHint('Never again !')
+        showSipHint(LAB_MESSAGES.offer.neverAgain)
         return true
       }
       if (grassOfferStep === 2) {
-        showSipHint('Death added to inventory.')
+        showSipHint(LAB_MESSAGES.offer.deathAdded)
         return true
       }
       switch (result.ok) {
         case true:
-          showSipHint(`Trophy unlocked: ${result.creature.name}`)
+          showSipHint(LAB_MESSAGES.offer.unlocked(result.creature.name))
           break
         case false: {
           const { reason } = result
           if (reason === 'no_creature') {
-            showSipHint('No trophy creature for this element yet.')
+            showSipHint(LAB_MESSAGES.offer.noCreatureYet)
           } else if (reason === 'already_owned') {
-            showSipHint('Trophy already unlocked.')
+            showSipHint(LAB_MESSAGES.offer.alreadyUnlocked)
           }
           break
         }
@@ -669,7 +670,7 @@ export function AlchemixShell() {
         if (!va || !vb) return
         const outcome = resolveFusionProduct(va, vb, vials)
         if (!outcome.ok) {
-          showSipHint('This mix stays inert.')
+          showSipHint(LAB_MESSAGES.fusion.inert)
           return
         }
         pushLabUndoHistory()
@@ -766,7 +767,7 @@ export function AlchemixShell() {
         if (!va || !vb) return false
         const outcome = resolveFusionProduct(va, vb, vials)
         if (!outcome.ok) {
-          showSipHint('This mix stays inert.')
+          showSipHint(LAB_MESSAGES.fusion.inert)
           return false
         }
         pushLabUndoHistory()
@@ -985,7 +986,7 @@ export function AlchemixShell() {
           <div className="relative z-10 h-full min-h-0 min-w-0 border-r border-[color:var(--border)] bg-[color:var(--panel-bg,var(--code-bg))]">
             <section
               className="absolute inset-0 overflow-visible"
-              aria-label="Play area"
+              aria-label={LAB_MESSAGES.dock.playAreaAriaLabel}
             >
               <LabCanvas
                 placed={placed}
@@ -1013,12 +1014,12 @@ export function AlchemixShell() {
                     }}
                     aria-expanded={trophyOpen}
                     aria-haspopup="dialog"
-                    aria-label="Creatures"
+                  aria-label={LAB_MESSAGES.dock.creaturesLabel}
                   >
                     <Trophy size={22} strokeWidth={2} aria-hidden className="shrink-0" />
                   </button>
                   <span className="lab-fabTooltip" aria-hidden="true">
-                    Creatures
+                  {LAB_MESSAGES.dock.creaturesTooltip}
                   </span>
                 </div>
               }
@@ -1029,7 +1030,7 @@ export function AlchemixShell() {
                   ref={offerDockRef}
                   type="button"
                   className="lab-controls-fab lab-offerFab"
-                  aria-label="Offer element for creature unlock"
+                  aria-label={LAB_MESSAGES.dock.offerAriaLabel}
                 >
                   <FlaskConical size={40} strokeWidth={2} aria-hidden className="shrink-0" />
                 </button>
@@ -1055,16 +1056,18 @@ export function AlchemixShell() {
                     ref={trophyDialogRef}
                     role="dialog"
                     aria-modal="true"
-                    aria-label="Creatures to discover"
+                    aria-label={LAB_MESSAGES.dialogs.creaturesToDiscoverTitle}
                     onClick={(e) => e.stopPropagation()}
                   >
                     <header className="lab-trophyPopupHeader">
-                      <h3 className="lab-trophyPopupTitle">Creatures to discover</h3>
+                      <h3 className="lab-trophyPopupTitle">
+                        {LAB_MESSAGES.dialogs.creaturesToDiscoverTitle}
+                      </h3>
                       <button
                         type="button"
                         className="lab-controls-close"
                         onClick={requestCloseTrophy}
-                        aria-label="Close creature popup"
+                    aria-label={LAB_MESSAGES.dialogs.closeCreaturePopupAriaLabel}
                       >
                         <X size={16} strokeWidth={2} aria-hidden />
                       </button>
@@ -1089,7 +1092,7 @@ export function AlchemixShell() {
           </div>
           <aside
             className="lab-inventoryColumn relative z-0 flex h-full min-h-0 min-w-0 flex-col overflow-hidden"
-            aria-label="Inventory"
+            aria-label={LAB_MESSAGES.dock.inventoryAriaLabel}
           >
             <InventoryPanel
               elements={inventoryGroups.elements}
