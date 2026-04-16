@@ -954,9 +954,9 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     type: "element",
     name: "Death",
     liquid: {
-      primaryColor: "#ffffff",
+      primaryColor: "#000000",
       opacity: 0.85,
-      texture: "liquid",
+      texture: "mist",
     },
   },
   'el-light': {

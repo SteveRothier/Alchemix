@@ -600,10 +600,40 @@ export function AlchemixShell() {
         showSipHint('Only elements can be offered.')
         return true
       }
+      const priorUses = store.offeringUseCount[vialId] ?? 0
+      const grassOfferStep =
+        vialId === 'el-grass' ? Math.min(2, priorUses + 1) : 0
       pushLabUndoHistory()
       const result: DrinkSpellResult = store.offerElementToCharacter(vialId)
+      if (grassOfferStep === 2 && !store.vials.death) {
+        const deathTpl = CRAFTED_VIAL_TEMPLATES.death
+        if (deathTpl && deathTpl.type === 'element') {
+          store.addVial({
+            id: deathTpl.id,
+            type: deathTpl.type,
+            name: deathTpl.name,
+            description: 'An ominous essence born from forbidden offering.',
+            liquid: deathTpl.liquid ?? {
+              primaryColor: '#000000',
+              opacity: 0.85,
+              texture: 'mist',
+            },
+            icon: 'rune',
+            rarity: 'common',
+            discoveredAt: new Date().toISOString(),
+          })
+        }
+      }
       if (instanceId) {
         setPlaced((prev) => prev.filter((p) => p.instanceId !== instanceId))
+      }
+      if (grassOfferStep === 1) {
+        showSipHint('Never again !')
+        return true
+      }
+      if (grassOfferStep === 2) {
+        showSipHint('Death added to inventory.')
+        return true
       }
       switch (result.ok) {
         case true:
