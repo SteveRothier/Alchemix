@@ -867,6 +867,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     id: "creature-goblin",
     type: "creature",
     name: "Goblin",
+    recipe: { ingredientA: "craft-gold", ingredientB: "craft-gold" },
   },
   'creature-golem': {
     id: "creature-golem",

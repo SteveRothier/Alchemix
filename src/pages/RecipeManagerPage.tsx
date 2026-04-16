@@ -949,6 +949,10 @@ type AlertItem = { id: number; message: string; kind: 'success' | 'error' }
 export function RecipeManagerPage() {
   const navigate = useNavigate()
   const vialOptions = useMemo(() => buildVialOptions(), [])
+  const ingredientOptions = useMemo(
+    () => vialOptions.filter((v) => v.type !== 'creature'),
+    [vialOptions],
+  )
   const elementOptions = useMemo(
     () => vialOptions.filter((v) => v.type === 'element'),
     [vialOptions],
@@ -2054,7 +2058,7 @@ export function RecipeManagerPage() {
                           }
                           value={elA}
                           onChange={setElA}
-                          options={vialOptions}
+                          options={ingredientOptions}
                           placeholder="Ingredient…"
                         />
                         <VialOptionCombo
@@ -2067,7 +2071,7 @@ export function RecipeManagerPage() {
                           }
                           value={elB}
                           onChange={setElB}
-                          options={vialOptions}
+                          options={ingredientOptions}
                           placeholder="Ingredient…"
                         />
                         <div className="ra-formGroup ra-formGroup--fieldRow">
