@@ -294,18 +294,6 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipe: { ingredientA: "craft-steam", ingredientB: "el-air" },
   },
-  'craft-mistral': {
-    id: "craft-mistral",
-    type: "element",
-    name: "Mistral",
-    liquid: {
-      primaryColor: "#6993c5",
-      secondaryColor: "#767caf",
-      opacity: 0.725,
-      texture: "wave",
-    },
-    recipe: { ingredientA: "el-air", ingredientB: "craft-abyss" },
-  },
   'craft-mud': {
     id: "craft-mud",
     type: "element",
@@ -341,18 +329,6 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "wave",
     },
     recipe: { ingredientA: "el-earth", ingredientB: "craft-abyss" },
-  },
-  'craft-omen': {
-    id: "craft-omen",
-    type: "element",
-    name: "Omen",
-    liquid: {
-      primaryColor: "#18546d",
-      secondaryColor: "#224b65",
-      opacity: 0.9,
-      texture: "wave",
-    },
-    recipe: { ingredientA: "craft-grove", ingredientB: "craft-abyss" },
   },
   'craft-pollen': {
     id: "craft-pollen",
@@ -854,6 +830,18 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "liquid",
     },
     recipe: { ingredientA: "el-earth", ingredientB: "craft-void" },
+  },
+  'Hail': {
+    id: "Hail",
+    type: "element",
+    name: "Hail",
+    liquid: {
+      primaryColor: "#36b6d0",
+      secondaryColor: "#0d50a2",
+      opacity: 0.54,
+      texture: "crystal",
+    },
+    recipe: { ingredientA: "ice", ingredientB: "rain" },
   },
   'heat': {
     id: "heat",

@@ -245,7 +245,7 @@ function VialOptionCombo({
   options,
   allowCustom = false,
   placeholder = 'Type to filter or pick…',
-  autoComplete = 'on',
+  autoComplete = 'off',
   compact = false,
 }: {
   inputId: string
@@ -408,6 +408,9 @@ function VialOptionCombo({
           value={typing ? text : selectedLabel}
           placeholder={placeholder}
           autoComplete={autoComplete}
+          autoCorrect="off"
+          autoCapitalize="none"
+          spellCheck={false}
           role="combobox"
           aria-expanded={open}
           aria-controls={listId}
