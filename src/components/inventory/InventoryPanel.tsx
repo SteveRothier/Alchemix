@@ -233,7 +233,7 @@ export function InventoryPanel({ elements }: InventoryPanelProps) {
   }, [elements, search, sortMode])
 
   return (
-    <div className="lab-invPanelRoot relative flex min-h-0 flex-1 flex-col gap-[0.45rem] overflow-hidden pl-[0.65rem] pr-0 pb-2 pt-1">
+    <div className="lab-invPanelRoot relative flex min-h-0 min-w-0 flex-1 flex-col gap-[0.45rem] overflow-hidden pl-[0.65rem] pr-0 pb-2 pt-1">
       <InventorySection
         title={LAB_MESSAGES.inventory.elementsSectionTitle}
         vials={filteredElements}

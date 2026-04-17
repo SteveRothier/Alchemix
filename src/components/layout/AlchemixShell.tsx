@@ -107,14 +107,29 @@ const TROPHY_CATEGORY_DEFS: TrophyCategoryDef[] = [
       'joy',
       'calm',
       'hope',
+      'trust',
+      'desire',
+      'faith',
+      'hate',
+      'envy',
       'rage',
       'anger',
+      'terror',
+      'despair',
+      'courage',
+      'guilt',
+      'doubt',
+      'paranoia',
+      'panic',
+      'devotion',
       'dream',
       'nightmare',
       'luck',
       'mind',
       'psych',
       'telepathy',
+      'soul',
+      'spirit',
     ],
   },
   {
@@ -863,7 +878,9 @@ export function AlchemixShell() {
     const fab = trophyFabRef.current
     if (!dim || !dlg || !fab) return
     const tl = playIconModalOpen(dim, dlg, fab, () => {
-      dlg.querySelector<HTMLButtonElement>('.lab-controls-close')?.focus()
+      const activeTab = dlg.querySelector<HTMLButtonElement>('.lab-trophyTab.is-active')
+      if (activeTab) activeTab.focus()
+      else dlg.querySelector<HTMLButtonElement>('.lab-controls-close')?.focus()
     })
     return () => {
       tl.kill()
@@ -1394,12 +1411,17 @@ export function AlchemixShell() {
                   type="button"
                   className="lab-controls-fab lab-offerFab"
                   aria-label={LAB_MESSAGES.dock.offerAriaLabel}
+                  aria-describedby={sipHint ? LAB_MESSAGES.dock.offerHintId : undefined}
                 >
                   <FlaskConical size={40} strokeWidth={2} aria-hidden className="shrink-0" />
                 </button>
               </div>
               {sipHint ? (
-                <p className="lab-offerHint pointer-events-none" aria-live="polite">
+                <p
+                  id={LAB_MESSAGES.dock.offerHintId}
+                  className="lab-offerHint pointer-events-none"
+                  aria-live="polite"
+                >
                   {sipHint}
                 </p>
               ) : null}
@@ -1445,7 +1467,11 @@ export function AlchemixShell() {
                         )}
                       </div>
                       <div className="lab-trophyHeaderSlot lab-trophyHeaderSlot--center">
-                        <div className="lab-trophyTabs" role="tablist" aria-label="Trophy tabs">
+                        <div
+                          className="lab-trophyTabs"
+                          role="tablist"
+                          aria-label={LAB_MESSAGES.dialogs.trophyTabsAriaLabel}
+                        >
                           <button
                             type="button"
                             role="tab"
@@ -1508,7 +1534,9 @@ export function AlchemixShell() {
                                 ) : null}
                               </span>
                               <span className="lab-trophyName">
-                                {discovered ? creature.name : '???'}
+                                {discovered
+                                  ? creature.name
+                                  : LAB_MESSAGES.dialogs.trophyUndiscoveredPlaceholder}
                               </span>
                             </li>
                           )
@@ -1541,7 +1569,9 @@ export function AlchemixShell() {
                                         discovered ? 'is-discovered' : ''
                                       }`}
                                     >
-                                      {discovered ? el.name : '???'}
+                                      {discovered
+                                        ? el.name
+                                        : LAB_MESSAGES.dialogs.trophyUndiscoveredPlaceholder}
                                     </li>
                                   )
                                 })}

@@ -253,7 +253,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.7,
       texture: "mist",
     },
-    recipe: { ingredientA: "el-air", ingredientB: "el-water" },
+    recipes: [
+      { ingredientA: "el-air", ingredientB: "el-water" },
+      { ingredientA: "Love", ingredientB: "Dream" },
+      { ingredientA: "Hope", ingredientB: "Fear" },
+    ],
   },
   'Cataclysm': {
     id: "Cataclysm",
@@ -1450,7 +1454,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.5,
       texture: "flakes",
     },
-    recipe: { ingredientA: "Love", ingredientB: "craft-void" },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "craft-void" },
+      { ingredientA: "Nightmare", ingredientB: "Calm" },
+      { ingredientA: "Doubt", ingredientB: "el-shadow" },
+    ],
   },
   'Flood': {
     id: "Flood",
@@ -1836,7 +1844,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "flakes",
     },
-    recipe: { ingredientA: "Spirit", ingredientB: "el-light" },
+    recipes: [
+      { ingredientA: "Spirit", ingredientB: "el-light" },
+      { ingredientA: "Hope", ingredientB: "Soul" },
+      { ingredientA: "Trust", ingredientB: "Faith" },
+    ],
   },
   'Luck': {
     id: "Luck",
@@ -3054,6 +3066,246 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Life", ingredientB: "Doom" },
       { ingredientA: "Parasite", ingredientB: "death" },
+    ],
+  },
+  'Courage': {
+    id: "Courage",
+    type: "element",
+    name: "Courage",
+    liquid: {
+      primaryColor: "#ff9f1c",
+      secondaryColor: "#ff5400",
+      opacity: 0.86,
+      texture: "spark",
+    },
+    recipes: [
+      { ingredientA: "Fear", ingredientB: "Love" },
+      { ingredientA: "Sacred", ingredientB: "Calm" },
+    ],
+  },
+  'Desire': {
+    id: "Desire",
+    type: "element",
+    name: "Desire",
+    liquid: {
+      primaryColor: "#d00000",
+      secondaryColor: "#6a040f",
+      opacity: 0.82,
+      texture: "swirl",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Dream" },
+      { ingredientA: "Love", ingredientB: "heat" },
+    ],
+  },
+  'Despair': {
+    id: "Despair",
+    type: "element",
+    name: "Despair",
+    liquid: {
+      primaryColor: "#240046",
+      secondaryColor: "#3c096c",
+      opacity: 0.9,
+      texture: "mist",
+    },
+    recipes: [
+      { ingredientA: "Hope", ingredientB: "death" },
+      { ingredientA: "Nightmare", ingredientB: "Calm" },
+    ],
+  },
+  'Devotion': {
+    id: "Devotion",
+    type: "element",
+    name: "Devotion",
+    liquid: {
+      primaryColor: "#ffd166",
+      secondaryColor: "#fca311",
+      opacity: 0.84,
+      texture: "glow",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Sacred" },
+      { ingredientA: "Faith", ingredientB: "Soul" },
+    ],
+  },
+  'Doubt': {
+    id: "Doubt",
+    type: "element",
+    name: "Doubt",
+    liquid: {
+      primaryColor: "#adb5bd",
+      secondaryColor: "#495057",
+      opacity: 0.78,
+      texture: "static",
+    },
+    recipes: [
+      { ingredientA: "Mind", ingredientB: "Oracle" },
+      { ingredientA: "Psychic", ingredientB: "Fear" },
+    ],
+  },
+  'Envy': {
+    id: "Envy",
+    type: "element",
+    name: "Envy",
+    liquid: {
+      primaryColor: "#2d6a4f",
+      secondaryColor: "#40916c",
+      opacity: 0.88,
+      texture: "swirl",
+    },
+    recipes: [
+      { ingredientA: "Desire", ingredientB: "Love" },
+      { ingredientA: "Hate", ingredientB: "Trust" },
+    ],
+  },
+  'Faith': {
+    id: "Faith",
+    type: "element",
+    name: "Faith",
+    liquid: {
+      primaryColor: "#fff3b0",
+      secondaryColor: "#ffd166",
+      opacity: 0.8,
+      texture: "glow",
+    },
+    recipes: [
+      { ingredientA: "Sacred", ingredientB: "Oracle" },
+      { ingredientA: "Soul", ingredientB: "Divine" },
+    ],
+  },
+  'Guilt': {
+    id: "Guilt",
+    type: "element",
+    name: "Guilt",
+    liquid: {
+      primaryColor: "#6d597a",
+      secondaryColor: "#363636",
+      opacity: 0.86,
+      texture: "ooze",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Hex" },
+      { ingredientA: "Trust", ingredientB: "Doubt" },
+    ],
+  },
+  'Hate': {
+    id: "Hate",
+    type: "element",
+    name: "Hate",
+    liquid: {
+      primaryColor: "#9d0208",
+      secondaryColor: "#370617",
+      opacity: 0.9,
+      texture: "ember",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Doom" },
+      { ingredientA: "Rage", ingredientB: "Fear" },
+    ],
+  },
+  'Hope': {
+    id: "Hope",
+    type: "element",
+    name: "Hope",
+    liquid: {
+      primaryColor: "#90e0ef",
+      secondaryColor: "#48cae4",
+      opacity: 0.72,
+      texture: "glow",
+    },
+    recipes: [
+      { ingredientA: "Dream", ingredientB: "el-light" },
+      { ingredientA: "Soul", ingredientB: "Oracle" },
+    ],
+  },
+  'Joy': {
+    id: "Joy",
+    type: "element",
+    name: "Joy",
+    liquid: {
+      primaryColor: "#ffea00",
+      secondaryColor: "#ffaa00",
+      opacity: 0.82,
+      texture: "spark",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Calm" },
+      { ingredientA: "Spirit", ingredientB: "el-light" },
+    ],
+  },
+  'Panic': {
+    id: "Panic",
+    type: "element",
+    name: "Panic",
+    liquid: {
+      primaryColor: "#ff006e",
+      secondaryColor: "#ffbe0b",
+      opacity: 0.84,
+      texture: "static",
+    },
+    recipes: [
+      { ingredientA: "Fear", ingredientB: "storm" },
+      { ingredientA: "Terror", ingredientB: "Calm" },
+    ],
+  },
+  'Paranoia': {
+    id: "Paranoia",
+    type: "element",
+    name: "Paranoia",
+    liquid: {
+      primaryColor: "#7209b7",
+      secondaryColor: "#3a0ca3",
+      opacity: 0.86,
+      texture: "static",
+    },
+    recipes: [
+      { ingredientA: "Telepathy", ingredientB: "Fear" },
+      { ingredientA: "Mind", ingredientB: "Nightmare" },
+    ],
+  },
+  'Rage': {
+    id: "Rage",
+    type: "element",
+    name: "Rage",
+    liquid: {
+      primaryColor: "#ff0000",
+      secondaryColor: "#7f0000",
+      opacity: 0.9,
+      texture: "ember",
+    },
+    recipes: [
+      { ingredientA: "el-fire", ingredientB: "Fear" },
+      { ingredientA: "Hate", ingredientB: "Calm" },
+    ],
+  },
+  'Terror': {
+    id: "Terror",
+    type: "element",
+    name: "Terror",
+    liquid: {
+      primaryColor: "#000814",
+      secondaryColor: "#001d3d",
+      opacity: 0.92,
+      texture: "mist",
+    },
+    recipes: [
+      { ingredientA: "Fear", ingredientB: "Nightmare" },
+      { ingredientA: "Panic", ingredientB: "el-shadow" },
+    ],
+  },
+  'Trust': {
+    id: "Trust",
+    type: "element",
+    name: "Trust",
+    liquid: {
+      primaryColor: "#48cae4",
+      secondaryColor: "#0077b6",
+      opacity: 0.78,
+      texture: "wave",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Soul" },
+      { ingredientA: "Sacred", ingredientB: "Oracle" },
     ],
   },
   'Wood': {

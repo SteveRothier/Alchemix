@@ -19,6 +19,7 @@ export const LAB_MESSAGES = {
     creaturesLabel: 'Creatures',
     creaturesTooltip: 'Creatures',
     offerAriaLabel: 'Offer element for creature unlock',
+    offerHintId: 'lab-offer-hint',
     resetAriaLabel: 'Reset progress',
     resetTooltip: 'Reset progress',
     clearAriaLabel: 'Clear canvas',
@@ -44,6 +45,8 @@ export const LAB_MESSAGES = {
     trophyTabCategoriesAriaLabel: 'Show categories progress',
     trophyTabCreaturesAriaLabel: 'Show creatures list',
     trophyBackToCategoriesAriaLabel: 'Back to categories',
+    trophyTabsAriaLabel: 'Trophy view tabs',
+    trophyUndiscoveredPlaceholder: '???',
   },
   controlsRows: [
     { keys: 'Left click', detail: 'Select item' },
