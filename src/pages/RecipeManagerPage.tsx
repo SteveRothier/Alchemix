@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type ChangeEvent,
   type FormEvent,
   type ReactNode,
 } from 'react'
@@ -14,11 +15,13 @@ import {
   ArrowDownAZ,
   ArrowDownUp,
   ArrowDownWideNarrow,
+  Download,
   MoveLeft,
   MoveRight,
   Pencil,
   RefreshCcw,
   Trash2,
+  Upload,
 } from 'lucide-react'
 import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
 import { STARTER_VIAL_DEFINITIONS } from '../data/starterVials'
@@ -26,6 +29,7 @@ import { gsap } from '../lib/gsap'
 import { inferLabelFromRef } from '../lib/inferVialLabel'
 import { applyLegacyVialIdRename } from '../lib/legacyVialIdRenames'
 import { buildCraftedVialsTs } from '../lib/buildCraftedVialsSource'
+import { pairKey } from '../lib/recipeMap'
 import {
   AMBIGUOUS_NAME_ERROR,
   HALF_PAIR_ERROR,
@@ -71,6 +75,11 @@ const WORKSHOP_MESSAGES = {
     'craftedVials updated directly in src/data. Restart the dev server if needed.',
   saveFailed:
     'Could not save in this context. Run with the local save API enabled.',
+  exportReady: 'Register export downloaded.',
+  exportFailed: 'Could not export the register.',
+  importFailed: 'Could not import this file (invalid format).',
+  importApplied: 'Register imported.',
+  importEmptySelection: 'No file selected for import.',
   creatureNameRequired: 'Creature name is required.',
   creatureNameInvalid: 'Creature name is invalid.',
   resultRequired: 'Result is required.',
@@ -123,6 +132,14 @@ type VisualOverrideDraft = {
   secondaryColor: string
   opacity: number
   texture: LiquidTexture
+}
+type RegisterExportPayloadV1 = {
+  version: 1
+  exportedAt: string
+  pairs: EditablePair[]
+  soloRows: EditableSolo[]
+  hiddenCatalogSoloIds: string[]
+  visualOverrides: Record<string, VisualOverrideDraft>
 }
 
 const COMBO_LIST_LIMIT = 120
@@ -591,15 +608,28 @@ function TextureSelect({
 
 function seedCraftedTemplatePairs(): EditablePair[] {
   const rows = Object.entries(CRAFTED_VIAL_TEMPLATES)
-    .filter(([id, t]) => t.recipe || t.type === 'creature' || id.startsWith('creature-'))
+    .filter(
+      ([id, t]) =>
+        !!t.recipe || (t.recipes?.length ?? 0) > 0 || t.type === 'creature' || id.startsWith('creature-'),
+    )
     .sort(([a], [b]) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
 
-  return rows.map(([resultId, t], i) => ({
-    clientId: i + 1,
-    a: t.recipe?.ingredientA ?? '',
-    b: t.recipe?.ingredientB ?? '',
-    resultId,
-  }))
+  const flatRows: Omit<EditablePair, 'clientId'>[] = []
+  for (const [resultId, t] of rows) {
+    const recipes = t.recipes?.length ? t.recipes : t.recipe ? [t.recipe] : []
+    if (recipes.length === 0) {
+      flatRows.push({ a: '', b: '', resultId })
+      continue
+    }
+    for (const recipe of recipes) {
+      flatRows.push({
+        a: recipe.ingredientA ?? '',
+        b: recipe.ingredientB ?? '',
+        resultId,
+      })
+    }
+  }
+  return flatRows.map((row, i) => ({ ...row, clientId: i + 1 }))
 }
 
 /** Registre : uniquement les paires définies dans `craftedVials.ts` (catalogue seed). */
@@ -614,7 +644,7 @@ function seedPairs(): EditablePair[] {
 
 function seedSolo(): EditableSolo[] {
   const soloIds = Object.entries(CRAFTED_VIAL_TEMPLATES)
-    .filter(([, t]) => t.type === 'element' && !t.recipe)
+    .filter(([, t]) => t.type === 'element' && !t.recipe && !(t.recipes?.length))
     .map(([id]) => id)
     .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
 
@@ -647,10 +677,15 @@ function loadPairs(): EditablePair[] {
       )
     })
     const defaults = seedPairs()
-    const existing = new Set(normalized.map((p) => p.resultId))
+    // Important: autoriser plusieurs recettes pour un même résultat.
+    const existing = new Set(
+      normalized.map((p) => `${pairKey(p.a, p.b)}|${p.resultId.trim()}`),
+    )
     const nextClientId =
       normalized.reduce((m, p) => Math.max(m, p.clientId), 0) + 1
-    const extra = defaults.filter((p) => !existing.has(p.resultId))
+    const extra = defaults.filter(
+      (p) => !existing.has(`${pairKey(p.a, p.b)}|${p.resultId.trim()}`),
+    )
     const merged =
       extra.length === 0
         ? normalized
@@ -1051,6 +1086,7 @@ export function RecipeManagerPage() {
   const addBtnRef = useRef<HTMLButtonElement>(null)
   const registerTableScrollRef = useRef<HTMLDivElement>(null)
   const backNavLinkRef = useRef<HTMLAnchorElement>(null)
+  const importFileInputRef = useRef<HTMLInputElement>(null)
   const modalAnchorRef = useRef<HTMLElement | null>(null)
   const deleteOverlayRef = useRef<HTMLDivElement>(null)
   const deleteDialogRef = useRef<HTMLDivElement>(null)
@@ -1978,6 +2014,115 @@ export function RecipeManagerPage() {
     hiddenCatalogSoloIds,
   ])
 
+  const exportRegister = useCallback(() => {
+    try {
+      const payload: RegisterExportPayloadV1 = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        pairs,
+        soloRows,
+        hiddenCatalogSoloIds,
+        visualOverrides,
+      }
+      const blob = new Blob([JSON.stringify(payload, null, 2)], {
+        type: 'application/json',
+      })
+      const url = URL.createObjectURL(blob)
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `alchemix-register-${stamp}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      pushAlert(WORKSHOP_MESSAGES.exportReady, 'success')
+    } catch {
+      pushAlert(WORKSHOP_MESSAGES.exportFailed, 'error')
+    }
+  }, [pairs, soloRows, hiddenCatalogSoloIds, visualOverrides, pushAlert])
+
+  const onImportRegisterFileChange = useCallback(
+    async (e: ChangeEvent<HTMLInputElement>) => {
+      const inputEl = e.currentTarget
+      const file = inputEl.files?.[0]
+      if (!file) {
+        pushAlert(WORKSHOP_MESSAGES.importEmptySelection, 'error')
+        return
+      }
+      try {
+        const raw = await file.text()
+        const parsed = JSON.parse(raw) as Partial<RegisterExportPayloadV1>
+        const textureSet = new Set<LiquidTexture>(TEXTURE_OPTIONS)
+
+        const importedPairs = Array.isArray(parsed.pairs) ? parsed.pairs : []
+        const nextPairs: EditablePair[] = importedPairs
+          .map((row, i) => ({
+            clientId: typeof row?.clientId === 'number' ? row.clientId : i + 1,
+            a: applyLegacyVialIdRename(String(row?.a ?? '').trim()),
+            b: applyLegacyVialIdRename(String(row?.b ?? '').trim()),
+            resultId: applyLegacyVialIdRename(String(row?.resultId ?? '').trim()),
+          }))
+          .filter((row) => row.resultId !== '')
+
+        const importedSolo = Array.isArray(parsed.soloRows) ? parsed.soloRows : []
+        const nextSoloRows: EditableSolo[] = importedSolo
+          .map((row, i) => ({
+            clientId: typeof row?.clientId === 'number' ? row.clientId : 10_000 + i,
+            id: applyLegacyVialIdRename(String(row?.id ?? '').trim()),
+          }))
+          .filter((row) => row.id !== '')
+
+        const importedHidden = Array.isArray(parsed.hiddenCatalogSoloIds)
+          ? parsed.hiddenCatalogSoloIds
+          : []
+        const nextHidden = importedHidden
+          .map((id) => applyLegacyVialIdRename(String(id).trim()))
+          .filter(Boolean)
+
+        const importedVisual = parsed.visualOverrides
+        const nextVisualOverrides: Record<string, VisualOverrideDraft> = {}
+        if (importedVisual && typeof importedVisual === 'object') {
+          for (const [rawId, rawValue] of Object.entries(importedVisual)) {
+            const id = applyLegacyVialIdRename(String(rawId).trim())
+            if (!id || !rawValue || typeof rawValue !== 'object') continue
+            const v = rawValue as Partial<VisualOverrideDraft>
+            const parsedOpacity = Number(v.opacity)
+            const texture = String(v.texture ?? '')
+            const textureSafe = textureSet.has(texture as LiquidTexture)
+              ? (texture as LiquidTexture)
+              : 'liquid'
+            nextVisualOverrides[id] = {
+              primaryColor: String(v.primaryColor ?? '#ffffff').trim() || '#ffffff',
+              secondaryColor: String(v.secondaryColor ?? '').trim(),
+              opacity: Number.isFinite(parsedOpacity)
+                ? Math.min(1, Math.max(0, parsedOpacity))
+                : 0.85,
+              texture: textureSafe,
+            }
+          }
+        }
+
+        setPairs(nextPairs)
+        setSoloRows(nextSoloRows)
+        setHiddenCatalogSoloIds(nextHidden)
+        setVisualOverrides(nextVisualOverrides)
+        setEditingPair(null)
+        setEditingSolo(null)
+        setRegistreDeletePrompt(null)
+        setRegisterPage(1)
+        registerBaselineRef.current = null
+        pushAlert(WORKSHOP_MESSAGES.importApplied, 'success')
+      } catch {
+        pushAlert(WORKSHOP_MESSAGES.importFailed, 'error')
+      } finally {
+        // Permet de réimporter le même fichier sans erreur silencieuse.
+        inputEl.value = ''
+      }
+    },
+    [pushAlert],
+  )
+
   const typeClass = (t: VialType | 'unknown' | 'fioleSeule') => {
     if (t === 'fioleSeule') return 'ra-typeSolo'
     if (t === 'element') return 'ra-typeElement'
@@ -2020,6 +2165,31 @@ export function RecipeManagerPage() {
         <header className="flex shrink-0 flex-nowrap items-center justify-between gap-3 border-b border-[color:var(--lab-border)] pb-1.5">
           <h1 className="ra-pageTitle">Alchemix — Recipe workshop</h1>
           <div className="ra-topActions flex shrink-0 items-center gap-2">
+            <input
+              ref={importFileInputRef}
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={onImportRegisterFileChange}
+            />
+            <button
+              type="button"
+              className="ra-btn ra-btnSecondary"
+              onClick={exportRegister}
+              title="Export register"
+              aria-label="Export register"
+            >
+              <Download size={14} />
+            </button>
+            <button
+              type="button"
+              className="ra-btn ra-btnSecondary"
+              onClick={() => importFileInputRef.current?.click()}
+              title="Import register"
+              aria-label="Import register"
+            >
+              <Upload size={14} />
+            </button>
             <button
               type="button"
               className="ra-btn ra-btnSecondary"

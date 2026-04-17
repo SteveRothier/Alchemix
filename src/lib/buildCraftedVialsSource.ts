@@ -27,7 +27,25 @@ function cloneTemplate(t: CraftedVialTemplate): CraftedVialTemplate {
     ...t,
     ...(t.liquid ? { liquid: { ...t.liquid } } : {}),
     recipe: t.recipe ? { ...t.recipe } : undefined,
+    recipes: t.recipes?.map((r) => ({ ...r })),
   }
+}
+
+function dedupeRecipes(
+  rows: Array<{ ingredientA: string; ingredientB: string }>,
+): Array<{ ingredientA: string; ingredientB: string }> {
+  const out: Array<{ ingredientA: string; ingredientB: string }> = []
+  const seen = new Set<string>()
+  for (const row of rows) {
+    const a = row.ingredientA.trim()
+    const b = row.ingredientB.trim()
+    if (!a || !b) continue
+    const k = [a, b].sort().join('|')
+    if (seen.has(k)) continue
+    seen.add(k)
+    out.push({ ingredientA: a, ingredientB: b })
+  }
+  return out
 }
 
 export function buildCraftedVialsTs(
@@ -42,6 +60,7 @@ export function buildCraftedVialsTs(
 
   const pairIds = new Set<string>()
   const ingredientIds = new Set<string>()
+  const recipesByResultId = new Map<string, Array<{ ingredientA: string; ingredientB: string }>>()
   for (const p of pairs) {
     const id = p.resultId.trim()
     if (!id) continue
@@ -61,8 +80,28 @@ export function buildCraftedVialsTs(
           name: inferLabelFromRef(id),
           liquid: defaultLiquid(),
         }
-    if (a && b) next.recipe = { ingredientA: a, ingredientB: b }
-    else delete next.recipe
+    const prev = recipesByResultId.get(id) ?? []
+    if (a && b) recipesByResultId.set(id, [...prev, { ingredientA: a, ingredientB: b }])
+    else recipesByResultId.set(id, prev)
+    delete next.recipe
+    delete next.recipes
+    out.set(id, next)
+  }
+
+  for (const [id, rows] of recipesByResultId.entries()) {
+    const next = out.get(id)
+    if (!next) continue
+    const recipes = dedupeRecipes(rows)
+    if (recipes.length === 0) {
+      delete next.recipe
+      delete next.recipes
+    } else if (recipes.length === 1) {
+      next.recipe = recipes[0]
+      delete next.recipes
+    } else {
+      next.recipes = recipes
+      delete next.recipe
+    }
     out.set(id, next)
   }
 
@@ -81,6 +120,7 @@ export function buildCraftedVialsTs(
           liquid: defaultLiquid(),
         }
     delete next.recipe
+    delete next.recipes
     out.set(id, next)
   }
 
@@ -128,6 +168,7 @@ export function buildCraftedVialsTs(
     "  'discoveredAt' | 'rarity' | 'description' | 'icon' | 'liquid'",
     '> & {',
     "  liquid?: Vial['liquid']",
+    "  recipes?: Array<{ ingredientA: string; ingredientB: string }>",
     '}',
     '',
     '/** Fioles du catalogue seed (sans `discoveredAt`). */',
@@ -156,6 +197,15 @@ export function buildCraftedVialsTs(
       lines.push(
         `    recipe: { ingredientA: ${q(t.recipe.ingredientA)}, ingredientB: ${q(t.recipe.ingredientB)} },`,
       )
+    }
+    if (t.recipes && t.recipes.length > 1) {
+      lines.push('    recipes: [')
+      for (const r of t.recipes) {
+        lines.push(
+          `      { ingredientA: ${q(r.ingredientA)}, ingredientB: ${q(r.ingredientB)} },`,
+        )
+      }
+      lines.push('    ],')
     }
     lines.push('  },')
   }

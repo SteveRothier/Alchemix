@@ -15,4 +15,20 @@ describe('buildCraftedVialsTs', () => {
     expect(ts).not.toContain('description:')
     expect(ts).not.toContain('icon:')
   })
+
+  it('keeps multiple combinations for same result', () => {
+    const ts = buildCraftedVialsTs(
+      [
+        { a: 'heat', b: 'ice', resultId: 'craft-steam' },
+        { a: 'el-water', b: 'el-fire', resultId: 'craft-steam' },
+      ],
+      [],
+      {},
+    )
+
+    expect(ts).toContain("'craft-steam': {")
+    expect(ts).toContain('recipes: [')
+    expect(ts).toContain('{ ingredientA: "heat", ingredientB: "ice" },')
+    expect(ts).toContain('{ ingredientA: "el-water", ingredientB: "el-fire" },')
+  })
 })

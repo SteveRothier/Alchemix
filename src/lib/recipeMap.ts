@@ -11,10 +11,12 @@ function pairKey(idA: string, idB: string): string {
 const SEED_RESULT_BY_PAIR = new Map<string, string>()
 
 for (const [resultId, tpl] of Object.entries(CRAFTED_VIAL_TEMPLATES)) {
-  if (!tpl.recipe) continue
-  const { ingredientA, ingredientB } = tpl.recipe
-  if (!ingredientA || !ingredientB) continue
-  SEED_RESULT_BY_PAIR.set(pairKey(ingredientA, ingredientB), resultId)
+  const recipes = tpl.recipes?.length ? tpl.recipes : tpl.recipe ? [tpl.recipe] : []
+  for (const r of recipes) {
+    const { ingredientA, ingredientB } = r
+    if (!ingredientA || !ingredientB) continue
+    SEED_RESULT_BY_PAIR.set(pairKey(ingredientA, ingredientB), resultId)
+  }
 }
 
 /** Identifiant de fiole seed si la paire est connue, sinon `null`. */
