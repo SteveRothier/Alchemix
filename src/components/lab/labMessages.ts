@@ -39,6 +39,11 @@ export const LAB_MESSAGES = {
     chooseLanguageAriaLabel: 'Choose language',
     closeCreaturePopupAriaLabel: 'Close creature popup',
     creaturesToDiscoverTitle: 'Creatures to discover',
+    trophyCategoriesTitle: 'Categories',
+    trophyCreaturesTitle: 'Creatures',
+    trophyTabCategoriesAriaLabel: 'Show categories progress',
+    trophyTabCreaturesAriaLabel: 'Show creatures list',
+    trophyBackToCategoriesAriaLabel: 'Back to categories',
   },
   controlsRows: [
     { keys: 'Left click', detail: 'Select item' },

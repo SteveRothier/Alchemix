@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { FlaskConical, Trophy, X } from 'lucide-react'
+import { ChevronLeft, FlaskConical, Trophy, X } from 'lucide-react'
 import { LabDragContext, type InventoryDragEndInfo } from '../game/LabDragContext'
 import {
   clampLabPlacementPercent,
@@ -35,6 +35,232 @@ registerGsapDraggable()
 
 const LAB_UNDO_MAX = 80
 const STORAGE_KEY_LAB_PLACED = 'alchemix-lab-placed'
+
+type TrophyViewMode = 'creatures' | 'categories'
+type TrophyCategoryId =
+  | 'weather'
+  | 'emotion'
+  | 'space'
+  | 'nature'
+  | 'tech'
+  | 'mythic'
+  | 'foundations'
+  | 'forbidden'
+
+type TrophyCategoryDef = {
+  id: TrophyCategoryId
+  label: string
+  keywords: string[]
+}
+
+const TROPHY_CATEGORY_DEFS: TrophyCategoryDef[] = [
+  {
+    id: 'weather',
+    label: 'Weather',
+    keywords: [
+      'weather',
+      'cloud',
+      'rain',
+      'storm',
+      'tempest',
+      'cyclone',
+      'tornado',
+      'typhoon',
+      'monsoon',
+      'hurricane',
+      'thunder',
+      'lightning',
+      'wind',
+      'breeze',
+      'gust',
+      'gale',
+      'squall',
+      'vortex',
+      'whirl',
+      'snow',
+      'ice',
+      'frost',
+      'blizzard',
+      'hail',
+      'sleet',
+      'drizzle',
+      'drought',
+      'flood',
+      'heatwave',
+      'sandstorm',
+      'duststorm',
+      'wildfire',
+      'fog',
+      'mist',
+      'vapor',
+      'humid',
+      'pressure',
+    ],
+  },
+  {
+    id: 'emotion',
+    label: 'Emotion',
+    keywords: [
+      'emotion',
+      'love',
+      'fear',
+      'joy',
+      'calm',
+      'hope',
+      'rage',
+      'anger',
+      'dream',
+      'nightmare',
+      'luck',
+      'mind',
+      'psych',
+      'telepathy',
+    ],
+  },
+  {
+    id: 'space',
+    label: 'Space',
+    keywords: [
+      'space',
+      'cosmic',
+      'star',
+      'sun',
+      'moon',
+      'galaxy',
+      'constellation',
+      'astral',
+      'darkmatter',
+      'blackhole',
+      'portal',
+      'dimension',
+      'void',
+      'sky',
+      'comet',
+      'meteor',
+    ],
+  },
+  {
+    id: 'nature',
+    label: 'Nature',
+    keywords: [
+      'nature',
+      'grass',
+      'plant',
+      'forest',
+      'wood',
+      'tree',
+      'flower',
+      'seed',
+      'life',
+      'beast',
+      'predator',
+      'nectar',
+      'biomass',
+      'earth',
+      'stone',
+      'sand',
+      'mountain',
+      'river',
+      'ocean',
+      'glacier',
+    ],
+  },
+  {
+    id: 'tech',
+    label: 'Tech',
+    keywords: [
+      'tech',
+      'cyber',
+      'tesla',
+      'laser',
+      'signal',
+      'circuit',
+      'metal',
+      'steel',
+      'wire',
+      'glitch',
+      'error',
+      'flux',
+      'energy',
+      'power',
+      'electric',
+      'telekinesis',
+      'chrono',
+      'chronos',
+      'rewind',
+      'teleport',
+    ],
+  },
+  {
+    id: 'mythic',
+    label: 'Mythic',
+    keywords: [
+      'myth',
+      'arcane',
+      'divine',
+      'sacred',
+      'oracle',
+      'mana',
+      'halo',
+      'astral',
+      'genesis',
+      'oath',
+      'rune',
+      'spirit',
+      'holy',
+      'legend',
+      'mirage',
+      'illusion',
+      'hex',
+      'omen',
+    ],
+  },
+  {
+    id: 'forbidden',
+    label: 'Forbidden',
+    keywords: [
+      'forbidden',
+      'death',
+      'doom',
+      'wither',
+      'necro',
+      'parasite',
+      'virus',
+      'acid',
+      'hollow',
+      'null',
+      'void',
+      'dark',
+      'blight',
+      'curse',
+      'nightmare',
+      'nether',
+    ],
+  },
+  {
+    id: 'foundations',
+    label: 'Foundations',
+    keywords: ['air', 'water', 'fire', 'light', 'ember', 'mist', 'steam'],
+  },
+]
+
+function resolveTrophyCategoryForElement(id: string, name: string): TrophyCategoryId {
+  const haystack = `${id} ${name}`.trim().toLowerCase()
+  if (!haystack) return 'foundations'
+  let best: TrophyCategoryId = 'foundations'
+  let bestScore = 0
+  for (const def of TROPHY_CATEGORY_DEFS) {
+    let score = 0
+    for (const key of def.keywords) {
+      if (haystack.includes(key)) score += key.length >= 6 ? 2 : 1
+    }
+    if (score > bestScore) {
+      bestScore = score
+      best = def.id
+    }
+  }
+  return best
+}
 
 function parseLabPlaced(raw: unknown): LabPlacedVial[] {
   if (!Array.isArray(raw)) return []
@@ -355,6 +581,52 @@ export function AlchemixShell() {
     }
     return ids
   }, [vialsById])
+  const starterElementCatalog = useMemo(
+    () => STARTER_VIAL_DEFINITIONS.filter((v) => v.type === 'element'),
+    [],
+  )
+  const craftedElementCatalog = useMemo(
+    () => Object.values(CRAFTED_VIAL_TEMPLATES).filter((v) => v.type === 'element'),
+    [],
+  )
+  const allElementCatalog = useMemo(() => {
+    const byId = new Map<string, { id: string; name: string }>()
+    for (const el of starterElementCatalog) byId.set(el.id, { id: el.id, name: el.name })
+    for (const el of craftedElementCatalog) {
+      if (!byId.has(el.id)) byId.set(el.id, { id: el.id, name: el.name })
+    }
+    return [...byId.values()]
+  }, [craftedElementCatalog, starterElementCatalog])
+  const discoveredElementIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const v of Object.values(vialsById)) {
+      if (v.type === 'element') ids.add(v.id)
+    }
+    return ids
+  }, [vialsById])
+  const trophyCategoryProgress = useMemo(() => {
+    const byCategory = new Map<
+      TrophyCategoryId,
+      { total: number; discovered: number; elements: Array<{ id: string; name: string }> }
+    >()
+    for (const def of TROPHY_CATEGORY_DEFS) {
+      byCategory.set(def.id, { total: 0, discovered: 0, elements: [] })
+    }
+    for (const el of allElementCatalog) {
+      const id = resolveTrophyCategoryForElement(el.id, el.name)
+      const entry = byCategory.get(id)
+      if (!entry) continue
+      entry.total += 1
+      if (discoveredElementIds.has(el.id)) entry.discovered += 1
+      entry.elements.push(el)
+    }
+    return TROPHY_CATEGORY_DEFS.map((def) => ({
+      ...def,
+      total: byCategory.get(def.id)?.total ?? 0,
+      discovered: byCategory.get(def.id)?.discovered ?? 0,
+      elements: byCategory.get(def.id)?.elements ?? [],
+    }))
+  }, [allElementCatalog, discoveredElementIds])
   const undiscoveredBlackPreviewVial = useMemo(
     () =>
       ({
@@ -384,6 +656,8 @@ export function AlchemixShell() {
   const [sipHint, setSipHint] = useState<string | null>(null)
   const [inventoryGhostActive, setInventoryGhostActive] = useState(false)
   const [trophyOpen, setTrophyOpen] = useState(false)
+  const [trophyViewMode, setTrophyViewMode] = useState<TrophyViewMode>('categories')
+  const [activeTrophyCategory, setActiveTrophyCategory] = useState<TrophyCategoryId | null>(null)
   const offerDockRef = useRef<HTMLButtonElement>(null)
   const trophyFabRef = useRef<HTMLButtonElement>(null)
   const trophyDimRef = useRef<HTMLDivElement>(null)
@@ -569,11 +843,15 @@ export function AlchemixShell() {
     const fab = trophyFabRef.current
     if (!dim || !dlg || !fab) {
       setTrophyOpen(false)
+      setTrophyViewMode('categories')
+      setActiveTrophyCategory(null)
       trophyClosingRef.current = false
       return
     }
     playIconModalClose(dim, dlg, fab, () => {
       setTrophyOpen(false)
+      setTrophyViewMode('categories')
+      setActiveTrophyCategory(null)
       trophyClosingRef.current = false
     })
   }, [])
@@ -1091,7 +1369,11 @@ export function AlchemixShell() {
                     onClick={() => {
                       if (trophyClosingRef.current) return
                       if (trophyOpenRef.current) requestCloseTrophy()
-                      else setTrophyOpen(true)
+                      else {
+                        setTrophyViewMode('categories')
+                        setActiveTrophyCategory(null)
+                        setTrophyOpen(true)
+                      }
                     }}
                     aria-expanded={trophyOpen}
                     aria-haspopup="dialog"
@@ -1137,46 +1419,163 @@ export function AlchemixShell() {
                     ref={trophyDialogRef}
                     role="dialog"
                     aria-modal="true"
-                    aria-label={LAB_MESSAGES.dialogs.creaturesToDiscoverTitle}
+                    aria-label={
+                      trophyViewMode === 'creatures'
+                        ? LAB_MESSAGES.dialogs.trophyCreaturesTitle
+                        : activeTrophyCategory
+                          ? TROPHY_CATEGORY_DEFS.find((c) => c.id === activeTrophyCategory)?.label ??
+                            LAB_MESSAGES.dialogs.trophyCategoriesTitle
+                          : LAB_MESSAGES.dialogs.trophyCategoriesTitle
+                    }
                     onClick={(e) => e.stopPropagation()}
                   >
                     <header className="lab-trophyPopupHeader">
-                      <h3 className="lab-trophyPopupTitle">
-                        {LAB_MESSAGES.dialogs.creaturesToDiscoverTitle}
-                      </h3>
-                      <button
-                        type="button"
-                        className="lab-controls-close"
-                        onClick={requestCloseTrophy}
-                    aria-label={LAB_MESSAGES.dialogs.closeCreaturePopupAriaLabel}
-                      >
-                        <X size={16} strokeWidth={2} aria-hidden />
-                      </button>
+                      <div className="lab-trophyHeaderSlot lab-trophyHeaderSlot--left">
+                        {trophyViewMode === 'categories' && activeTrophyCategory ? (
+                          <button
+                            type="button"
+                            className="lab-trophyBackBtn"
+                            onClick={() => setActiveTrophyCategory(null)}
+                            aria-label={LAB_MESSAGES.dialogs.trophyBackToCategoriesAriaLabel}
+                          >
+                            <ChevronLeft size={14} strokeWidth={2.1} aria-hidden />
+                          </button>
+                        ) : (
+                          <span className="lab-trophyHeaderSlotSpacer" aria-hidden />
+                        )}
+                      </div>
+                      <div className="lab-trophyHeaderSlot lab-trophyHeaderSlot--center">
+                        <div className="lab-trophyTabs" role="tablist" aria-label="Trophy tabs">
+                          <button
+                            type="button"
+                            role="tab"
+                            className={`lab-trophyTab ${
+                              trophyViewMode === 'categories' ? 'is-active' : ''
+                            }`}
+                            aria-selected={trophyViewMode === 'categories'}
+                            onClick={() => {
+                              setActiveTrophyCategory(null)
+                              setTrophyViewMode('categories')
+                            }}
+                            aria-label={LAB_MESSAGES.dialogs.trophyTabCategoriesAriaLabel}
+                          >
+                            {LAB_MESSAGES.dialogs.trophyCategoriesTitle}
+                          </button>
+                          <button
+                            type="button"
+                            role="tab"
+                            className={`lab-trophyTab ${
+                              trophyViewMode === 'creatures' ? 'is-active' : ''
+                            }`}
+                            aria-selected={trophyViewMode === 'creatures'}
+                            onClick={() => {
+                              setActiveTrophyCategory(null)
+                              setTrophyViewMode('creatures')
+                            }}
+                            aria-label={LAB_MESSAGES.dialogs.trophyTabCreaturesAriaLabel}
+                          >
+                            {LAB_MESSAGES.dialogs.trophyCreaturesTitle}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="lab-trophyHeaderSlot lab-trophyHeaderSlot--right">
+                        <button
+                          type="button"
+                          className="lab-controls-close"
+                          onClick={requestCloseTrophy}
+                          aria-label={LAB_MESSAGES.dialogs.closeCreaturePopupAriaLabel}
+                        >
+                          <X size={16} strokeWidth={2} aria-hidden />
+                        </button>
+                      </div>
                     </header>
-                    <ul className="lab-trophyList" role="list">
-                      {creatureCatalog.map((creature) => {
-                        const discovered = discoveredCreatureIds.has(creature.id)
-                        const previewVial = creatureOfferingVialById[creature.id]
-                        const thumbVial = discovered
-                          ? previewVial
-                          : undiscoveredBlackPreviewVial
-                        return (
-                          <li key={creature.id} className="lab-trophyRow">
-                            <span className="lab-trophyThumb" aria-hidden>
-                              {thumbVial ? (
-                                <VialFlaskGraphic
-                                  vial={thumbVial}
-                                  className="lab-trophyThumbFlask"
-                                />
-                              ) : null}
-                            </span>
-                            <span className="lab-trophyName">
-                              {discovered ? creature.name : '???'}
-                            </span>
-                          </li>
-                        )
-                      })}
-                    </ul>
+                    {trophyViewMode === 'creatures' ? (
+                      <ul className="lab-trophyList" role="list">
+                        {creatureCatalog.map((creature) => {
+                          const discovered = discoveredCreatureIds.has(creature.id)
+                          const previewVial = creatureOfferingVialById[creature.id]
+                          const thumbVial = discovered
+                            ? previewVial
+                            : undiscoveredBlackPreviewVial
+                          return (
+                            <li key={creature.id} className="lab-trophyRow">
+                              <span className="lab-trophyThumb" aria-hidden>
+                                {thumbVial ? (
+                                  <VialFlaskGraphic
+                                    vial={thumbVial}
+                                    className="lab-trophyThumbFlask"
+                                  />
+                                ) : null}
+                              </span>
+                              <span className="lab-trophyName">
+                                {discovered ? creature.name : '???'}
+                              </span>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    ) : activeTrophyCategory ? (
+                      <div className="lab-trophyCategoryDetail">
+                        {(() => {
+                          const cat = trophyCategoryProgress.find((c) => c.id === activeTrophyCategory)
+                          if (!cat) return null
+                          const ratio = cat.total > 0 ? (cat.discovered / cat.total) * 100 : 0
+                          return (
+                            <>
+                              <div className="lab-trophyCategoryDetailStats">
+                                <span>
+                                  {cat.discovered} / {cat.total}
+                                </span>
+                                <span>{Math.round(ratio)}%</span>
+                              </div>
+                              <div className="lab-trophyCategoryBar" aria-hidden>
+                                <span style={{ width: `${ratio}%` }} />
+                              </div>
+                              <ul className="lab-trophyList lab-trophyCategoryChips" role="list">
+                                {cat.elements.map((el) => {
+                                  const discovered = discoveredElementIds.has(el.id)
+                                  return (
+                                    <li
+                                      key={el.id}
+                                      className={`lab-trophyCategoryChip ${
+                                        discovered ? 'is-discovered' : ''
+                                      }`}
+                                    >
+                                      {discovered ? el.name : '???'}
+                                    </li>
+                                  )
+                                })}
+                              </ul>
+                            </>
+                          )
+                        })()}
+                      </div>
+                    ) : (
+                      <ul className="lab-trophyList lab-trophyCategoryList" role="list">
+                        {trophyCategoryProgress.map((cat) => {
+                          const ratio = cat.total > 0 ? (cat.discovered / cat.total) * 100 : 0
+                          return (
+                            <li key={cat.id}>
+                              <button
+                                type="button"
+                                className="lab-trophyCategoryCard"
+                                onClick={() => setActiveTrophyCategory(cat.id)}
+                              >
+                                <div className="lab-trophyCategoryTop">
+                                  <span className="lab-trophyCategoryName">{cat.label}</span>
+                                  <span className="lab-trophyCategoryCount">
+                                    {cat.discovered} / {cat.total}
+                                  </span>
+                                </div>
+                                <div className="lab-trophyCategoryBar" aria-hidden>
+                                  <span style={{ width: `${ratio}%` }} />
+                                </div>
+                              </button>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
                   </div>
                 </div>
               </div>
