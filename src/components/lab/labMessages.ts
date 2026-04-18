@@ -27,9 +27,6 @@ export const LAB_MESSAGES = {
     unlocked: (creatureName: string) => `Trophy unlocked: ${creatureName}`,
     deathDescription: 'An ominous essence born from forbidden offering.',
   },
-  fusion: {
-    inert: 'This mix stays inert.',
-  },
   dock: {
     creaturesLabel: 'Creatures',
     creaturesTooltip: 'Creatures',

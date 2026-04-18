@@ -1156,19 +1156,17 @@ export function AlchemixShell() {
         const vb = vials[vialId]
         if (!va || !vb) return
         const outcome = resolveFusionProduct(va, vb, vials)
-        if (!outcome.ok) {
-          showSipHint(LAB_MESSAGES.fusion.inert)
-          return
-        }
+        const resultVial = outcome.ok ? outcome.vial : vb
+        const resultId = resultVial.id
+        const wasNew = outcome.ok && outcome.wasNew
         pushLabUndoHistory()
-        const { vial: result, wasNew } = outcome
-        if (wasNew) addVial(result)
-        recordFusion()
+        if (wasNew) addVial(resultVial)
+        if (outcome.ok) recordFusion()
         const targetInstanceId = hitVial.instanceId
         const targetChip = canvasChipForInstance(canvasEl, targetInstanceId)
         const newEntry: LabPlacedVial = {
           instanceId: crypto.randomUUID(),
-          vialId: result.id,
+          vialId: resultId,
           xPct: hitVial.xPct,
           yPct: hitVial.yPct,
         }
@@ -1221,7 +1219,7 @@ export function AlchemixShell() {
         }
       }
     },
-    [findHitPlacedVial, pushLabUndoHistory, showSipHint, tryOfferAtDock],
+    [findHitPlacedVial, pushLabUndoHistory, tryOfferAtDock],
   )
 
   const completeLabDrag = useCallback(
@@ -1253,17 +1251,15 @@ export function AlchemixShell() {
         const vb = vials[vialId]
         if (!va || !vb) return false
         const outcome = resolveFusionProduct(va, vb, vials)
-        if (!outcome.ok) {
-          showSipHint(LAB_MESSAGES.fusion.inert)
-          return false
-        }
+        const resultVial = outcome.ok ? outcome.vial : vb
+        const resultId = resultVial.id
+        const wasNew = outcome.ok && outcome.wasNew
         pushLabUndoHistory()
-        const { vial: result, wasNew } = outcome
-        if (wasNew) addVial(result)
-        recordFusion()
+        if (wasNew) addVial(resultVial)
+        if (outcome.ok) recordFusion()
         const newEntry: LabPlacedVial = {
           instanceId: crypto.randomUUID(),
-          vialId: result.id,
+          vialId: resultId,
           xPct: targetPlaced.xPct,
           yPct: targetPlaced.yPct,
         }
@@ -1357,7 +1353,7 @@ export function AlchemixShell() {
       }
       return false
     },
-    [findHitPlacedVial, pushLabUndoHistory, showSipHint, tryOfferAtDock],
+    [findHitPlacedVial, pushLabUndoHistory, tryOfferAtDock],
   )
 
   const placeInventoryVialNearLabCenter = useCallback((vialId: string) => {
