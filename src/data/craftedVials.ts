@@ -35,6 +35,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "craft-space", ingredientB: "el-air" },
       { ingredientA: "craft-mist", ingredientB: "el-light" },
+      { ingredientA: "craft-wind", ingredientB: "craft-mist" },
+      { ingredientA: "craft-wind-air", ingredientB: "craft-mist" },
     ],
   },
   'Amethyst': {
@@ -77,6 +79,12 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Mana", ingredientB: "craft-void" },
       { ingredientA: "Oracle", ingredientB: "Energy" },
+      { ingredientA: "Mana", ingredientB: "el-fire" },
+      { ingredientA: "Mana", ingredientB: "el-earth" },
+      { ingredientA: "Mana", ingredientB: "el-grass" },
+      { ingredientA: "Oracle", ingredientB: "el-water" },
+      { ingredientA: "Oracle", ingredientB: "el-fire" },
+      { ingredientA: "Oracle", ingredientB: "el-earth" },
     ],
   },
   'Astral': {
@@ -92,6 +100,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Arcane", ingredientB: "sky" },
       { ingredientA: "craft-space", ingredientB: "Soul" },
+      { ingredientA: "Nebula", ingredientB: "Arcane" },
+      { ingredientA: "Constellation", ingredientB: "Star" },
     ],
   },
   'Aurora': {
@@ -108,6 +118,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "el-light", ingredientB: "storm" },
       { ingredientA: "Aether", ingredientB: "storm" },
       { ingredientA: "el-light", ingredientB: "craft-tide" },
+      { ingredientA: "ocean", ingredientB: "el-light" },
     ],
   },
   'Beast': {
@@ -135,6 +146,9 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Plant", ingredientB: "Life" },
       { ingredientA: "Nectar", ingredientB: "Life" },
+      { ingredientA: "Life", ingredientB: "el-air" },
+      { ingredientA: "craft-spore", ingredientB: "Life" },
+      { ingredientA: "craft-bloom", ingredientB: "craft-mud" },
     ],
   },
   'Blackhole': {
@@ -150,6 +164,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Galaxy", ingredientB: "craft-void" },
       { ingredientA: "Darkmatter", ingredientB: "gravity" },
+      { ingredientA: "Constellation", ingredientB: "el-shadow" },
     ],
   },
   'Blaze': {
@@ -161,7 +176,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "liquid",
     },
-    recipe: { ingredientA: "craft-inferno", ingredientB: "el-fire" },
+    recipes: [
+      { ingredientA: "craft-inferno", ingredientB: "el-fire" },
+      { ingredientA: "blood", ingredientB: "el-fire" },
+    ],
   },
   'Blizzard': {
     id: "Blizzard",
@@ -213,7 +231,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "liquid",
     },
-    recipe: { ingredientA: "rift", ingredientB: "craft-void" },
+    recipes: [
+      { ingredientA: "rift", ingredientB: "craft-void" },
+      { ingredientA: "rift", ingredientB: "el-earth" },
+    ],
   },
   'Breeze': {
     id: "Breeze",
@@ -241,7 +262,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.9,
       texture: "wave",
     },
-    recipe: { ingredientA: "el-water", ingredientB: "craft-murk" },
+    recipes: [
+      { ingredientA: "el-water", ingredientB: "craft-murk" },
+      { ingredientA: "ocean", ingredientB: "craft-murk" },
+    ],
   },
   'Calm': {
     id: "Calm",
@@ -257,6 +281,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "el-air", ingredientB: "el-water" },
       { ingredientA: "Love", ingredientB: "Dream" },
       { ingredientA: "Hope", ingredientB: "Fear" },
+      { ingredientA: "Love", ingredientB: "el-water" },
     ],
   },
   'Cataclysm': {
@@ -289,6 +314,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "storm", ingredientB: "craft-void" },
       { ingredientA: "rift", ingredientB: "storm" },
       { ingredientA: "Cataclysm", ingredientB: "rift" },
+      { ingredientA: "craft-void", ingredientB: "el-water" },
+      { ingredientA: "craft-void", ingredientB: "el-grass" },
     ],
   },
   'Chronos': {
@@ -304,6 +331,9 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Time", ingredientB: "Constellation" },
       { ingredientA: "Permafrost", ingredientB: "Time" },
+      { ingredientA: "Time", ingredientB: "el-fire" },
+      { ingredientA: "Time", ingredientB: "el-water" },
+      { ingredientA: "Time", ingredientB: "el-earth" },
     ],
   },
   'Cloud': {
@@ -319,6 +349,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "craft-mist", ingredientB: "el-air" },
       { ingredientA: "craft-steam", ingredientB: "el-air" },
+      { ingredientA: "el-light", ingredientB: "el-water" },
+      { ingredientA: "Breeze", ingredientB: "craft-vapor" },
+      { ingredientA: "Fog", ingredientB: "el-water" },
+      { ingredientA: "craft-mist", ingredientB: "Fog" },
     ],
   },
   'Cold': {
@@ -358,7 +392,12 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "spark",
     },
-    recipe: { ingredientA: "craft-venom", ingredientB: "Metal" },
+    recipes: [
+      { ingredientA: "craft-venom", ingredientB: "Metal" },
+      { ingredientA: "Poison", ingredientB: "el-earth" },
+      { ingredientA: "Poison", ingredientB: "el-air" },
+      { ingredientA: "Poison", ingredientB: "el-grass" },
+    ],
   },
   'Corruption': {
     id: "Corruption",
@@ -374,6 +413,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "craft-blight", ingredientB: "Life" },
       { ingredientA: "Plague", ingredientB: "craft-void" },
       { ingredientA: "craft-spore", ingredientB: "craft-venom" },
+      { ingredientA: "Life", ingredientB: "el-shadow" },
     ],
   },
   'Cosmos': {
@@ -387,6 +427,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "mist",
     },
     recipe: { ingredientA: "Nebula", ingredientB: "craft-space" },
+  },
+  'Courage': {
+    id: "Courage",
+    type: "element",
+    name: "Courage",
+    liquid: {
+      primaryColor: "#ff9f1c",
+      secondaryColor: "#ff5400",
+      opacity: 0.86,
+      texture: "spark",
+    },
+    recipes: [
+      { ingredientA: "Fear", ingredientB: "Love" },
+      { ingredientA: "Sacred", ingredientB: "Calm" },
+    ],
   },
   'craft-abyss': {
     id: "craft-abyss",
@@ -416,6 +471,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "el-air", ingredientB: "craft-lava" },
       { ingredientA: "craft-lava", ingredientB: "craft-wind" },
+      { ingredientA: "death", ingredientB: "el-fire" },
     ],
   },
   'craft-blight': {
@@ -428,7 +484,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.88,
       texture: "smoke",
     },
-    recipe: { ingredientA: "el-shadow", ingredientB: "el-grass" },
+    recipes: [
+      { ingredientA: "el-shadow", ingredientB: "el-grass" },
+      { ingredientA: "death", ingredientB: "el-grass" },
+    ],
   },
   'craft-bloom': {
     id: "craft-bloom",
@@ -444,6 +503,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "el-light", ingredientB: "el-grass" },
       { ingredientA: "craft-spore", ingredientB: "el-light" },
       { ingredientA: "el-grass", ingredientB: "Nature" },
+      { ingredientA: "Nectar", ingredientB: "el-water" },
     ],
   },
   'craft-cinder': {
@@ -498,6 +558,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "craft-soil", ingredientB: "el-earth" },
       { ingredientA: "craft-mud", ingredientB: "craft-soil" },
+      { ingredientA: "Spirit", ingredientB: "el-earth" },
+      { ingredientA: "craft-mud", ingredientB: "craft-dirt" },
     ],
   },
   'craft-ember': {
@@ -522,7 +584,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.9,
       texture: "spark",
     },
-    recipe: { ingredientA: "el-fire", ingredientB: "craft-blight" },
+    recipes: [
+      { ingredientA: "el-fire", ingredientB: "craft-blight" },
+      { ingredientA: "heat", ingredientB: "craft-bloom" },
+    ],
   },
   'craft-geyser': {
     id: "craft-geyser",
@@ -570,7 +635,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.9,
       texture: "bubbles",
     },
-    recipe: { ingredientA: "el-grass", ingredientB: "el-grass" },
+    recipes: [
+      { ingredientA: "el-grass", ingredientB: "el-grass" },
+      { ingredientA: "craft-bloom", ingredientB: "craft-dirt" },
+      { ingredientA: "craft-bloom", ingredientB: "craft-soil" },
+    ],
   },
   'craft-inferno': {
     id: "craft-inferno",
@@ -582,7 +651,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.93,
       texture: "spark",
     },
-    recipe: { ingredientA: "el-fire", ingredientB: "el-shadow" },
+    recipes: [
+      { ingredientA: "el-fire", ingredientB: "el-shadow" },
+      { ingredientA: "Oil", ingredientB: "el-fire" },
+    ],
   },
   'craft-lagoon': {
     id: "craft-lagoon",
@@ -597,6 +669,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "el-water", ingredientB: "craft-bloom" },
       { ingredientA: "ocean", ingredientB: "craft-steam" },
+      { ingredientA: "ocean", ingredientB: "craft-mud" },
     ],
   },
   'craft-lava': {
@@ -609,7 +682,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.95,
       texture: "liquid",
     },
-    recipe: { ingredientA: "el-fire", ingredientB: "el-earth" },
+    recipes: [
+      { ingredientA: "el-fire", ingredientB: "el-earth" },
+      { ingredientA: "Metal", ingredientB: "el-fire" },
+    ],
   },
   'craft-mirror': {
     id: "craft-mirror",
@@ -621,7 +697,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.88,
       texture: "wave",
     },
-    recipe: { ingredientA: "craft-blight", ingredientB: "el-water" },
+    recipes: [
+      { ingredientA: "craft-blight", ingredientB: "el-water" },
+      { ingredientA: "Glass", ingredientB: "craft-vapor" },
+    ],
   },
   'craft-mist': {
     id: "craft-mist",
@@ -636,6 +715,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "smoke", ingredientB: "craft-steam" },
       { ingredientA: "el-air", ingredientB: "craft-steam" },
+      { ingredientA: "Dream", ingredientB: "el-water" },
+      { ingredientA: "smoke", ingredientB: "el-water" },
     ],
   },
   'craft-mud': {
@@ -652,6 +733,9 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "el-water", ingredientB: "el-earth" },
       { ingredientA: "craft-swamp", ingredientB: "el-water" },
       { ingredientA: "el-water", ingredientB: "craft-dirt" },
+      { ingredientA: "smoke", ingredientB: "el-earth" },
+      { ingredientA: "Drought", ingredientB: "el-water" },
+      { ingredientA: "Dust", ingredientB: "ocean" },
     ],
   },
   'craft-murk': {
@@ -676,7 +760,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.9,
       texture: "wave",
     },
-    recipe: { ingredientA: "el-earth", ingredientB: "craft-abyss" },
+    recipes: [
+      { ingredientA: "el-earth", ingredientB: "craft-abyss" },
+      { ingredientA: "el-earth", ingredientB: "el-shadow" },
+    ],
   },
   'craft-pollen': {
     id: "craft-pollen",
@@ -704,6 +791,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "el-earth", ingredientB: "el-air" },
       { ingredientA: "el-air", ingredientB: "craft-stone" },
       { ingredientA: "el-water", ingredientB: "craft-stone" },
+      { ingredientA: "Glass", ingredientB: "Dust" },
+      { ingredientA: "quicksand", ingredientB: "craft-stone" },
     ],
   },
   'craft-soil': {
@@ -716,7 +805,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.9,
       texture: "liquid",
     },
-    recipe: { ingredientA: "el-earth", ingredientB: "el-grass" },
+    recipes: [
+      { ingredientA: "el-earth", ingredientB: "el-grass" },
+      { ingredientA: "Fog", ingredientB: "el-earth" },
+      { ingredientA: "craft-dirt", ingredientB: "el-light" },
+    ],
   },
   'craft-space': {
     id: "craft-space",
@@ -743,6 +836,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "el-fire", ingredientB: "craft-cyclone" },
       { ingredientA: "Electric", ingredientB: "craft-stone" },
+      { ingredientA: "ice", ingredientB: "Electric" },
+      { ingredientA: "snow", ingredientB: "Electric" },
     ],
   },
   'craft-spore': {
@@ -777,6 +872,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "heat", ingredientB: "ice" },
       { ingredientA: "el-fire", ingredientB: "el-water" },
       { ingredientA: "Plasma", ingredientB: "el-water" },
+      { ingredientA: "heat", ingredientB: "el-water" },
+      { ingredientA: "Cold", ingredientB: "el-fire" },
+      { ingredientA: "heat", ingredientB: "Whirlpool" },
+      { ingredientA: "heat", ingredientB: "rain" },
+      { ingredientA: "Frost", ingredientB: "heat" },
     ],
   },
   'craft-stone': {
@@ -789,7 +889,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.92,
       texture: "liquid",
     },
-    recipe: { ingredientA: "el-earth", ingredientB: "el-earth" },
+    recipes: [
+      { ingredientA: "el-earth", ingredientB: "el-earth" },
+      { ingredientA: "Glass", ingredientB: "el-earth" },
+    ],
   },
   'craft-surge': {
     id: "craft-surge",
@@ -818,6 +921,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "Bog", ingredientB: "craft-mud" },
       { ingredientA: "craft-spore", ingredientB: "el-water" },
       { ingredientA: "el-water", ingredientB: "Nature" },
+      { ingredientA: "Wood", ingredientB: "el-water" },
     ],
   },
   'craft-tempest': {
@@ -830,7 +934,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.78,
       texture: "wave",
     },
-    recipe: { ingredientA: "craft-wind", ingredientB: "storm" },
+    recipes: [
+      { ingredientA: "craft-wind", ingredientB: "storm" },
+      { ingredientA: "Monsoon", ingredientB: "craft-wind" },
+    ],
   },
   'craft-tide': {
     id: "craft-tide",
@@ -1175,6 +1282,51 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipe: { ingredientA: "craft-sand", ingredientB: "el-earth" },
   },
+  'Desire': {
+    id: "Desire",
+    type: "element",
+    name: "Desire",
+    liquid: {
+      primaryColor: "#d00000",
+      secondaryColor: "#6a040f",
+      opacity: 0.82,
+      texture: "swirl",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Dream" },
+      { ingredientA: "Love", ingredientB: "heat" },
+    ],
+  },
+  'Despair': {
+    id: "Despair",
+    type: "element",
+    name: "Despair",
+    liquid: {
+      primaryColor: "#240046",
+      secondaryColor: "#3c096c",
+      opacity: 0.9,
+      texture: "mist",
+    },
+    recipes: [
+      { ingredientA: "Hope", ingredientB: "death" },
+      { ingredientA: "Nightmare", ingredientB: "Calm" },
+    ],
+  },
+  'Devotion': {
+    id: "Devotion",
+    type: "element",
+    name: "Devotion",
+    liquid: {
+      primaryColor: "#ffd166",
+      secondaryColor: "#fca311",
+      opacity: 0.84,
+      texture: "glow",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Sacred" },
+      { ingredientA: "Faith", ingredientB: "Soul" },
+    ],
+  },
   'Diamond': {
     id: "Diamond",
     type: "element",
@@ -1235,6 +1387,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "Omen", ingredientB: "Wither" },
     ],
   },
+  'Doubt': {
+    id: "Doubt",
+    type: "element",
+    name: "Doubt",
+    liquid: {
+      primaryColor: "#adb5bd",
+      secondaryColor: "#495057",
+      opacity: 0.78,
+      texture: "static",
+    },
+    recipes: [
+      { ingredientA: "Mind", ingredientB: "Oracle" },
+      { ingredientA: "Psychic", ingredientB: "Fear" },
+    ],
+  },
   'Dream': {
     id: "Dream",
     type: "element",
@@ -1246,6 +1413,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "mist",
     },
     recipe: { ingredientA: "Spirit", ingredientB: "craft-mist" },
+  },
+  'Drizzle': {
+    id: "Drizzle",
+    type: "element",
+    name: "Drizzle",
+    liquid: {
+      primaryColor: "#cfefff",
+      secondaryColor: "#a8d8ff",
+      opacity: 0.55,
+      texture: "mist",
+    },
+    recipes: [
+      { ingredientA: "rain", ingredientB: "Cloud" },
+      { ingredientA: "rain", ingredientB: "craft-mist" },
+    ],
   },
   'Drought': {
     id: "Drought",
@@ -1260,6 +1442,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Heatwave", ingredientB: "el-water" },
       { ingredientA: "Sunscorch", ingredientB: "Plant" },
+      { ingredientA: "Sunflare", ingredientB: "el-earth" },
+      { ingredientA: "heat", ingredientB: "craft-wind-air" },
     ],
   },
   'dune': {
@@ -1275,6 +1459,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "desert", ingredientB: "craft-wind-air" },
       { ingredientA: "desert", ingredientB: "craft-wind" },
+      { ingredientA: "sandstorm", ingredientB: "craft-bloom" },
     ],
   },
   'Dust': {
@@ -1290,6 +1475,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "craft-wind", ingredientB: "craft-stone" },
       { ingredientA: "craft-sand", ingredientB: "el-air" },
+      { ingredientA: "heat", ingredientB: "craft-wind" },
     ],
   },
   'Duststorm': {
@@ -1305,6 +1491,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Dust", ingredientB: "storm" },
       { ingredientA: "Gust", ingredientB: "Dust" },
+      { ingredientA: "sandstorm", ingredientB: "Dust" },
     ],
   },
   'Echo': {
@@ -1332,7 +1519,12 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.75,
       texture: "spark",
     },
-    recipe: { ingredientA: "craft-steam", ingredientB: "craft-sand" },
+    recipes: [
+      { ingredientA: "craft-steam", ingredientB: "craft-sand" },
+      { ingredientA: "el-water", ingredientB: "craft-sand" },
+      { ingredientA: "el-fire", ingredientB: "craft-steam" },
+      { ingredientA: "heat", ingredientB: "el-air" },
+    ],
   },
   'el-shadow': {
     id: "el-shadow",
@@ -1344,7 +1536,12 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "smoke",
     },
-    recipe: { ingredientA: "craft-mist", ingredientB: "craft-ash" },
+    recipes: [
+      { ingredientA: "craft-mist", ingredientB: "craft-ash" },
+      { ingredientA: "el-fire", ingredientB: "craft-mist" },
+      { ingredientA: "el-earth", ingredientB: "craft-mist" },
+      { ingredientA: "el-water", ingredientB: "craft-ash" },
+    ],
   },
   'el-water': {
     id: "el-water",
@@ -1367,7 +1564,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.95,
       texture: "swirl",
     },
-    recipe: { ingredientA: "storm", ingredientB: "el-air" },
+    recipes: [
+      { ingredientA: "storm", ingredientB: "el-air" },
+      { ingredientA: "Energy", ingredientB: "el-water" },
+      { ingredientA: "Electric", ingredientB: "ocean" },
+    ],
   },
   'Emerald': {
     id: "Emerald",
@@ -1397,6 +1598,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Plasma", ingredientB: "el-light" },
       { ingredientA: "Lightning", ingredientB: "Flux" },
+      { ingredientA: "Electric", ingredientB: "craft-mud" },
     ],
   },
   'Enigma': {
@@ -1412,6 +1614,22 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Paradox", ingredientB: "craft-space" },
       { ingredientA: "Oblivion", ingredientB: "Time" },
+    ],
+  },
+  'Envy': {
+    id: "Envy",
+    type: "element",
+    name: "Envy",
+    liquid: {
+      primaryColor: "#2d6a4f",
+      secondaryColor: "#40916c",
+      opacity: 0.88,
+      texture: "swirl",
+    },
+    recipes: [
+      { ingredientA: "Desire", ingredientB: "Love" },
+      { ingredientA: "Hate", ingredientB: "Trust" },
+      { ingredientA: "Love", ingredientB: "el-shadow" },
     ],
   },
   'Error': {
@@ -1444,6 +1662,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "Torch", ingredientB: "Oil" },
     ],
   },
+  'Faith': {
+    id: "Faith",
+    type: "element",
+    name: "Faith",
+    liquid: {
+      primaryColor: "#fff3b0",
+      secondaryColor: "#ffd166",
+      opacity: 0.8,
+      texture: "glow",
+    },
+    recipes: [
+      { ingredientA: "Sacred", ingredientB: "Oracle" },
+      { ingredientA: "Soul", ingredientB: "Divine" },
+    ],
+  },
   'Fear': {
     id: "Fear",
     type: "element",
@@ -1473,6 +1706,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "storm", ingredientB: "craft-tide" },
       { ingredientA: "rain", ingredientB: "ocean" },
+      { ingredientA: "Mirage", ingredientB: "Monsoon" },
     ],
   },
   'Flux': {
@@ -1506,6 +1740,9 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "el-air", ingredientB: "craft-swamp" },
       { ingredientA: "craft-spore", ingredientB: "craft-mist" },
       { ingredientA: "craft-mist", ingredientB: "el-water" },
+      { ingredientA: "ocean", ingredientB: "smoke" },
+      { ingredientA: "Monsoon", ingredientB: "craft-vapor" },
+      { ingredientA: "Cloud", ingredientB: "smoke" },
     ],
   },
   'Forest': {
@@ -1560,6 +1797,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Cosmos", ingredientB: "Constellation" },
       { ingredientA: "Astral", ingredientB: "craft-space" },
+      { ingredientA: "Cosmos", ingredientB: "el-water" },
+      { ingredientA: "Cosmos", ingredientB: "el-shadow" },
     ],
   },
   'Genesis': {
@@ -1575,6 +1814,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Life", ingredientB: "Divine" },
       { ingredientA: "Oath", ingredientB: "Time" },
+      { ingredientA: "Divine", ingredientB: "el-water" },
     ],
   },
   'Glacier': {
@@ -1590,6 +1830,9 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "ice", ingredientB: "craft-stone" },
       { ingredientA: "Cloud", ingredientB: "Cold" },
+      { ingredientA: "snow", ingredientB: "el-earth" },
+      { ingredientA: "Blizzard", ingredientB: "el-earth" },
+      { ingredientA: "ice", ingredientB: "ocean" },
     ],
   },
   'Glass': {
@@ -1634,6 +1877,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipe: { ingredientA: "el-earth", ingredientB: "craft-void" },
   },
+  'Guilt': {
+    id: "Guilt",
+    type: "element",
+    name: "Guilt",
+    liquid: {
+      primaryColor: "#6d597a",
+      secondaryColor: "#363636",
+      opacity: 0.86,
+      texture: "ooze",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Hex" },
+      { ingredientA: "Trust", ingredientB: "Doubt" },
+    ],
+  },
   'Gust': {
     id: "Gust",
     type: "element",
@@ -1659,7 +1917,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.54,
       texture: "crystal",
     },
-    recipe: { ingredientA: "ice", ingredientB: "craft-wind" },
+    recipes: [
+      { ingredientA: "ice", ingredientB: "craft-wind" },
+      { ingredientA: "Mirage", ingredientB: "storm" },
+    ],
   },
   'Halo': {
     id: "Halo",
@@ -1674,6 +1935,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Astral", ingredientB: "el-light" },
       { ingredientA: "sky", ingredientB: "el-light" },
+    ],
+  },
+  'Hate': {
+    id: "Hate",
+    type: "element",
+    name: "Hate",
+    liquid: {
+      primaryColor: "#9d0208",
+      secondaryColor: "#370617",
+      opacity: 0.9,
+      texture: "ember",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Doom" },
+      { ingredientA: "Rage", ingredientB: "Fear" },
     ],
   },
   'heat': {
@@ -1700,6 +1976,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "heat", ingredientB: "Sunflare" },
       { ingredientA: "Drought", ingredientB: "el-fire" },
+      { ingredientA: "Plant", ingredientB: "heat" },
     ],
   },
   'hell': {
@@ -1752,6 +2029,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipe: { ingredientA: "craft-void", ingredientB: "craft-ash" },
   },
+  'Hope': {
+    id: "Hope",
+    type: "element",
+    name: "Hope",
+    liquid: {
+      primaryColor: "#90e0ef",
+      secondaryColor: "#48cae4",
+      opacity: 0.72,
+      texture: "glow",
+    },
+    recipes: [
+      { ingredientA: "Dream", ingredientB: "el-light" },
+      { ingredientA: "Soul", ingredientB: "Oracle" },
+    ],
+  },
   'Hurricane': {
     id: "Hurricane",
     type: "element",
@@ -1765,6 +2057,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Gust", ingredientB: "storm" },
       { ingredientA: "craft-cyclone", ingredientB: "ocean" },
+      { ingredientA: "craft-tornado", ingredientB: "craft-mud" },
     ],
   },
   'ice': {
@@ -1791,6 +2084,22 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Dream", ingredientB: "el-light" },
       { ingredientA: "mind", ingredientB: "Fog" },
+      { ingredientA: "Dream", ingredientB: "el-air" },
+    ],
+  },
+  'Joy': {
+    id: "Joy",
+    type: "element",
+    name: "Joy",
+    liquid: {
+      primaryColor: "#ffea00",
+      secondaryColor: "#ffaa00",
+      opacity: 0.82,
+      texture: "spark",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Calm" },
+      { ingredientA: "Spirit", ingredientB: "el-light" },
     ],
   },
   'Laser': {
@@ -1806,6 +2115,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "el-light", ingredientB: "Energy" },
       { ingredientA: "Ruby", ingredientB: "el-light" },
+      { ingredientA: "Constellation", ingredientB: "el-fire" },
+      { ingredientA: "Mirage", ingredientB: "Electric" },
     ],
   },
   'Life': {
@@ -1818,6 +2129,22 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "liquid",
     },
     recipe: { ingredientA: "Plant", ingredientB: "el-water" },
+  },
+  'lighting': {
+    id: "lighting",
+    type: "element",
+    name: "Lighting",
+    liquid: {
+      primaryColor: "#fff3bf",
+      secondaryColor: "#ffd166",
+      opacity: 0.86,
+      texture: "glow",
+    },
+    recipes: [
+      { ingredientA: "el-light", ingredientB: "Electric" },
+      { ingredientA: "el-light", ingredientB: "craft-spark" },
+      { ingredientA: "Lightning", ingredientB: "el-light" },
+    ],
   },
   'Lightning': {
     id: "Lightning",
@@ -1832,6 +2159,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Cloud", ingredientB: "Electric" },
       { ingredientA: "storm", ingredientB: "craft-spark" },
+      { ingredientA: "Electric", ingredientB: "Whirlpool" },
     ],
   },
   'Love': {
@@ -1848,6 +2176,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "Spirit", ingredientB: "el-light" },
       { ingredientA: "Hope", ingredientB: "Soul" },
       { ingredientA: "Trust", ingredientB: "Faith" },
+      { ingredientA: "Plant", ingredientB: "Spirit" },
     ],
   },
   'Luck': {
@@ -1875,7 +2204,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "wave",
     },
-    recipe: { ingredientA: "Metal", ingredientB: "gravity" },
+    recipes: [
+      { ingredientA: "Metal", ingredientB: "gravity" },
+      { ingredientA: "Energy", ingredientB: "el-earth" },
+      { ingredientA: "Electric", ingredientB: "Rust" },
+    ],
   },
   'Mana': {
     id: "Mana",
@@ -1937,7 +2270,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.72,
       texture: "smoke",
     },
-    recipe: { ingredientA: "craft-swamp", ingredientB: "Fog" },
+    recipes: [
+      { ingredientA: "craft-swamp", ingredientB: "Fog" },
+      { ingredientA: "craft-spore", ingredientB: "Monsoon" },
+    ],
   },
   'Mind': {
     id: "mind",
@@ -1964,7 +2300,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "ooze",
     },
-    recipe: { ingredientA: "craft-mist", ingredientB: "heat" },
+    recipes: [
+      { ingredientA: "craft-mist", ingredientB: "heat" },
+      { ingredientA: "sandstorm", ingredientB: "heat" },
+    ],
   },
   'Monolith': {
     id: "Monolith",
@@ -1976,21 +2315,6 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "liquid",
     },
     recipe: { ingredientA: "craft-stone", ingredientB: "craft-obsidian" },
-  },
-  'Drizzle': {
-    id: "Drizzle",
-    type: "element",
-    name: "Drizzle",
-    liquid: {
-      primaryColor: "#cfefff",
-      secondaryColor: "#a8d8ff",
-      opacity: 0.55,
-      texture: "mist",
-    },
-    recipes: [
-      { ingredientA: "rain", ingredientB: "Cloud" },
-      { ingredientA: "rain", ingredientB: "craft-mist" },
-    ],
   },
   'Monsoon': {
     id: "Monsoon",
@@ -2005,51 +2329,9 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Flood", ingredientB: "rain" },
       { ingredientA: "craft-wind", ingredientB: "ocean" },
-    ],
-  },
-  'Sleet': {
-    id: "Sleet",
-    type: "element",
-    name: "Sleet",
-    liquid: {
-      primaryColor: "#d8e2ec",
-      secondaryColor: "#90a4ae",
-      opacity: 0.78,
-      texture: "crystal",
-    },
-    recipes: [
-      { ingredientA: "snow", ingredientB: "rain" },
-      { ingredientA: "Hail", ingredientB: "rain" },
-    ],
-  },
-  'Squall': {
-    id: "Squall",
-    type: "element",
-    name: "Squall",
-    liquid: {
-      primaryColor: "#546e7a",
-      secondaryColor: "#263238",
-      opacity: 0.82,
-      texture: "wave",
-    },
-    recipes: [
-      { ingredientA: "Gust", ingredientB: "rain" },
-      { ingredientA: "storm", ingredientB: "Breeze" },
-    ],
-  },
-  'Typhoon': {
-    id: "Typhoon",
-    type: "element",
-    name: "Typhoon",
-    liquid: {
-      primaryColor: "#023e8a",
-      secondaryColor: "#0077b6",
-      opacity: 0.9,
-      texture: "wave",
-    },
-    recipes: [
-      { ingredientA: "Hurricane", ingredientB: "ocean" },
-      { ingredientA: "craft-cyclone", ingredientB: "current" },
+      { ingredientA: "Mirage", ingredientB: "ocean" },
+      { ingredientA: "Breeze", ingredientB: "ocean" },
+      { ingredientA: "heat", ingredientB: "ocean" },
     ],
   },
   'Mutation': {
@@ -2092,6 +2374,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "craft-space", ingredientB: "craft-glow" },
       { ingredientA: "Enigma", ingredientB: "craft-space" },
+      { ingredientA: "craft-space", ingredientB: "el-fire" },
+      { ingredientA: "craft-space", ingredientB: "el-water" },
     ],
   },
   'Necro': {
@@ -2122,6 +2406,9 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Plant", ingredientB: "craft-bloom" },
       { ingredientA: "Emerald", ingredientB: "Life" },
+      { ingredientA: "craft-pollen", ingredientB: "craft-bloom" },
+      { ingredientA: "Fog", ingredientB: "craft-pollen" },
+      { ingredientA: "heat", ingredientB: "craft-pollen" },
     ],
   },
   'Nether': {
@@ -2164,6 +2451,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Dream", ingredientB: "Fear" },
       { ingredientA: "Illusion", ingredientB: "Fear" },
+      { ingredientA: "Dream", ingredientB: "el-earth" },
     ],
   },
   'Nuclear': {
@@ -2283,6 +2571,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Omen", ingredientB: "Arcane" },
       { ingredientA: "Sacred", ingredientB: "mind" },
+      { ingredientA: "Soul", ingredientB: "el-water" },
     ],
   },
   'Orbit': {
@@ -2297,6 +2586,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipe: { ingredientA: "gravity", ingredientB: "craft-space" },
   },
+  'Panic': {
+    id: "Panic",
+    type: "element",
+    name: "Panic",
+    liquid: {
+      primaryColor: "#ff006e",
+      secondaryColor: "#ffbe0b",
+      opacity: 0.84,
+      texture: "static",
+    },
+    recipes: [
+      { ingredientA: "Fear", ingredientB: "storm" },
+      { ingredientA: "Terror", ingredientB: "Calm" },
+    ],
+  },
   'Paradox': {
     id: "Paradox",
     type: "element",
@@ -2307,6 +2611,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "liquid",
     },
     recipe: { ingredientA: "Memory", ingredientB: "craft-mirror" },
+  },
+  'Paranoia': {
+    id: "Paranoia",
+    type: "element",
+    name: "Paranoia",
+    liquid: {
+      primaryColor: "#7209b7",
+      secondaryColor: "#3a0ca3",
+      opacity: 0.86,
+      texture: "static",
+    },
+    recipes: [
+      { ingredientA: "Telepathy", ingredientB: "Fear" },
+      { ingredientA: "Mind", ingredientB: "Nightmare" },
+    ],
   },
   'Parasite': {
     id: "Parasite",
@@ -2348,6 +2667,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Glacier", ingredientB: "craft-wind" },
       { ingredientA: "Frost", ingredientB: "craft-stone" },
+      { ingredientA: "ice", ingredientB: "el-earth" },
     ],
   },
   'Plague': {
@@ -2393,6 +2713,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Electric", ingredientB: "el-fire" },
       { ingredientA: "Radiation", ingredientB: "el-fire" },
+      { ingredientA: "Energy", ingredientB: "el-fire" },
     ],
   },
   'Poison': {
@@ -2493,16 +2814,36 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "Nuclear", ingredientB: "craft-glow" },
     ],
   },
+  'Rage': {
+    id: "Rage",
+    type: "element",
+    name: "Rage",
+    liquid: {
+      primaryColor: "#ff0000",
+      secondaryColor: "#7f0000",
+      opacity: 0.9,
+      texture: "ember",
+    },
+    recipes: [
+      { ingredientA: "el-fire", ingredientB: "Fear" },
+      { ingredientA: "Hate", ingredientB: "Calm" },
+    ],
+  },
   'rain': {
     id: "rain",
     type: "element",
     name: "Rain",
     liquid: {
-      primaryColor: "#ffffff",
+      primaryColor: "#1b56bb",
+      secondaryColor: "#c1b9b9",
       opacity: 0.85,
-      texture: "liquid",
+      texture: "drip",
     },
-    recipe: { ingredientA: "craft-wind", ingredientB: "el-water" },
+    recipes: [
+      { ingredientA: "craft-wind", ingredientB: "el-water" },
+      { ingredientA: "Cloud", ingredientB: "heat" },
+      { ingredientA: "Cloud", ingredientB: "craft-vapor" },
+    ],
   },
   'Relic': {
     id: "Relic",
@@ -2579,7 +2920,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "liquid",
     },
-    recipe: { ingredientA: "craft-blight", ingredientB: "death" },
+    recipes: [
+      { ingredientA: "craft-blight", ingredientB: "death" },
+      { ingredientA: "craft-spore", ingredientB: "smoke" },
+    ],
   },
   'Ruby': {
     id: "Ruby",
@@ -2605,7 +2949,12 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "liquid",
     },
-    recipe: { ingredientA: "Metal", ingredientB: "el-water" },
+    recipes: [
+      { ingredientA: "Metal", ingredientB: "el-water" },
+      { ingredientA: "Acid", ingredientB: "el-earth" },
+      { ingredientA: "Rust", ingredientB: "heat" },
+      { ingredientA: "ocean", ingredientB: "Rust" },
+    ],
   },
   'Sacred': {
     id: "Sacred",
@@ -2620,6 +2969,9 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Divine", ingredientB: "Arcane" },
       { ingredientA: "Halo", ingredientB: "Oath" },
+      { ingredientA: "Hope", ingredientB: "el-light" },
+      { ingredientA: "Sacred", ingredientB: "el-water" },
+      { ingredientA: "Sacred", ingredientB: "el-fire" },
     ],
   },
   'sandstorm': {
@@ -2650,6 +3002,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Diamond", ingredientB: "el-water" },
       { ingredientA: "craft-crystal", ingredientB: "craft-tide" },
+      { ingredientA: "ocean", ingredientB: "craft-crystal" },
     ],
   },
   'Sarcophagus': {
@@ -2679,6 +3032,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "el-air", ingredientB: "craft-space" },
     ],
   },
+  'Sleet': {
+    id: "Sleet",
+    type: "element",
+    name: "Sleet",
+    liquid: {
+      primaryColor: "#d8e2ec",
+      secondaryColor: "#90a4ae",
+      opacity: 0.78,
+      texture: "crystal",
+    },
+    recipes: [
+      { ingredientA: "snow", ingredientB: "rain" },
+      { ingredientA: "Hail", ingredientB: "rain" },
+    ],
+  },
   'smoke': {
     id: "smoke",
     type: "element",
@@ -2692,6 +3060,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "el-fire", ingredientB: "el-grass" },
       { ingredientA: "craft-spore", ingredientB: "el-fire" },
+      { ingredientA: "Fog", ingredientB: "el-fire" },
+      { ingredientA: "el-fire", ingredientB: "craft-mud" },
     ],
   },
   'snow': {
@@ -2715,7 +3085,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.9,
       texture: "spark",
     },
-    recipe: { ingredientA: "el-light", ingredientB: "craft-inferno" },
+    recipes: [
+      { ingredientA: "el-light", ingredientB: "craft-inferno" },
+      { ingredientA: "Soul", ingredientB: "el-fire" },
+    ],
   },
   'Soul': {
     id: "Soul",
@@ -2753,6 +3126,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipe: { ingredientA: "Life", ingredientB: "death" },
   },
+  'Squall': {
+    id: "Squall",
+    type: "element",
+    name: "Squall",
+    liquid: {
+      primaryColor: "#546e7a",
+      secondaryColor: "#263238",
+      opacity: 0.82,
+      texture: "wave",
+    },
+    recipes: [
+      { ingredientA: "Gust", ingredientB: "rain" },
+      { ingredientA: "storm", ingredientB: "Breeze" },
+    ],
+  },
   'Star': {
     id: "Star",
     type: "element",
@@ -2763,7 +3151,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.82,
       texture: "spark",
     },
-    recipe: { ingredientA: "el-light", ingredientB: "craft-space" },
+    recipes: [
+      { ingredientA: "el-light", ingredientB: "craft-space" },
+      { ingredientA: "sky", ingredientB: "el-fire" },
+    ],
   },
   'storm': {
     id: "storm",
@@ -2775,7 +3166,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "spark",
     },
-    recipe: { ingredientA: "rain", ingredientB: "el-fire" },
+    recipes: [
+      { ingredientA: "rain", ingredientB: "el-fire" },
+      { ingredientA: "Permafrost", ingredientB: "el-fire" },
+    ],
   },
   'Sunflare': {
     id: "Sunflare",
@@ -2787,7 +3181,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.95,
       texture: "spark",
     },
-    recipe: { ingredientA: "Solaris", ingredientB: "el-fire" },
+    recipes: [
+      { ingredientA: "Solaris", ingredientB: "el-fire" },
+      { ingredientA: "Divine", ingredientB: "el-fire" },
+    ],
   },
   'Sunscorch': {
     id: "Sunscorch",
@@ -2799,7 +3196,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.9,
       texture: "spark",
     },
-    recipe: { ingredientA: "el-fire", ingredientB: "craft-sand" },
+    recipes: [
+      { ingredientA: "el-fire", ingredientB: "craft-sand" },
+      { ingredientA: "el-fire", ingredientB: "quicksand" },
+    ],
   },
   'Telekinesis': {
     id: "Telekinesis",
@@ -2846,6 +3246,21 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "Arcane", ingredientB: "Flux" },
     ],
   },
+  'Terror': {
+    id: "Terror",
+    type: "element",
+    name: "Terror",
+    liquid: {
+      primaryColor: "#000814",
+      secondaryColor: "#001d3d",
+      opacity: 0.92,
+      texture: "mist",
+    },
+    recipes: [
+      { ingredientA: "Fear", ingredientB: "Nightmare" },
+      { ingredientA: "Panic", ingredientB: "el-shadow" },
+    ],
+  },
   'Tesla': {
     id: "Tesla",
     type: "element",
@@ -2886,6 +3301,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "storm", ingredientB: "Lightning" },
       { ingredientA: "Cloud", ingredientB: "Electric" },
+      { ingredientA: "rain", ingredientB: "Electric" },
+      { ingredientA: "craft-tornado", ingredientB: "Electric" },
     ],
   },
   'Time': {
@@ -2947,7 +3364,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.9,
       texture: "bubbles",
     },
-    recipe: { ingredientA: "Poison", ingredientB: "craft-swamp" },
+    recipes: [
+      { ingredientA: "Poison", ingredientB: "craft-swamp" },
+      { ingredientA: "Poison", ingredientB: "el-fire" },
+    ],
   },
   'Tree': {
     id: "Tree",
@@ -2971,6 +3391,39 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "wave",
     },
     recipe: { ingredientA: "craft-ocean", ingredientB: "craft-rift" },
+  },
+  'Trust': {
+    id: "Trust",
+    type: "element",
+    name: "Trust",
+    liquid: {
+      primaryColor: "#48cae4",
+      secondaryColor: "#0077b6",
+      opacity: 0.78,
+      texture: "wave",
+    },
+    recipes: [
+      { ingredientA: "Love", ingredientB: "Soul" },
+      { ingredientA: "Sacred", ingredientB: "Oracle" },
+      { ingredientA: "Love", ingredientB: "el-earth" },
+    ],
+  },
+  'Typhoon': {
+    id: "Typhoon",
+    type: "element",
+    name: "Typhoon",
+    liquid: {
+      primaryColor: "#023e8a",
+      secondaryColor: "#0077b6",
+      opacity: 0.9,
+      texture: "wave",
+    },
+    recipes: [
+      { ingredientA: "Hurricane", ingredientB: "ocean" },
+      { ingredientA: "craft-cyclone", ingredientB: "current" },
+      { ingredientA: "craft-tornado", ingredientB: "ocean" },
+      { ingredientA: "sandstorm", ingredientB: "Whirlpool" },
+    ],
   },
   'Veil': {
     id: "Veil",
@@ -3051,7 +3504,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "smoke",
     },
-    recipe: { ingredientA: "Aether", ingredientB: "el-air" },
+    recipes: [
+      { ingredientA: "Aether", ingredientB: "el-air" },
+      { ingredientA: "Spirit", ingredientB: "el-fire" },
+      { ingredientA: "Spirit", ingredientB: "el-air" },
+    ],
   },
   'Wither': {
     id: "Wither",
@@ -3066,246 +3523,6 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     recipes: [
       { ingredientA: "Life", ingredientB: "Doom" },
       { ingredientA: "Parasite", ingredientB: "death" },
-    ],
-  },
-  'Courage': {
-    id: "Courage",
-    type: "element",
-    name: "Courage",
-    liquid: {
-      primaryColor: "#ff9f1c",
-      secondaryColor: "#ff5400",
-      opacity: 0.86,
-      texture: "spark",
-    },
-    recipes: [
-      { ingredientA: "Fear", ingredientB: "Love" },
-      { ingredientA: "Sacred", ingredientB: "Calm" },
-    ],
-  },
-  'Desire': {
-    id: "Desire",
-    type: "element",
-    name: "Desire",
-    liquid: {
-      primaryColor: "#d00000",
-      secondaryColor: "#6a040f",
-      opacity: 0.82,
-      texture: "swirl",
-    },
-    recipes: [
-      { ingredientA: "Love", ingredientB: "Dream" },
-      { ingredientA: "Love", ingredientB: "heat" },
-    ],
-  },
-  'Despair': {
-    id: "Despair",
-    type: "element",
-    name: "Despair",
-    liquid: {
-      primaryColor: "#240046",
-      secondaryColor: "#3c096c",
-      opacity: 0.9,
-      texture: "mist",
-    },
-    recipes: [
-      { ingredientA: "Hope", ingredientB: "death" },
-      { ingredientA: "Nightmare", ingredientB: "Calm" },
-    ],
-  },
-  'Devotion': {
-    id: "Devotion",
-    type: "element",
-    name: "Devotion",
-    liquid: {
-      primaryColor: "#ffd166",
-      secondaryColor: "#fca311",
-      opacity: 0.84,
-      texture: "glow",
-    },
-    recipes: [
-      { ingredientA: "Love", ingredientB: "Sacred" },
-      { ingredientA: "Faith", ingredientB: "Soul" },
-    ],
-  },
-  'Doubt': {
-    id: "Doubt",
-    type: "element",
-    name: "Doubt",
-    liquid: {
-      primaryColor: "#adb5bd",
-      secondaryColor: "#495057",
-      opacity: 0.78,
-      texture: "static",
-    },
-    recipes: [
-      { ingredientA: "Mind", ingredientB: "Oracle" },
-      { ingredientA: "Psychic", ingredientB: "Fear" },
-    ],
-  },
-  'Envy': {
-    id: "Envy",
-    type: "element",
-    name: "Envy",
-    liquid: {
-      primaryColor: "#2d6a4f",
-      secondaryColor: "#40916c",
-      opacity: 0.88,
-      texture: "swirl",
-    },
-    recipes: [
-      { ingredientA: "Desire", ingredientB: "Love" },
-      { ingredientA: "Hate", ingredientB: "Trust" },
-    ],
-  },
-  'Faith': {
-    id: "Faith",
-    type: "element",
-    name: "Faith",
-    liquid: {
-      primaryColor: "#fff3b0",
-      secondaryColor: "#ffd166",
-      opacity: 0.8,
-      texture: "glow",
-    },
-    recipes: [
-      { ingredientA: "Sacred", ingredientB: "Oracle" },
-      { ingredientA: "Soul", ingredientB: "Divine" },
-    ],
-  },
-  'Guilt': {
-    id: "Guilt",
-    type: "element",
-    name: "Guilt",
-    liquid: {
-      primaryColor: "#6d597a",
-      secondaryColor: "#363636",
-      opacity: 0.86,
-      texture: "ooze",
-    },
-    recipes: [
-      { ingredientA: "Love", ingredientB: "Hex" },
-      { ingredientA: "Trust", ingredientB: "Doubt" },
-    ],
-  },
-  'Hate': {
-    id: "Hate",
-    type: "element",
-    name: "Hate",
-    liquid: {
-      primaryColor: "#9d0208",
-      secondaryColor: "#370617",
-      opacity: 0.9,
-      texture: "ember",
-    },
-    recipes: [
-      { ingredientA: "Love", ingredientB: "Doom" },
-      { ingredientA: "Rage", ingredientB: "Fear" },
-    ],
-  },
-  'Hope': {
-    id: "Hope",
-    type: "element",
-    name: "Hope",
-    liquid: {
-      primaryColor: "#90e0ef",
-      secondaryColor: "#48cae4",
-      opacity: 0.72,
-      texture: "glow",
-    },
-    recipes: [
-      { ingredientA: "Dream", ingredientB: "el-light" },
-      { ingredientA: "Soul", ingredientB: "Oracle" },
-    ],
-  },
-  'Joy': {
-    id: "Joy",
-    type: "element",
-    name: "Joy",
-    liquid: {
-      primaryColor: "#ffea00",
-      secondaryColor: "#ffaa00",
-      opacity: 0.82,
-      texture: "spark",
-    },
-    recipes: [
-      { ingredientA: "Love", ingredientB: "Calm" },
-      { ingredientA: "Spirit", ingredientB: "el-light" },
-    ],
-  },
-  'Panic': {
-    id: "Panic",
-    type: "element",
-    name: "Panic",
-    liquid: {
-      primaryColor: "#ff006e",
-      secondaryColor: "#ffbe0b",
-      opacity: 0.84,
-      texture: "static",
-    },
-    recipes: [
-      { ingredientA: "Fear", ingredientB: "storm" },
-      { ingredientA: "Terror", ingredientB: "Calm" },
-    ],
-  },
-  'Paranoia': {
-    id: "Paranoia",
-    type: "element",
-    name: "Paranoia",
-    liquid: {
-      primaryColor: "#7209b7",
-      secondaryColor: "#3a0ca3",
-      opacity: 0.86,
-      texture: "static",
-    },
-    recipes: [
-      { ingredientA: "Telepathy", ingredientB: "Fear" },
-      { ingredientA: "Mind", ingredientB: "Nightmare" },
-    ],
-  },
-  'Rage': {
-    id: "Rage",
-    type: "element",
-    name: "Rage",
-    liquid: {
-      primaryColor: "#ff0000",
-      secondaryColor: "#7f0000",
-      opacity: 0.9,
-      texture: "ember",
-    },
-    recipes: [
-      { ingredientA: "el-fire", ingredientB: "Fear" },
-      { ingredientA: "Hate", ingredientB: "Calm" },
-    ],
-  },
-  'Terror': {
-    id: "Terror",
-    type: "element",
-    name: "Terror",
-    liquid: {
-      primaryColor: "#000814",
-      secondaryColor: "#001d3d",
-      opacity: 0.92,
-      texture: "mist",
-    },
-    recipes: [
-      { ingredientA: "Fear", ingredientB: "Nightmare" },
-      { ingredientA: "Panic", ingredientB: "el-shadow" },
-    ],
-  },
-  'Trust': {
-    id: "Trust",
-    type: "element",
-    name: "Trust",
-    liquid: {
-      primaryColor: "#48cae4",
-      secondaryColor: "#0077b6",
-      opacity: 0.78,
-      texture: "wave",
-    },
-    recipes: [
-      { ingredientA: "Love", ingredientB: "Soul" },
-      { ingredientA: "Sacred", ingredientB: "Oracle" },
     ],
   },
   'Wood': {
