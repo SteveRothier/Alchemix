@@ -1,6 +1,7 @@
 import type { RefObject } from 'react'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { requestWorkshopBlockedModal } from '../../lib/workshopBlockedModal'
 import { LAB_MESSAGES } from '../lab/labMessages'
 import type { Vial } from '../../types'
 import { CanvasVialItem } from './CanvasVialItem'
@@ -188,7 +189,7 @@ export function LabCanvas({
               type="button"
               className="lab-recipesBtn"
               title={LAB_MESSAGES.canvas.recipesLinkTitle}
-              onClick={() => window.alert(LAB_MESSAGES.canvas.workshopDevOnlyAlert)}
+              onClick={() => requestWorkshopBlockedModal()}
             >
               {LAB_MESSAGES.canvas.recipesLinkLabel}
             </button>

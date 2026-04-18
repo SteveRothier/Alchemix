@@ -1,0 +1,78 @@
+/*
+ * Modale « Atelier indisponible » : même esprit que .recipe-atelier .ra-modal,
+ * sans dépendre de .recipe-atelier (route / seule au chargement).
+ * Variables : :root dans index.css.
+ */
+.lab-workshopBlocked-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--text-h) 42%, transparent);
+}
+
+.lab-workshopBlocked-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 20px 50px color-mix(in srgb, var(--text-h) 22%, transparent);
+}
+
+.lab-workshopBlocked-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--lab-inventory-title, var(--text-h));
+  text-transform: uppercase;
+  letter-spacing: 1.25px;
+  font-family: var(--font-lab-heading);
+  font-weight: 800;
+}
+
+.lab-workshopBlocked-body {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.lab-workshopBlocked-actions {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+}
+
+.lab-workshopBlocked-ok {
+  flex: 1;
+  margin: 0;
+  padding: 0.38rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-family: var(--font-lab-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: var(--text-h);
+  background: color-mix(in srgb, var(--panel-bg) 88%, var(--bg));
+  transition:
+    border-color 0.12s ease,
+    color 0.12s ease,
+    background 0.12s ease;
+}
+
+.lab-workshopBlocked-ok:hover {
+  border-color: var(--lab-hover);
+  color: var(--lab-hover);
+}
+
+.lab-workshopBlocked-ok:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lab-hover) 50%, transparent);
+  outline-offset: 2px;
+}

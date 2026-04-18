@@ -78,6 +78,8 @@ export const LAB_MESSAGES = {
     recipesLinkTitle: 'Open the recipe workshop (local development only)',
     workshopDevOnlyAlert:
       'The recipe workshop is only available when you run the app locally (e.g. npm run dev). It is disabled in this build.',
+    workshopBlockedTitle: 'Recipe workshop unavailable',
+    workshopBlockedOk: 'OK',
     placementAreaAriaLabel:
       'Vial placement area — drag on the background to select multiple vials',
   },

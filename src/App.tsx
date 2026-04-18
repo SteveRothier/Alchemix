@@ -1,8 +1,9 @@
 import { useLayoutEffect } from 'react'
 import { HashRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import { AlchemixShell } from './components/layout/AlchemixShell'
-import { LAB_MESSAGES } from './components/lab/labMessages'
+import { LabWorkshopBlockedModalHost } from './components/lab/LabWorkshopBlockedModalHost'
 import { RecipeManagerPage } from './pages/RecipeManagerPage'
+import { requestWorkshopBlockedModal } from './lib/workshopBlockedModal'
 
 function RecipeManagerDevRoute() {
   const navigate = useNavigate()
@@ -10,7 +11,7 @@ function RecipeManagerDevRoute() {
 
   useLayoutEffect(() => {
     if (isDev) return
-    window.alert(LAB_MESSAGES.canvas.workshopDevOnlyAlert)
+    requestWorkshopBlockedModal()
     navigate('/', { replace: true })
   }, [isDev, navigate])
 
@@ -21,6 +22,7 @@ function RecipeManagerDevRoute() {
 function App() {
   return (
     <HashRouter>
+      <LabWorkshopBlockedModalHost />
       <Routes>
         <Route path="/" element={<AlchemixShell />} />
         <Route path="/recipes" element={<RecipeManagerDevRoute />} />

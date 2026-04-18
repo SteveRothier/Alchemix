@@ -239,7 +239,7 @@
 .alchemix-lab .lab-recipesLink,
 .alchemix-lab .lab-resetBtn,
 .alchemix-lab .lab-invSectionTitle {
-  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-family: var(--font-lab-mono);
   font-size: clamp(0.68rem, 0.64rem + 0.12vw, 0.75rem);
   font-weight: 600;
   text-transform: uppercase;
@@ -292,9 +292,14 @@
   text-decoration: none;
 }
 
+/* Ne pas utiliser `font: inherit` : le bouton reprendrait la police du parent (ex. serif sur Vercel). */
 .alchemix-lab button.lab-recipesBtn {
   margin: 0;
-  font: inherit;
+  font-family: var(--font-lab-mono);
+  font-size: clamp(0.68rem, 0.64rem + 0.12vw, 0.75rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.25px;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
