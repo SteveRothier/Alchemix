@@ -1,6 +1,8 @@
 # Alchemix
 
-Jeu d’alchimie en React : combiner des fioles, découvrir des recettes, faire progresser l’inventaire. Page principale = laboratoire ; atelier des recettes = mode développement seulement.
+**Alchemix** est un jeu d’alchimie développé en React où tu combines des fioles, tu découvres des recettes et tu fais progresser l’inventaire. Page principale = laboratoire ; atelier des recettes = mode développement seulement.
+
+Le concept est **fortement inspirés** de [Infinite Craft](https://neal.fun/infinite-craft/) (Neal.fun).
 
 ## Démarrage rapide
 
@@ -109,3 +111,4 @@ npm run test
 **Après Save fichier**
 
 - Redémarrer le serveur de dev si besoin pour recharger les données
+
