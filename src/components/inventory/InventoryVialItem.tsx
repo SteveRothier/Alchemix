@@ -188,21 +188,30 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
         const ghostBox = ghostEl.getBoundingClientRect()
         ghostW = ghostBox.width
         ghostH = ghostBox.height
+        ghostChipEl = ghostEl.querySelector(
+          '.lab-chipInventory',
+        ) as HTMLElement | null
+        const chip = ghostChipEl
         /*
-         * Recalcul du point de prise au moment où le drag démarre (rect actuel + dernier point du lot).
-         * Sinon, grabDx/grabDy figés au pointerdown + défilement / coalescence = saut ou « téléportation » si on va vite.
+         * Point de prise = centre de la carte dans le fantôme (pas le coin du wrap).
+         * Le clone reçoit les styles « plateau » (carte plus large que la colonne inventaire) :
+         * si grabDx/grabDy restent basés sur le wrap d’origine, le centre de la fiche dérive du curseur
+         * et le dépôt sur le labo est légèrement décalé par rapport au rendu du fantôme.
          */
-        grabDx = lastEv.clientX - r.left
-        grabDy = lastEv.clientY - r.top
+        if (chip) {
+          const cr = chip.getBoundingClientRect()
+          const wr = ghostEl.getBoundingClientRect()
+          grabDx = cr.left + cr.width / 2 - wr.left
+          grabDy = cr.top + cr.height / 2 - wr.top
+        } else {
+          grabDx = lastEv.clientX - r.left
+          grabDy = lastEv.clientY - r.top
+        }
         for (const ev of moves) {
           clampToLab(ev.clientX, ev.clientY)
         }
         scheduleFusionHoverFromGhost()
 
-        ghostChipEl = ghostEl.querySelector(
-          '.lab-chipInventory',
-        ) as HTMLElement | null
-        const chip = ghostChipEl
         if (chip) {
           const cr = chip.getBoundingClientRect()
           ctx.grabOffsetRef.current = {

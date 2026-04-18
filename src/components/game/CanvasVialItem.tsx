@@ -204,13 +204,11 @@ export function CanvasVialItem({
       style={{
         left: `${placed.xPct}%`,
         top: `${placed.yPct}%`,
+        transform: 'translate(-50%, -50%)',
         zIndex,
       }}
     >
-      <div
-        className="lab-canvasVialPivot inline-flex max-w-full touch-none"
-        style={{ transform: 'translate(-50%, -50%)' }}
-      >
+      <div className="lab-canvasVialPivot inline-flex max-w-full touch-none">
         <div
           ref={dragLayerRef}
           className="lab-canvasVialDragLayer inline-flex max-w-full touch-none"

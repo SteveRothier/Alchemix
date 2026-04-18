@@ -1,6 +1,8 @@
 /**
- * Boîte de placement du canvas (padding/content), alignée sur les % `left` / `top`
- * des fioles absolues — pas la border box seule.
+ * Boîte de placement du canvas en coordonnées viewport (getBoundingClientRect),
+ * même repère que les cartes / le fantôme au même instant.
+ * Mélanger clientWidth (souvent arrondi) avec des centres mesurés en subpixel
+ * provoquait un léger décalage au dépôt depuis l’inventaire.
  */
 export type CanvasPlacementBox = {
   left: number
@@ -12,10 +14,10 @@ export type CanvasPlacementBox = {
 export function getCanvasPlacementBox(canvasEl: HTMLElement): CanvasPlacementBox {
   const r = canvasEl.getBoundingClientRect()
   return {
-    left: r.left + canvasEl.clientLeft,
-    top: r.top + canvasEl.clientTop,
-    width: canvasEl.clientWidth,
-    height: canvasEl.clientHeight,
+    left: r.left,
+    top: r.top,
+    width: r.width,
+    height: r.height,
   }
 }
 
