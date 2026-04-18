@@ -77,4 +77,17 @@ export const LAB_MESSAGES = {
     placementAreaAriaLabel:
       'Vial placement area — drag on the background to select multiple vials',
   },
+  recipesBook: {
+    title: 'Recipes',
+    searchPlaceholder: 'Search items…',
+    searchAriaLabel: 'Search discovered vials',
+    closeAriaLabel: 'Close recipes',
+    fabAriaLabel: 'Recipes',
+    fabTooltip: 'Recipes',
+    emptyFilter: 'No vials match that search.',
+    backToListAriaLabel: 'Back to all recipes',
+    noCatalogCombinations: 'No fusion recipes are listed for this item in the catalog.',
+    noDiscoveredCombinations:
+      'No fully discovered combinations yet. Discover both ingredients of a recipe to see it here.',
+  },
 } as const

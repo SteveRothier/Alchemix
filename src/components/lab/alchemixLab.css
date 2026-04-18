@@ -105,14 +105,45 @@
   font-family: var(--font-lab-mono);
   font-size: 0.7rem;
   line-height: 1.2;
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .alchemix-lab .lab-invSearchInput::placeholder {
   color: color-mix(in srgb, var(--text-muted) 82%, var(--text) 18%);
 }
 
+/* Même focus que .lab-recipesSearchInput (livre de recettes). */
+.alchemix-lab .lab-invSearchInput:focus,
 .alchemix-lab .lab-invSearchInput:focus-visible {
   outline: none;
+  border-color: color-mix(in srgb, var(--lab-hover) 55%, var(--border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lab-hover) 22%, transparent);
+}
+
+/*
+ * Chrome / Edge / Safari : la croix native d’effacement sur type=search est souvent bleue système.
+ * On la remplace par une croix aux couleurs du labo (--text-muted #667064).
+ */
+.alchemix-lab .lab-invSearchInput::-webkit-search-cancel-button,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesSearchInput::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin-inline: 0.15rem 0.05rem;
+  cursor: pointer;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23667064' stroke-linecap='round' stroke-width='1.75'%3E%3Cpath d='M4 4l8 8M12 4l-8 8'/%3E%3C/svg%3E")
+    center / 12px 12px no-repeat;
+  opacity: 0.88;
+}
+
+.alchemix-lab .lab-invSearchInput:hover::-webkit-search-cancel-button,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesSearchInput:hover::-webkit-search-cancel-button {
+  opacity: 1;
 }
 
 /*
@@ -1090,7 +1121,8 @@ html[data-lab-canvas-chip-drag]
 }
 
 @media (max-width: 380px) {
-  .lab-trophyPopup {
+  .lab-trophyPopup,
+  .lab-controls-dialog.lab-recipesDialog {
     width: min(100% - 1rem, calc(100vw - 1rem));
     height: min(56dvh, 22.5rem);
   }
@@ -1112,7 +1144,9 @@ html[data-lab-canvas-chip-drag]
   color: var(--text-h);
 }
 
-.lab-trophyList {
+/* Zone scroll Trophy + livre recettes : même padding et barre (WebKit / Windows). */
+.lab-trophyList,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesScroll {
   flex: 1;
   min-height: 0;
   margin: 0;
@@ -1123,27 +1157,32 @@ html[data-lab-canvas-chip-drag]
   scrollbar-color: color-mix(in srgb, var(--text-h) 18%, transparent) transparent;
 }
 
-.lab-trophyList:hover {
+.lab-trophyList:hover,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesScroll:hover {
   scrollbar-color: color-mix(in srgb, var(--text-h) 26%, transparent) transparent;
 }
 
 @supports selector(::-webkit-scrollbar) {
-  .lab-trophyList {
+  .lab-trophyList,
+  .lab-controls-dialog.lab-recipesDialog .lab-recipesScroll {
     scrollbar-width: auto;
     scrollbar-color: unset;
   }
 
-  .lab-trophyList:hover {
+  .lab-trophyList:hover,
+  .lab-controls-dialog.lab-recipesDialog .lab-recipesScroll:hover {
     scrollbar-color: unset;
   }
 }
 
-.lab-trophyList::-webkit-scrollbar {
+.lab-trophyList::-webkit-scrollbar,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesScroll::-webkit-scrollbar {
   width: 4px;
 }
 
 /* Masque explicitement les flèches haut/bas sur Windows Chromium. */
-.lab-trophyList::-webkit-scrollbar-button {
+.lab-trophyList::-webkit-scrollbar-button,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesScroll::-webkit-scrollbar-button {
   -webkit-appearance: none;
   appearance: none;
   display: block;
@@ -1160,33 +1199,47 @@ html[data-lab-canvas-chip-drag]
 .lab-trophyList::-webkit-scrollbar-button:vertical:start:decrement,
 .lab-trophyList::-webkit-scrollbar-button:vertical:end:increment,
 .lab-trophyList::-webkit-scrollbar-button:horizontal:start:decrement,
-.lab-trophyList::-webkit-scrollbar-button:horizontal:end:increment {
+.lab-trophyList::-webkit-scrollbar-button:horizontal:end:increment,
+.lab-controls-dialog.lab-recipesDialog
+  .lab-recipesScroll::-webkit-scrollbar-button:vertical:start:decrement,
+.lab-controls-dialog.lab-recipesDialog
+  .lab-recipesScroll::-webkit-scrollbar-button:vertical:end:increment,
+.lab-controls-dialog.lab-recipesDialog
+  .lab-recipesScroll::-webkit-scrollbar-button:horizontal:start:decrement,
+.lab-controls-dialog.lab-recipesDialog
+  .lab-recipesScroll::-webkit-scrollbar-button:horizontal:end:increment {
   display: block;
   width: 0 !important;
   height: 0 !important;
 }
 
 .lab-trophyList::-webkit-scrollbar-button:single-button,
-.lab-trophyList::-webkit-scrollbar-button:double-button {
+.lab-trophyList::-webkit-scrollbar-button:double-button,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesScroll::-webkit-scrollbar-button:single-button,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesScroll::-webkit-scrollbar-button:double-button {
   display: block;
   width: 0 !important;
   height: 0 !important;
 }
 
-.lab-trophyList::-webkit-scrollbar-corner {
+.lab-trophyList::-webkit-scrollbar-corner,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesScroll::-webkit-scrollbar-corner {
   background: transparent;
 }
 
-.lab-trophyList::-webkit-scrollbar-track {
+.lab-trophyList::-webkit-scrollbar-track,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesScroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.lab-trophyList::-webkit-scrollbar-thumb {
+.lab-trophyList::-webkit-scrollbar-thumb,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesScroll::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--text-h) 14%, transparent);
   border-radius: 999px;
 }
 
-.lab-trophyList:hover::-webkit-scrollbar-thumb {
+.lab-trophyList:hover::-webkit-scrollbar-thumb,
+.lab-controls-dialog.lab-recipesDialog .lab-recipesScroll:hover::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--text-h) 26%, transparent);
 }
 
@@ -1554,4 +1607,291 @@ html[data-lab-canvas-chip-drag]
 .lab-clear-dialog .lab-clear-btn:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--lab-hover) 50%, transparent);
   outline-offset: 2px;
+}
+
+/* ——— Livre des recettes (portail body : pas de parent .alchemix-lab) ——— */
+
+.lab-controls-dim.lab-recipesBookDim {
+  z-index: 405;
+  /* Même voile que le popup Trophy (contrôles utilisent 28 %). */
+  background: color-mix(in srgb, var(--text-h) 22%, transparent);
+}
+
+.lab-controls-dialog-layer.lab-recipesBookLayer {
+  z-index: 406;
+}
+
+/* Gabarit proche du popup Trophy, un peu plus large pour la grille de fioles. */
+.lab-controls-dialog.lab-recipesDialog {
+  width: min(30rem, calc(100% - 2rem));
+  height: min(58dvh, 24.5rem);
+  max-height: none;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-controls-header.lab-recipesDialogHeader {
+  padding: 0.38rem 0.55rem 0.32rem 0.8rem;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesSearchWrap {
+  position: relative;
+  flex-shrink: 0;
+  padding: 0.35rem 0.55rem 0.4rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, var(--lab-hover) 18%);
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesSearchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: color-mix(in srgb, var(--text-h) 38%, var(--text-muted));
+  pointer-events: none;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesSearchInput {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.45rem 0.55rem 0.45rem 2.1rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, var(--lab-hover) 22%);
+  background: color-mix(in srgb, var(--panel-bg) 88%, #fff);
+  font-family: var(--font-lab-mono);
+  font-size: 0.78rem;
+  color: var(--text-h);
+  outline: none;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesSearchInput::placeholder {
+  color: color-mix(in srgb, var(--text-h) 42%, var(--text-muted));
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesSearchInput:focus {
+  border-color: color-mix(in srgb, var(--lab-hover) 55%, var(--border));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lab-hover) 22%, transparent);
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesGrid {
+  display: flex;
+  flex-wrap: wrap;
+  /* Même espacement que la grille inventaire (InventoryPanel : gap-[3px]). */
+  gap: 3px;
+  align-content: flex-start;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.45rem 0.28rem 0.38rem;
+  border-radius: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, var(--lab-hover) 20%);
+  background: color-mix(in srgb, var(--panel-bg) 92%, #fff);
+  max-width: 100%;
+  box-sizing: border-box;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesChip:hover {
+  border-color: color-mix(in srgb, var(--lab-hover) 48%, var(--border));
+  background: color-mix(in srgb, var(--panel-bg) 82%, var(--lab-hover) 14%);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--text-h) 6%, transparent),
+    0 2px 8px color-mix(in srgb, var(--text-h) 8%, transparent);
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesChip:active {
+  box-shadow: none;
+  transform: translateY(0.5px);
+}
+
+.lab-controls-dialog.lab-recipesDialog button.lab-recipesChip {
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  color: inherit;
+}
+
+.lab-controls-dialog.lab-recipesDialog button.lab-recipesChip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lab-hover) 50%, transparent);
+  outline-offset: 2px;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesDetailBar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.55rem 0.45rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, var(--lab-hover) 18%);
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesBackBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  margin: 0;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 65%, var(--lab-hover) 20%);
+  background: color-mix(in srgb, var(--panel-bg) 92%, transparent);
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesBackBtn:hover {
+  border-color: color-mix(in srgb, var(--lab-hover) 45%, var(--border));
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesBackBtn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lab-hover) 50%, transparent);
+  outline-offset: 2px;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesDetailThumb.lab-flaskSvg {
+  flex-shrink: 0;
+  display: block;
+  height: 26px;
+  width: auto;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesDetailTitle {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-lab-heading);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  color: var(--text-h);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesDetailProgress {
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-left: 0.35rem;
+  font-family: var(--font-lab-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--text-h) 48%, var(--text-muted));
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesFusionList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesFusionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesFusionRow:last-child {
+  border-bottom: none;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesFusionCard {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  padding: 0.22rem 0.38rem 0.22rem 0.32rem;
+  border-radius: 0.38rem;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, var(--lab-hover) 22%);
+  background: color-mix(in srgb, var(--panel-bg) 94%, #fff);
+  box-sizing: border-box;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesFusionFlask.lab-flaskSvg {
+  flex-shrink: 0;
+  display: block;
+  height: 20px;
+  width: auto;
+  aspect-ratio: 48 / 56;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesFusionFlask.lab-flaskSvg--creature {
+  aspect-ratio: 28 / 48;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesFusionFlask.lab-flaskSvg--spell {
+  aspect-ratio: 27 / 40;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesFusionCardName {
+  font-family: var(--font-lab-heading);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-h);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 7.5rem;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesFusionPlus {
+  flex-shrink: 0;
+  font-family: var(--font-lab-heading);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--text-h) 38%, var(--text-muted));
+  line-height: 1;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesChipFlask.lab-flaskSvg {
+  flex-shrink: 0;
+  display: block;
+  height: 22px;
+  width: auto;
+  aspect-ratio: 48 / 56;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesChipFlask.lab-flaskSvg--creature {
+  aspect-ratio: 28 / 48;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesChipFlask.lab-flaskSvg--spell {
+  aspect-ratio: 27 / 40;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesChipName {
+  font-family: var(--font-lab-heading);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-h);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 11rem;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesEmpty {
+  margin: 0;
+  padding: 0.75rem 0.25rem;
+  font-family: var(--font-lab-mono);
+  font-size: 0.76rem;
+  color: color-mix(in srgb, var(--text-h) 55%, var(--text-muted));
+  text-align: center;
 }

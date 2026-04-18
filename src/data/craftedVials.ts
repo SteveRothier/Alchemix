@@ -294,11 +294,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "spark",
     },
-    recipes: [
-      { ingredientA: "gravity", ingredientB: "storm" },
-      { ingredientA: "current", ingredientB: "storm" },
-      { ingredientA: "ocean", ingredientB: "craft-stone" },
-    ],
+    recipe: { ingredientA: "gravity", ingredientB: "storm" },
   },
   'Chaos': {
     id: "Chaos",
@@ -1506,6 +1502,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipes: [
       { ingredientA: "sound", ingredientB: "craft-mist" },
+      { ingredientA: "el-air", ingredientB: "craft-crystal" },
       { ingredientA: "el-air", ingredientB: "craft-amalgam-crystal" },
     ],
   },

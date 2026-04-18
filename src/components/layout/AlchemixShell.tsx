@@ -1377,6 +1377,7 @@ export function AlchemixShell() {
               onClearCanvas={clearLabCanvas}
               canClearCanvas={placed.length > 0}
               onResetProgress={handleReset}
+              recipesBookVials={vialsById}
               leadingFabs={
                 <div className="lab-fabWithTooltip pointer-events-auto">
                   <button
@@ -1394,12 +1395,12 @@ export function AlchemixShell() {
                     }}
                     aria-expanded={trophyOpen}
                     aria-haspopup="dialog"
-                  aria-label={LAB_MESSAGES.dock.creaturesLabel}
+                    aria-label={LAB_MESSAGES.dock.creaturesLabel}
                   >
                     <Trophy size={22} strokeWidth={2} aria-hidden className="shrink-0" />
                   </button>
                   <span className="lab-fabTooltip" aria-hidden="true">
-                  {LAB_MESSAGES.dock.creaturesTooltip}
+                    {LAB_MESSAGES.dock.creaturesTooltip}
                   </span>
                 </div>
               }

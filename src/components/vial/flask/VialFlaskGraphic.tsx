@@ -71,9 +71,15 @@ function creatureClipTransform(): string {
 type VialFlaskGraphicProps = {
   vial: Vial
   className?: string
+  /** Créature : `silhouette` masque verre / chrome (icône sans fiole). */
+  creaturePresentation?: 'flask' | 'silhouette'
 }
 
-export function VialFlaskGraphic({ vial, className = '' }: VialFlaskGraphicProps) {
+export function VialFlaskGraphic({
+  vial,
+  className = '',
+  creaturePresentation = 'flask',
+}: VialFlaskGraphicProps) {
   const svgRef = useRef<SVGSVGElement>(null)
   const reactId = useId().replace(/:/g, '')
   const gradId = `${reactId}-lg`
@@ -105,10 +111,15 @@ export function VialFlaskGraphic({ vial, className = '' }: VialFlaskGraphicProps
     </>
   )
 
+  const creatureSilhouette =
+    vial.type === 'creature' && creaturePresentation === 'silhouette'
+
   const flaskTypeClass =
     vial.type === 'creature'
-        ? ' lab-flaskSvg--creature'
-        : ''
+      ? creatureSilhouette
+        ? ' lab-flaskSvg--creature lab-flaskSvg--creatureSilhouette'
+        : ' lab-flaskSvg--creature'
+      : ''
 
   return (
     <svg
@@ -168,8 +179,12 @@ export function VialFlaskGraphic({ vial, className = '' }: VialFlaskGraphicProps
         )}
       </g>
 
-      <ChromeForType type={vial.type} />
-      <GlassGlint type={vial.type} />
+      {!creatureSilhouette ? (
+        <>
+          <ChromeForType type={vial.type} />
+          <GlassGlint type={vial.type} />
+        </>
+      ) : null}
     </svg>
   )
 }
