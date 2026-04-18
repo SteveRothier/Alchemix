@@ -412,15 +412,27 @@
 }
 
 .alchemix-lab .lab-offerFab {
-  /* Cible tactile ~44px minimum (icône peut rester grande à l’intérieur). */
-  min-width: 2.75rem;
-  min-height: 2.75rem;
-  width: 2.75rem;
-  height: 2.75rem;
+  /* Fiole d’offrande : cible large + icône Lucide agrandie. */
+  min-width: 3.5rem;
+  min-height: 3.5rem;
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+@media (max-width: 560px) {
+  .alchemix-lab .lab-offerFab {
+    min-width: 3.15rem;
+    min-height: 3.15rem;
+    width: 3.15rem;
+    height: 3.15rem;
+  }
 }
 
 .alchemix-lab .lab-offerHint {
   margin: 0;
+  align-self: flex-start;
+  /* Remonte la bulle : haut au niveau / au-dessus du goulot de la fiole. */
+  transform: translateY(-1.35rem);
   max-width: min(24rem, 48vw);
   padding: 0.35rem 0.55rem;
   border-radius: 0.45rem;
@@ -1955,5 +1967,78 @@ html[data-lab-canvas-chip-drag]
 
 .lab-invRecipeContextMenu-item:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--lab-hover) 50%, transparent);
+  outline-offset: 1px;
+}
+
+/* Tutoriel discret première visite (colonne labo uniquement, sous FAB z-40). */
+.alchemix-lab .lab-firstVisit {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  pointer-events: none;
+}
+
+.alchemix-lab .lab-firstVisit-card {
+  position: relative;
+  z-index: 1;
+  max-width: min(20rem, 88vw);
+  padding: 0.75rem 0.9rem 0.65rem;
+  border-radius: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, var(--text-h) 12%);
+  background: color-mix(in srgb, var(--panel-bg) 86%, #fff 14%);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--text-h) 5%, transparent),
+    0 6px 20px color-mix(in srgb, var(--text-h) 7%, transparent);
+  pointer-events: auto;
+}
+
+.alchemix-lab .lab-firstVisit-title {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-lab-heading);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-h) 72%, var(--text-muted) 28%);
+}
+
+.alchemix-lab .lab-firstVisit-line {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-lab-mono);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--text-h) 78%, var(--text-muted) 22%);
+}
+
+.alchemix-lab .lab-firstVisit-line:last-of-type {
+  margin-bottom: 0.55rem;
+}
+
+.alchemix-lab .lab-firstVisit-dismiss {
+  display: inline-block;
+  margin: 0;
+  padding: 0.22rem 0.45rem;
+  border: none;
+  border-radius: 0.35rem;
+  font-family: var(--font-lab-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--text-h) 85%, var(--lab-hover) 15%);
+  background: color-mix(in srgb, var(--lab-hover) 14%, transparent);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.alchemix-lab .lab-firstVisit-dismiss:hover {
+  background: color-mix(in srgb, var(--lab-hover) 22%, transparent);
+}
+
+.alchemix-lab .lab-firstVisit-dismiss:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lab-hover) 45%, transparent);
   outline-offset: 1px;
 }

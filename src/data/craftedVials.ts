@@ -3193,10 +3193,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.9,
       texture: "spark",
     },
-    recipes: [
-      { ingredientA: "el-fire", ingredientB: "craft-sand" },
-      { ingredientA: "el-fire", ingredientB: "quicksand" },
-    ],
+    recipe: { ingredientA: "el-fire", ingredientB: "quicksand" },
   },
   'Telekinesis': {
     id: "Telekinesis",

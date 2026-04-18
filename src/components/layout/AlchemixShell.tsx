@@ -15,7 +15,7 @@ import { InventoryPanel } from '../inventory/InventoryPanel'
 import { resolveFusionProduct } from '../../lib/fusion'
 import { applyLegacyVialIdRename } from '../../lib/legacyVialIdRenames'
 import { isProceduralLegacyFusionVialId } from '../../lib/proceduralFusionMigration'
-import type { DrinkSpellResult } from '../../lib/drinkSpell'
+import { resolveDrinkSpell, type DrinkSpellResult } from '../../lib/drinkSpell'
 import { CRAFTED_VIAL_TEMPLATES } from '../../data/craftedVials'
 import { STARTER_VIAL_DEFINITIONS } from '../../data/starterVials'
 import { OFFERING_ID_TO_CREATURE_ID } from '../../data/spellDrinkCreatures'
@@ -27,6 +27,7 @@ import {
 import type { Vial } from '../../types'
 import { useAlchemixStore } from '../../store/useAlchemixStore'
 import { LabControlsFloating } from '../lab/LabControlsFloating'
+import { LabFirstVisitHint } from '../lab/LabFirstVisitHint'
 import { LAB_MESSAGES } from '../lab/labMessages'
 import { VialFlaskGraphic } from '../vial/flask/VialFlaskGraphic'
 import '../lab/alchemixLab.css'
@@ -35,6 +36,48 @@ registerGsapDraggable()
 
 const LAB_UNDO_MAX = 80
 const STORAGE_KEY_LAB_PLACED = 'alchemix-lab-placed'
+const STORAGE_KEY_LAB_INTRO = 'alchemix-lab-intro-dismissed'
+const STORAGE_KEY_FLASK_WHISPER_INTRO = 'alchemix-flask-whisper-intro-seen'
+
+function loadLabIntroDismissed(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEY_LAB_INTRO) === '1'
+  } catch {
+    return true
+  }
+}
+
+function persistLabIntroDismissed() {
+  try {
+    localStorage.setItem(STORAGE_KEY_LAB_INTRO, '1')
+  } catch {
+    /* quota / navigation privée */
+  }
+}
+
+function loadFlaskWhisperIntroSeen(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_KEY_FLASK_WHISPER_INTRO) === '1'
+  } catch {
+    return true
+  }
+}
+
+function persistFlaskWhisperIntroSeen() {
+  try {
+    localStorage.setItem(STORAGE_KEY_FLASK_WHISPER_INTRO, '1')
+  } catch {
+    /* quota / navigation privée */
+  }
+}
+
+function clearFlaskWhisperIntroSeen() {
+  try {
+    localStorage.removeItem(STORAGE_KEY_FLASK_WHISPER_INTRO)
+  } catch {
+    /* ignore */
+  }
+}
 
 type TrophyViewMode = 'creatures' | 'categories'
 type TrophyCategoryId =
@@ -619,6 +662,14 @@ export function AlchemixShell() {
     }
     return ids
   }, [vialsById])
+  /** Au moins un élément de l’inventaire pourrait débloquer une créature (resolveDrinkSpell, sans mutation). */
+  const hasOfferableElementForFlask = useMemo(() => {
+    for (const v of Object.values(vialsById)) {
+      if (v.type !== 'element') continue
+      if (resolveDrinkSpell(v, vialsById).ok) return true
+    }
+    return false
+  }, [vialsById])
   const trophyCategoryProgress = useMemo(() => {
     const byCategory = new Map<
       TrophyCategoryId,
@@ -681,11 +732,36 @@ export function AlchemixShell() {
   const trophyOpenRef = useRef(trophyOpen)
   trophyOpenRef.current = trophyOpen
   const sipTimerRef = useRef(0)
+  /** Évite qu’un `click` sur la fiole juste après un drop n’écrase le message d’offrande. */
+  const sipDockLastOfferTsRef = useRef(0)
 
   const canvasRef = useRef<HTMLDivElement>(null)
   const grabOffsetRef = useRef<{ dx: number; dy: number } | null>(null)
   const placedRef = useRef(placed)
   placedRef.current = placed
+
+  const [labIntroVisible, setLabIntroVisible] = useState(false)
+
+  useLayoutEffect(() => {
+    if (loadLabIntroDismissed()) return
+    const initialPlaced = loadLabPlaced()
+    if (initialPlaced.length > 0) {
+      persistLabIntroDismissed()
+      return
+    }
+    setLabIntroVisible(true)
+  }, [])
+
+  const dismissLabIntro = useCallback(() => {
+    persistLabIntroDismissed()
+    setLabIntroVisible(false)
+  }, [])
+
+  useEffect(() => {
+    if (!labIntroVisible || placed.length === 0) return
+    persistLabIntroDismissed()
+    setLabIntroVisible(false)
+  }, [placed.length, labIntroVisible])
 
   useEffect(() => {
     saveLabPlaced(placed)
@@ -923,11 +999,42 @@ export function AlchemixShell() {
     ],
   )
 
-  const showSipHint = useCallback((msg: string) => {
+  const showSipHint = useCallback((msg: string, durationMs = 3200) => {
     window.clearTimeout(sipTimerRef.current)
     setSipHint(msg)
-    sipTimerRef.current = window.setTimeout(() => setSipHint(null), 3200)
+    sipTimerRef.current = window.setTimeout(() => setSipHint(null), durationMs)
   }, [])
+
+  const onOfferFlaskWhisperClick = useCallback(() => {
+    if (Date.now() - sipDockLastOfferTsRef.current < 450) return
+    window.clearTimeout(sipTimerRef.current)
+
+    if (!loadFlaskWhisperIntroSeen()) {
+      persistFlaskWhisperIntroSeen()
+      showSipHint(LAB_MESSAGES.flaskWhisper.intro, 5600)
+      return
+    }
+
+    const noCreatureDiscoveredYet = discoveredCreatureIds.size === 0
+    if (noCreatureDiscoveredYet) {
+      const pool = [
+        ...LAB_MESSAGES.flaskWhisper.whenOfferingPossible,
+        ...LAB_MESSAGES.flaskWhisper.neutral,
+        LAB_MESSAGES.flaskWhisper.intro,
+      ]
+      const msg = pool[Math.floor(Math.random() * pool.length)]!
+      showSipHint(msg, msg === LAB_MESSAGES.flaskWhisper.intro ? 5600 : 5000)
+      return
+    }
+
+    if (hasOfferableElementForFlask) {
+      const lines = LAB_MESSAGES.flaskWhisper.whenOfferingPossible
+      showSipHint(lines[Math.floor(Math.random() * lines.length)]!, 4800)
+      return
+    }
+    const lines = LAB_MESSAGES.flaskWhisper.neutral
+    showSipHint(lines[Math.floor(Math.random() * lines.length)]!, 4000)
+  }, [discoveredCreatureIds, hasOfferableElementForFlask, showSipHint])
 
   useEffect(
     () => () => {
@@ -975,6 +1082,7 @@ export function AlchemixShell() {
       const vial = store.vials[vialId]
       if (!vial || vial.type !== 'element') {
         showSipHint(LAB_MESSAGES.offer.onlyElements)
+        sipDockLastOfferTsRef.current = Date.now()
         return true
       }
       const priorUses = store.offeringUseCount[vialId] ?? 0
@@ -1006,10 +1114,12 @@ export function AlchemixShell() {
       }
       if (grassOfferStep === 1) {
         showSipHint(LAB_MESSAGES.offer.neverAgain)
+        sipDockLastOfferTsRef.current = Date.now()
         return true
       }
       if (grassOfferStep === 2) {
         showSipHint(LAB_MESSAGES.offer.deathAdded)
+        sipDockLastOfferTsRef.current = Date.now()
         return true
       }
       switch (result.ok) {
@@ -1026,6 +1136,7 @@ export function AlchemixShell() {
           break
         }
       }
+      sipDockLastOfferTsRef.current = Date.now()
       return true
     },
     [pushLabUndoHistory, showSipHint],
@@ -1347,6 +1458,7 @@ export function AlchemixShell() {
 
   const handleReset = () => {
     clearLabUndoHistory()
+    clearFlaskWhisperIntroSeen()
     resetToStarters()
     setPlaced([])
   }
@@ -1373,6 +1485,7 @@ export function AlchemixShell() {
                 onDuplicatePlaced={duplicatePlaced}
               />
             </section>
+            <LabFirstVisitHint visible={labIntroVisible} onDismiss={dismissLabIntro} />
             <LabControlsFloating
               onClearCanvas={clearLabCanvas}
               canClearCanvas={placed.length > 0}
@@ -1413,8 +1526,9 @@ export function AlchemixShell() {
                   className="lab-controls-fab lab-offerFab"
                   aria-label={LAB_MESSAGES.dock.offerAriaLabel}
                   aria-describedby={sipHint ? LAB_MESSAGES.dock.offerHintId : undefined}
+                  onClick={onOfferFlaskWhisperClick}
                 >
-                  <FlaskConical size={40} strokeWidth={2} aria-hidden className="shrink-0" />
+                  <FlaskConical size={52} strokeWidth={2} aria-hidden className="shrink-0" />
                 </button>
               </div>
               {sipHint ? (

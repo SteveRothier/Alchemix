@@ -3,6 +3,21 @@ export const LAB_MESSAGES = {
     yes: 'Yes',
     no: 'No',
   },
+  flaskWhisper: {
+    intro:
+      'Drag an element onto this flask to offer it. When a gift matches a hidden thirst, a new creature may appear among your trophies.',
+    whenOfferingPossible: [
+      'One of your vials hums a shade lower than the others—as if remembering a name.',
+      'The shelf is honest tonight: something there would rather leave the glass for the cup.',
+      'Not every color is only for mixing. One bottle is keener to be given than stirred.',
+      'The dust falls differently above a vial that already has an appointment elsewhere.',
+    ],
+    neutral: [
+      'The flask keeps its counsel; nothing nudges you yet.',
+      'Still water. Perhaps later, when the shelf has shifted.',
+      'Quiet glass. The letters you are looking for are not on the labels tonight.',
+    ],
+  },
   offer: {
     onlyElements: 'Only elements can be offered.',
     neverAgain: 'Never again !',
@@ -18,7 +33,8 @@ export const LAB_MESSAGES = {
   dock: {
     creaturesLabel: 'Creatures',
     creaturesTooltip: 'Creatures',
-    offerAriaLabel: 'Offer element for creature unlock',
+    offerAriaLabel:
+      'Offer an element on the flask to unlock creatures; click for a whispered hint',
     offerHintId: 'lab-offer-hint',
     resetAriaLabel: 'Reset progress',
     resetTooltip: 'Reset progress',
@@ -71,6 +87,14 @@ export const LAB_MESSAGES = {
     sortColor: 'Sort by color',
     unitSingular: 'vial',
     unitPlural: 'vials',
+  },
+  firstVisit: {
+    regionAriaLabel: 'Getting started',
+    title: 'Welcome',
+    lineDrag: 'Drag elements from the list into the laboratory to work with them.',
+    lineOffer:
+      'Some elements can be dropped on the flask to offer them and unlock creatures. Tap the flask for quiet hints.',
+    dismissLabel: 'Got it',
   },
   canvas: {
     laboratoryTitle: 'Laboratory',
