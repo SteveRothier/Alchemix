@@ -61,6 +61,8 @@ export const LAB_MESSAGES = {
   },
   inventory: {
     elementsSectionTitle: 'Elements',
+    viewRecipesMenuItem: 'View Recipes',
+    viewRecipesContextMenuLabel: 'Vial actions',
     searchPlaceholder: 'Search...',
     searchAriaLabel: 'Search elements',
     sortAriaLabel: 'Sort elements',

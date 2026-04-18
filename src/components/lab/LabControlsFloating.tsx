@@ -10,6 +10,7 @@ import {
   useState,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { RECIPES_BOOK_OPEN_EVENT } from '../../lib/recipesBookEvents'
 import type { Vial } from '../../types'
 import {
   playLabIconModalClose,
@@ -41,6 +42,7 @@ export function LabControlsFloating({
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
   const [langMenuOpen, setLangMenuOpen] = useState(false)
   const [recipesBookOpen, setRecipesBookOpen] = useState(false)
+  const [recipesDetailIntentId, setRecipesDetailIntentId] = useState<string | null>(null)
   const fabRef = useRef<HTMLButtonElement>(null)
   const langFabRef = useRef<HTMLButtonElement>(null)
   const dimRef = useRef<HTMLDivElement>(null)
@@ -174,14 +176,34 @@ export function LabControlsFloating({
     const fab = recipesBookFabRef.current
     if (!dim || !dlg || !fab) {
       setRecipesBookOpen(false)
+      setRecipesDetailIntentId(null)
       recipesClosingRef.current = false
       return
     }
     playLabIconModalClose(dim, dlg, fab, () => {
       setRecipesBookOpen(false)
+      setRecipesDetailIntentId(null)
       recipesClosingRef.current = false
     })
   }, [])
+
+  const clearRecipesDetailIntent = useCallback(() => {
+    setRecipesDetailIntentId(null)
+  }, [])
+
+  useEffect(() => {
+    if (!recipesBookVials) return
+    const onOpenRecipes = (e: Event) => {
+      const ce = e as CustomEvent<{ vialId?: string }>
+      const id = ce.detail?.vialId
+      if (typeof id !== 'string' || !id.trim()) return
+      setRecipesDetailIntentId(id.trim())
+      setRecipesBookOpen(true)
+    }
+    window.addEventListener(RECIPES_BOOK_OPEN_EVENT, onOpenRecipes as EventListener)
+    return () =>
+      window.removeEventListener(RECIPES_BOOK_OPEN_EVENT, onOpenRecipes as EventListener)
+  }, [recipesBookVials])
 
   useLayoutEffect(() => {
     if (!open) return
@@ -264,9 +286,10 @@ export function LabControlsFloating({
     if (!dim || !dialog || !fab) return
 
     const tl = playLabIconModalOpen(dim, dialog, fab, () => {
-      recipesDialogRef.current
-        ?.querySelector<HTMLInputElement>('input[type="search"]')
-        ?.focus()
+      const dlg = recipesDialogRef.current
+      const search = dlg?.querySelector<HTMLInputElement>('input[type="search"]')
+      if (search) search.focus()
+      else dlg?.querySelector<HTMLButtonElement>('.lab-recipesBackBtn')?.focus()
     })
 
     return () => {
@@ -550,6 +573,8 @@ export function LabControlsFloating({
               vials={recipesBookVials}
               onRequestClose={requestCloseRecipesBook}
               titleId={recipesTitleId}
+              detailIntentId={recipesDetailIntentId}
+              onDetailIntentConsumed={clearRecipesDetailIntent}
             />
           </div>
         </div>
@@ -628,7 +653,10 @@ export function LabControlsFloating({
               onClick={() => {
                 if (recipesClosingRef.current) return
                 if (recipesBookOpenRef.current) requestCloseRecipesBook()
-                else setRecipesBookOpen(true)
+                else {
+                  setRecipesDetailIntentId(null)
+                  setRecipesBookOpen(true)
+                }
               }}
               aria-expanded={recipesBookOpen}
               aria-haspopup="dialog"

@@ -1,5 +1,5 @@
 import { ChevronLeft, Search, X } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
 import { CRAFTED_VIAL_TEMPLATES } from '../../data/craftedVials'
 import { applyLegacyVialIdRename, resolveLabVialDisplayName } from '../../lib/legacyVialIdRenames'
 import { pairKey } from '../../lib/recipeMap'
@@ -56,15 +56,32 @@ export type LabRecipesBookPanelProps = {
   vials: Record<string, Vial>
   onRequestClose: () => void
   titleId: string
+  /** Si défini au montage / ouverture : affiche directement le détail de cette fiole puis est effacé côté parent. */
+  detailIntentId?: string | null
+  onDetailIntentConsumed?: () => void
 }
 
 export function LabRecipesBookPanel({
   vials,
   onRequestClose,
   titleId,
+  detailIntentId,
+  onDetailIntentConsumed,
 }: LabRecipesBookPanelProps) {
   const [q, setQ] = useState('')
   const [detailVial, setDetailVial] = useState<Vial | null>(null)
+
+  useLayoutEffect(() => {
+    if (!detailIntentId) return
+    const raw = detailIntentId.trim()
+    const resolvedId = applyLegacyVialIdRename(raw)
+    const v = vials[resolvedId] ?? vials[raw]
+    if (v) {
+      setDetailVial(v)
+      setQ('')
+    }
+    onDetailIntentConsumed?.()
+  }, [detailIntentId, vials, onDetailIntentConsumed])
 
   const rows = useMemo(() => {
     const list = Object.values(vials)

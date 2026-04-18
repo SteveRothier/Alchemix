@@ -1,4 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { List } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { requestOpenRecipesBookToVial } from '../../lib/recipesBookEvents'
 import { remapSvgIdsInClonedSubtree } from '../../lib/remapSvgIdsForDomClone'
 import {
   collectLabFusionDropTargets,
@@ -7,9 +10,28 @@ import {
 } from '../game/labGeometry'
 import type { Vial } from '../../types'
 import { useLabDrag, type LabDragContextValue } from '../game/LabDragContext'
+import { LAB_MESSAGES } from '../lab/labMessages'
 import { VialChip } from '../vial/VialChip'
 
 const MIN_MOVE_PX = 6
+
+/** Position fixe sous la carte (alignée à gauche), repli au-dessus si pas assez de place en bas. */
+function computeRecipeContextMenuPosition(cardEl: HTMLElement): { left: number; top: number } {
+  const r = cardEl.getBoundingClientRect()
+  const gap = 3
+  const estW = 118
+  const estH = 28
+  const pad = 6
+  let left = r.left
+  let top = r.bottom + gap
+  left = Math.max(pad, Math.min(left, window.innerWidth - estW - pad))
+  if (top + estH > window.innerHeight - pad) {
+    top = Math.max(pad, r.top - estH - gap)
+  } else {
+    top = Math.max(pad, top)
+  }
+  return { left, top }
+}
 
 type InventoryVialItemProps = {
   vial: Vial
@@ -20,7 +42,34 @@ type InventoryVialItemProps = {
  */
 export function InventoryVialItem({ vial }: InventoryVialItemProps) {
   const wrapRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const labDrag = useLabDrag()
+  const [ctxMenu, setCtxMenu] = useState<{ left: number; top: number } | null>(null)
+
+  useEffect(() => {
+    if (!ctxMenu) return
+    const focusRaf = requestAnimationFrame(() => {
+      menuRef.current?.querySelector<HTMLButtonElement>('button[role="menuitem"]')?.focus()
+    })
+    const close = () => setCtxMenu(null)
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close()
+    }
+    const onPointerDown = (e: PointerEvent) => {
+      if (menuRef.current?.contains(e.target as Node)) return
+      close()
+    }
+    const onScroll = () => close()
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('pointerdown', onPointerDown, true)
+    window.addEventListener('scroll', onScroll, true)
+    return () => {
+      cancelAnimationFrame(focusRaf)
+      window.removeEventListener('keydown', onKey)
+      window.removeEventListener('pointerdown', onPointerDown, true)
+      window.removeEventListener('scroll', onScroll, true)
+    }
+  }, [ctxMenu])
 
   useEffect(() => {
     if (!wrapRef.current || !labDrag) return
@@ -307,9 +356,48 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
     }
   }, [vial.id, labDrag])
 
+  const ctxPortal =
+    ctxMenu &&
+    createPortal(
+      <div
+        ref={menuRef}
+        className="lab-invRecipeContextMenu"
+        role="menu"
+        aria-label={LAB_MESSAGES.inventory.viewRecipesContextMenuLabel}
+        style={{ left: ctxMenu.left, top: ctxMenu.top }}
+      >
+        <button
+          type="button"
+          role="menuitem"
+          className="lab-invRecipeContextMenu-item"
+          onClick={() => {
+            requestOpenRecipesBookToVial(vial.id)
+            setCtxMenu(null)
+          }}
+        >
+          <List size={14} strokeWidth={2} aria-hidden className="shrink-0" />
+          <span>{LAB_MESSAGES.inventory.viewRecipesMenuItem}</span>
+        </button>
+      </div>,
+      document.body,
+    )
+
   return (
-    <div ref={wrapRef} className="lab-invItemWrap touch-none">
-      <VialChip vial={vial} inventory />
-    </div>
+    <>
+      <div
+        ref={wrapRef}
+        className="lab-invItemWrap touch-none"
+        onContextMenu={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          const wrap = wrapRef.current
+          if (!wrap) return
+          setCtxMenu(computeRecipeContextMenuPosition(wrap))
+        }}
+      >
+        <VialChip vial={vial} inventory />
+      </div>
+      {ctxPortal}
+    </>
   )
 }
