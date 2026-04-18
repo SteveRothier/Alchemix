@@ -22,7 +22,7 @@ npm run test
 
 ## Stack
 
-- React 19, TypeScript, Vite 8, Zustand, GSAP Draggable, Vitest, Tailwind + CSS du laboratoire
+- React 19, TypeScript, Vite 8, Zustand, GSAP Draggable, Vitest, Tailwind + CSS du laboratoire, Lucide Icon
 
 ---
 
