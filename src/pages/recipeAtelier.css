@@ -750,12 +750,6 @@
   border: 1px solid color-mix(in srgb, var(--lab-hover) 32%, var(--border));
 }
 
-.recipe-atelier .ra-typeSpell {
-  background: color-mix(in srgb, #7c3aed 14%, var(--bg));
-  color: #4c1d95;
-  border: 1px solid color-mix(in srgb, #7c3aed 28%, var(--border));
-}
-
 .recipe-atelier .ra-typeCreature {
   background: color-mix(in srgb, #ea580c 14%, var(--bg));
   color: #7c2d12;

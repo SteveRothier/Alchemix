@@ -851,7 +851,7 @@ function isCreatureResultId(resultId: string): boolean {
 }
 
 /**
- * Créature avec un seul sort affiché en combinaison (a et b identiques et non vides).
+ * Créature : recette symétrique (a === b) affichée comme seul ingrédient en double.
  */
 function isCreatureRecipePair(p: Pick<EditablePair, 'a' | 'b' | 'resultId'>): boolean {
   const a = p.a.trim()
@@ -2126,7 +2126,6 @@ export function RecipeManagerPage() {
   const typeClass = (t: VialType | 'unknown' | 'fioleSeule') => {
     if (t === 'fioleSeule') return 'ra-typeSolo'
     if (t === 'element') return 'ra-typeElement'
-    if (t === 'spell') return 'ra-typeSpell'
     if (t === 'creature') return 'ra-typeCreature'
     return 'ra-typeUnknown'
   }
@@ -2770,12 +2769,12 @@ export function RecipeManagerPage() {
                                     setEditingSolo(null)
                                     if (isCreatureResultId(p.resultId)) {
                                       setCreateMode('creature')
-                                      const spell = p.a.trim()
+                                      const crIngredientId = p.a.trim()
                                         ? p.a.trim()
                                         : p.b.trim()
                                           ? p.b.trim()
                                           : ''
-                                      setCrElement(spell)
+                                      setCrElement(crIngredientId)
                                       setCrName(displayName(p.resultId))
                                     } else {
                                       setCreateMode('element')

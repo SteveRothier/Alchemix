@@ -52,10 +52,6 @@
     animation-duration: 3.8s;
   }
 
-  .lab-flaskSvg .lab-flask-spellGlow {
-    animation: lab-flask-glow-o 2.4s ease-in-out infinite;
-  }
-
   .lab-flaskSvg .lab-flask-swirlSpin {
     animation: lab-flask-swirl-rot 10s linear infinite;
     transform-box: fill-box;

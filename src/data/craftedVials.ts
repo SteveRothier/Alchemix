@@ -20,7 +20,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "swirl",
     },
-    recipe: { ingredientA: "Poison", ingredientB: "el-water" },
+    recipes: [
+      { ingredientA: "Poison", ingredientB: "el-water" },
+      { ingredientA: "craft-venom", ingredientB: "el-water" },
+      { ingredientA: "Corrosive", ingredientB: "el-water" },
+    ],
   },
   'Aether': {
     id: "Aether",
@@ -64,7 +68,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.57,
       texture: "ember",
     },
-    recipe: { ingredientA: "el-fire", ingredientB: "craft-void" },
+    recipes: [
+      { ingredientA: "el-fire", ingredientB: "craft-void" },
+      { ingredientA: "hell", ingredientB: "el-fire" },
+    ],
   },
   'Arcane': {
     id: "Arcane",
@@ -121,18 +128,6 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "ocean", ingredientB: "el-light" },
     ],
   },
-  'Beast': {
-    id: "Beast",
-    type: "element",
-    name: "Beast",
-    liquid: {
-      primaryColor: "#6d597a",
-      secondaryColor: "#b56576",
-      opacity: 0.9,
-      texture: "liquid",
-    },
-    recipe: { ingredientA: "Life", ingredientB: "Forest" },
-  },
   'Biomass': {
     id: "Biomass",
     type: "element",
@@ -165,6 +160,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       { ingredientA: "Galaxy", ingredientB: "craft-void" },
       { ingredientA: "Darkmatter", ingredientB: "gravity" },
       { ingredientA: "Constellation", ingredientB: "el-shadow" },
+      { ingredientA: "gravity", ingredientB: "el-shadow" },
     ],
   },
   'Blaze': {
@@ -205,7 +201,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "liquid",
     },
-    recipe: { ingredientA: "el-water", ingredientB: "hell" },
+    recipes: [
+      { ingredientA: "el-water", ingredientB: "hell" },
+      { ingredientA: "Life", ingredientB: "hell" },
+    ],
   },
   'Bog': {
     id: "Bog",
@@ -426,7 +425,10 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "mist",
     },
-    recipe: { ingredientA: "Nebula", ingredientB: "craft-space" },
+    recipes: [
+      { ingredientA: "Nebula", ingredientB: "craft-space" },
+      { ingredientA: "Star", ingredientB: "craft-space" },
+    ],
   },
   'Courage': {
     id: "Courage",
@@ -1412,7 +1414,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "mist",
     },
-    recipe: { ingredientA: "Spirit", ingredientB: "craft-mist" },
+    recipes: [
+      { ingredientA: "Spirit", ingredientB: "craft-mist" },
+      { ingredientA: "Soul", ingredientB: "craft-mist" },
+      { ingredientA: "Spirit", ingredientB: "Fog" },
+    ],
   },
   'Drizzle': {
     id: "Drizzle",
@@ -1770,7 +1776,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.85,
       texture: "static",
     },
-    recipe: { ingredientA: "ice", ingredientB: "snow" },
+    recipes: [
+      { ingredientA: "ice", ingredientB: "snow" },
+      { ingredientA: "ice", ingredientB: "craft-mist" },
+      { ingredientA: "snow", ingredientB: "el-water" },
+    ],
   },
   'Frostbite': {
     id: "Frostbite",
@@ -2380,7 +2390,11 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.63,
       texture: "mist",
     },
-    recipe: { ingredientA: "el-air", ingredientB: "el-grass" },
+    recipes: [
+      { ingredientA: "el-air", ingredientB: "el-grass" },
+      { ingredientA: "Plant", ingredientB: "el-air" },
+      { ingredientA: "craft-grove", ingredientB: "el-air" },
+    ],
   },
   'Nebula': {
     id: "Nebula",
@@ -2457,7 +2471,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.88,
       texture: "flakes",
     },
-    recipe: { ingredientA: "craft-venom", ingredientB: "El-shadow" },
+    recipe: { ingredientA: "craft-venom", ingredientB: "el-shadow" },
   },
   'Nightmare': {
     id: "Nightmare",
@@ -2774,8 +2788,8 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "liquid",
     },
     recipes: [
-      { ingredientA: "Life", ingredientB: "Beast" },
-      { ingredientA: "Parasite", ingredientB: "Beast" },
+      { ingredientA: "Life", ingredientB: "Parasite" },
+      { ingredientA: "Parasite", ingredientB: "Forest" },
     ],
   },
   'Pressure': {

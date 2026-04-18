@@ -9,7 +9,6 @@ import {
   ELEMENT_CLIP_SCALE,
   CREATURE_VIEWBOX,
   FLASK_VIEWBOX,
-  INNER_CLIP_PATH,
 } from './innerClipPaths'
 import { VialTextureLayer } from './layers/VialTextureLayer'
 import { CreatureFlaskChrome } from './shapes/CreatureFlaskChrome'
@@ -89,20 +88,10 @@ export function VialFlaskGraphic({
 
   const a = vial.liquid.primaryColor
   const b = vial.liquid.secondaryColor ?? vial.liquid.primaryColor
-  const clipPath = INNER_CLIP_PATH[vial.type]
+  const isCreature = vial.type === 'creature'
 
-  const gradY1 =
-    vial.type === 'element'
-      ? 20
-      : vial.type === 'creature'
-          ? 8
-          : 14
-  const gradY2 =
-    vial.type === 'element'
-      ? 47
-      : vial.type === 'creature'
-          ? 46
-          : 48
+  const gradY1 = isCreature ? 8 : 20
+  const gradY2 = isCreature ? 46 : 47
 
   const glassFill = (
     <>
@@ -111,25 +100,19 @@ export function VialFlaskGraphic({
     </>
   )
 
-  const creatureSilhouette =
-    vial.type === 'creature' && creaturePresentation === 'silhouette'
+  const creatureSilhouette = isCreature && creaturePresentation === 'silhouette'
 
-  const flaskTypeClass =
-    vial.type === 'creature'
-      ? creatureSilhouette
-        ? ' lab-flaskSvg--creature lab-flaskSvg--creatureSilhouette'
-        : ' lab-flaskSvg--creature'
-      : ''
+  const flaskTypeClass = isCreature
+    ? creatureSilhouette
+      ? ' lab-flaskSvg--creature lab-flaskSvg--creatureSilhouette'
+      : ' lab-flaskSvg--creature'
+    : ''
 
   return (
     <svg
       ref={svgRef}
       className={`lab-flaskSvg${flaskTypeClass} ${className}`.trim()}
-      viewBox={
-        vial.type === 'creature'
-          ? CREATURE_VIEWBOX
-          : FLASK_VIEWBOX
-      }
+      viewBox={isCreature ? CREATURE_VIEWBOX : FLASK_VIEWBOX}
       aria-hidden
       focusable="false"
     >
@@ -147,36 +130,19 @@ export function VialFlaskGraphic({
           <stop offset="100%" stopColor={a} stopOpacity={0.78} />
         </linearGradient>
         <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
-          {vial.type === 'element' ? (
-            <path transform={elementClipTransform()} d={ELEMENT_BULB_BODY_PATH} />
-          ) : vial.type === 'creature' ? (
+          {isCreature ? (
             <path transform={creatureClipTransform()} d={CREATURE_BODY_PATH} />
           ) : (
-            <path d={clipPath} />
+            <path transform={elementClipTransform()} d={ELEMENT_BULB_BODY_PATH} />
           )}
         </clipPath>
       </defs>
 
       <g clipPath={`url(#${clipId})`} style={{ opacity: vial.liquid.opacity }}>
-        {vial.type === 'element' || vial.type === 'creature' ? (
-          <>
-            {glassFill}
-            <VialTextureLayer
-              texture={vial.liquid.texture}
-              vialType={vial.type}
-              defsId={reactId}
-            />
-          </>
-        ) : (
-          <>
-            <rect x="0" y="0" width="48" height="56" fill={`url(#${gradId})`} />
-            <VialTextureLayer
-              texture={vial.liquid.texture}
-              vialType={vial.type}
-              defsId={reactId}
-            />
-          </>
-        )}
+        <>
+          {glassFill}
+          <VialTextureLayer texture={vial.liquid.texture} defsId={reactId} />
+        </>
       </g>
 
       {!creatureSilhouette ? (

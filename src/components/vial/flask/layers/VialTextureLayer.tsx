@@ -1,18 +1,13 @@
-import type { LiquidTexture, VialType } from '../../../../types'
+import type { LiquidTexture } from '../../../../types'
 
 type VialTextureLayerProps = {
   texture: LiquidTexture
-  vialType: VialType
   /** Préfixe unique pour les ids de gradients (définitions par fiole). */
   defsId: string
 }
 
 /** Effets à l’intérieur du clip — coordonnées viewBox 48×56. */
-export function VialTextureLayer({
-  texture,
-  vialType,
-  defsId,
-}: VialTextureLayerProps) {
+export function VialTextureLayer({ texture, defsId }: VialTextureLayerProps) {
   switch (texture) {
     case 'liquid':
       return null
@@ -72,17 +67,6 @@ export function VialTextureLayer({
             ry="3.5"
             fill="rgba(255,255,255,0.14)"
           />
-          {vialType === 'spell' ? (
-            <circle
-              className="lab-flask-spellGlow"
-              cx="24"
-              cy="27"
-              r="7"
-              fill="none"
-              stroke="rgba(200,180,255,0.38)"
-              strokeWidth="0.75"
-            />
-          ) : null}
         </g>
       )
     case 'spark':

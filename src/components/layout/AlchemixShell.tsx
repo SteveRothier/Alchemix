@@ -15,10 +15,10 @@ import { InventoryPanel } from '../inventory/InventoryPanel'
 import { resolveFusionProduct } from '../../lib/fusion'
 import { applyLegacyVialIdRename } from '../../lib/legacyVialIdRenames'
 import { isProceduralLegacyFusionVialId } from '../../lib/proceduralFusionMigration'
-import { resolveDrinkSpell, type DrinkSpellResult } from '../../lib/drinkSpell'
+import { resolveCreatureFromOffering, type CreatureOfferResult } from '../../lib/creatureOffer'
 import { CRAFTED_VIAL_TEMPLATES } from '../../data/craftedVials'
 import { STARTER_VIAL_DEFINITIONS } from '../../data/starterVials'
-import { OFFERING_ID_TO_CREATURE_ID } from '../../data/spellDrinkCreatures'
+import { OFFERING_ID_TO_CREATURE_ID } from '../../data/creatureOfferMap'
 import {
   Draggable,
   gsap,
@@ -662,11 +662,11 @@ export function AlchemixShell() {
     }
     return ids
   }, [vialsById])
-  /** Au moins un élément de l’inventaire pourrait débloquer une créature (resolveDrinkSpell, sans mutation). */
+  /** Au moins un élément de l’inventaire pourrait débloquer une créature (resolveCreatureFromOffering, sans mutation). */
   const hasOfferableElementForFlask = useMemo(() => {
     for (const v of Object.values(vialsById)) {
       if (v.type !== 'element') continue
-      if (resolveDrinkSpell(v, vialsById).ok) return true
+      if (resolveCreatureFromOffering(v, vialsById).ok) return true
     }
     return false
   }, [vialsById])
@@ -1089,7 +1089,7 @@ export function AlchemixShell() {
       const grassOfferStep =
         vialId === 'el-grass' ? Math.min(2, priorUses + 1) : 0
       pushLabUndoHistory()
-      const result: DrinkSpellResult = store.offerElementToCharacter(vialId)
+        const result: CreatureOfferResult = store.offerElementToCharacter(vialId)
       if (grassOfferStep === 2 && !store.vials.death) {
         const deathTpl = CRAFTED_VIAL_TEMPLATES.death
         if (deathTpl && deathTpl.type === 'element') {

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { getCreatureIdFromOfferedElement } from './spellDrinkCreatures'
+import { getCreatureIdFromOfferedElement } from './creatureOfferMap'
 
 describe('getCreatureIdFromOfferedElement', () => {
-  it('unlocks golem when offering craft-stone', () => {
+  it('débloque le golem en offrant craft-stone', () => {
     expect(getCreatureIdFromOfferedElement('craft-stone')).toBe('creature-golem')
   })
 
-  it('keeps legacy spell alias for stone wall', () => {
+  it("garde l’alias sp-stone-wall → golem", () => {
     expect(getCreatureIdFromOfferedElement('sp-stone-wall')).toBe('creature-golem')
   })
 })

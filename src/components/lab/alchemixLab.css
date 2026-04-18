@@ -638,7 +638,7 @@
 }
 
 /*
- * Fioles : même hauteur par contexte (élément / sort / créature) ;
+ * Fioles : même hauteur par contexte (élément / créature) ;
  * largeur dérivée du viewBox via aspect-ratio (innerClipPaths).
  */
 .lab-flaskSvg {
@@ -647,10 +647,6 @@
   height: 28px;
   aspect-ratio: 48 / 56;
   flex-shrink: 0;
-}
-
-.lab-flaskSvg--spell {
-  aspect-ratio: 27 / 40;
 }
 
 .lab-flaskSvg--creature {
@@ -662,10 +658,6 @@
   aspect-ratio: 48 / 56;
 }
 
-.lab-chipCompact .lab-flaskSvg--spell {
-  aspect-ratio: 27 / 40;
-}
-
 .lab-chipCompact .lab-flaskSvg--creature {
   aspect-ratio: 28 / 48;
 }
@@ -675,15 +667,11 @@
   aspect-ratio: 48 / 56;
 }
 
-.lab-chipInventory .lab-flaskSvg--spell {
-  aspect-ratio: 27 / 40;
-}
-
 .lab-chipInventory .lab-flaskSvg--creature {
   aspect-ratio: 28 / 48;
 }
 
-/* Éléments : moins d’air gauche/droite autour de l’icône (bulbe plus large que sort / créature). */
+/* Éléments : moins d’air gauche/droite autour de l’icône (bulbe plus large que créature). */
 .lab-chipInventory[data-vial-type='element'] .lab-flaskSvg {
   margin-inline: -3px;
 }
@@ -1876,10 +1864,6 @@ html[data-lab-offer-drag-hover] .alchemix-lab .lab-controls-fab.lab-offerFab {
   aspect-ratio: 28 / 48;
 }
 
-.lab-controls-dialog.lab-recipesDialog .lab-recipesFusionFlask.lab-flaskSvg--spell {
-  aspect-ratio: 27 / 40;
-}
-
 .lab-controls-dialog.lab-recipesDialog .lab-recipesFusionCardName {
   font-family: var(--font-lab-heading);
   font-size: 0.68rem;
@@ -1910,10 +1894,6 @@ html[data-lab-offer-drag-hover] .alchemix-lab .lab-controls-fab.lab-offerFab {
 
 .lab-controls-dialog.lab-recipesDialog .lab-recipesChipFlask.lab-flaskSvg--creature {
   aspect-ratio: 28 / 48;
-}
-
-.lab-controls-dialog.lab-recipesDialog .lab-recipesChipFlask.lab-flaskSvg--spell {
-  aspect-ratio: 27 / 40;
 }
 
 .lab-controls-dialog.lab-recipesDialog .lab-recipesChipName {

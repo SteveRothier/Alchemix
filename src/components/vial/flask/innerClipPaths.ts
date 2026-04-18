@@ -1,5 +1,3 @@
-import type { VialType } from '../../../types'
-
 /**
  * Contour du globe (corps) fiole élément — identique au chrome dans ElementFlaskChrome.
  * Le clip liquide / cavité est ce path homothétique depuis le centre (voir VialFlaskGraphic).
@@ -12,15 +10,6 @@ export const ELEMENT_CLIP_ORIGIN = { x: 24, y: 33.65 }
 export const ELEMENT_CLIP_SCALE = 0.968
 
 /**
- * Contour du corps hexagonal fiole sort — identique au chrome dans SpellFlaskChrome.
- */
-export const SPELL_HEX_BODY_PATH =
-  'M 24 12.5 L 35 18.5 V 29.5 L 24 37.5 L 13 29.5 V 18.5 Z'
-
-export const SPELL_CLIP_ORIGIN = { x: 24, y: 25 }
-export const SPELL_CLIP_SCALE = 0.968
-
-/**
  * Créature : corps anguleux (épaules larges, base plate, goulot étroit). Ornements dans CreatureFlaskChrome.
  */
 /** Symétrique par rapport à x = 24 : épaules 12,8 / 35,2 ; goulot 22–26 (arêtes verticales). */
@@ -30,22 +19,8 @@ export const CREATURE_BODY_PATH =
 export const CREATURE_CLIP_ORIGIN = { x: 24, y: 29 }
 export const CREATURE_CLIP_SCALE = 0.968
 
-/**
- * Référence ; `element`, `spell` et `creature` utilisent le corps chrome + transform dans VialFlaskGraphic.
- */
-export const INNER_CLIP_PATH: Record<VialType, string> = {
-  element: ELEMENT_BULB_BODY_PATH,
-  spell: SPELL_HEX_BODY_PATH,
-  creature: CREATURE_BODY_PATH,
-}
-
 /** Cadre global (élément, créature). */
 export const FLASK_VIEWBOX = '0 0 48 56' as const
-
-/**
- * Cadrage sort : zoom sur l’hex + cristal, sans changer les coordonnées des paths.
- */
-export const SPELL_VIEWBOX = '10.5 0 27 40' as const
 
 /**
  * Cadrage créature : corps + cristal / ornements haut, socle bas.

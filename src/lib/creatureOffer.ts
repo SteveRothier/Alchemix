@@ -1,5 +1,5 @@
 import { CRAFTED_VIAL_TEMPLATES } from '../data/craftedVials'
-import { getCreatureIdFromOfferedElement } from '../data/spellDrinkCreatures'
+import { getCreatureIdFromOfferedElement } from '../data/creatureOfferMap'
 import type { Vial } from '../types'
 
 const DEFAULT_LIQUID: Vial['liquid'] = {
@@ -8,17 +8,17 @@ const DEFAULT_LIQUID: Vial['liquid'] = {
   texture: 'liquid',
 }
 
-export type DrinkSpellResult =
+export type CreatureOfferResult =
   | { ok: false; reason: 'not_element' | 'no_creature' | 'already_owned' }
   | { ok: true; creature: Vial }
 
 /**
- * Offers an element to the character: may unlock a creature trophy.
+ * Offre un élément au personnage : peut débloquer une créature trophée.
  */
-export function resolveDrinkSpell(
+export function resolveCreatureFromOffering(
   offeredVial: Vial | undefined,
   vialsById: Record<string, Vial>,
-): DrinkSpellResult {
+): CreatureOfferResult {
   if (!offeredVial || offeredVial.type !== 'element') {
     return { ok: false, reason: 'not_element' }
   }

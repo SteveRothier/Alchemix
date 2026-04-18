@@ -1,4 +1,4 @@
-export type VialType = 'element' | 'spell' | 'creature'
+export type VialType = 'element' | 'creature'
 
 export type LiquidTexture =
   | 'bubbles'
@@ -65,7 +65,6 @@ export interface Recipe {
 
 export type AchievementCondition =
   | 'discover_element'
-  | 'discover_spell'
   | 'create_combo'
   | 'unlock_tier'
 

@@ -14,7 +14,6 @@ export type ElementAffinity =
 export type IngredientKind =
   | 'primordial'
   | 'crafted'
-  | 'spell'
   | 'creature'
   | 'unknown'
 
@@ -47,7 +46,7 @@ const RARITY_TO_INTENSITY: Record<VialRarity, number> = {
 function kindFromVial(vial: Vial): IngredientKind {
   const { id, type } = vial
   if (id.startsWith('creature-') || type === 'creature') return 'creature'
-  if (id.startsWith('sp-')) return 'spell'
+  if (id.startsWith('sp-')) return 'crafted'
   if (id.startsWith('el-')) return 'primordial'
   if (id.startsWith('craft-')) return 'crafted'
   if (type === 'element') return 'crafted'

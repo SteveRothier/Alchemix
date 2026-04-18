@@ -6,11 +6,11 @@ import {
   reconcileStarterVialsWithDefinitions,
 } from '../lib/legacyVialIdRenames'
 import { migrateProceduralFusionVialsFromStore } from '../lib/proceduralFusionMigration'
-import { resolveDrinkSpell, type DrinkSpellResult } from '../lib/drinkSpell'
+import { resolveCreatureFromOffering, type CreatureOfferResult } from '../lib/creatureOffer'
 import type { Vial } from '../types'
 
 const PERSIST_KEY = 'alchemix-save'
-const PERSIST_VERSION = 5
+const PERSIST_VERSION = 6
 
 function freshStarterState(isoTime: string) {
   return {
@@ -31,7 +31,7 @@ export type AlchemixState = PersistedData & {
   recordFusion: () => void
   incrementOfferingUse: (vialId: string) => void
   /** Offer an element to the character and maybe unlock a creature trophy. */
-  offerElementToCharacter: (vialId: string) => DrinkSpellResult
+  offerElementToCharacter: (vialId: string) => CreatureOfferResult
   resetToStarters: () => void
 }
 
@@ -66,7 +66,7 @@ export const useAlchemixStore = create<AlchemixState>()(
           return { ok: false, reason: 'not_element' }
         }
         const vials = get().vials
-        const result = resolveDrinkSpell(offered, vials)
+        const result = resolveCreatureFromOffering(offered, vials)
         const nextUse = (get().offeringUseCount[vialId] ?? 0) + 1
         if (result.ok) {
           set((s) => ({
@@ -115,6 +115,14 @@ export const useAlchemixStore = create<AlchemixState>()(
         }
         if (version < 5 && data.vials) {
           migrateProceduralFusionVialsFromStore(data.vials, data.offeringUseCount)
+        }
+        if (version < 6 && data.vials) {
+          for (const id of Object.keys(data.vials)) {
+            const v = data.vials[id]
+            if (v && (v as { type: string }).type === 'spell') {
+              data.vials[id] = { ...v, type: 'element' }
+            }
+          }
         }
         return data
       },

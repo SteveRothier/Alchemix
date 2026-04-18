@@ -1,8 +1,8 @@
 import { CRAFTED_VIAL_TEMPLATES } from './craftedVials'
 
 /**
- * Legacy explicit offering ids (spells, aliases) that unlock a creature trophy.
- * Absence from this table falls back to recipe-based detection.
+ * Ids d’offrande explicites (alias historiques `sp-*`, etc.) → créature trophée.
+ * Hors table : déduction depuis les recettes créature A===B du catalogue.
  */
 export const OFFERING_ID_TO_CREATURE_ID: Partial<Record<string, string>> = {
   'sp-fireball': 'creature-ifrit',
@@ -19,10 +19,6 @@ export const OFFERING_ID_TO_CREATURE_ID: Partial<Record<string, string>> = {
   'sp-plague-touch': 'creature-ogre',
 }
 
-/**
- * Any creature with a symmetric recipe (A === B) can be unlocked by offering
- * that exact element id to the character.
- */
 const OFFERING_ID_FROM_CREATURE_RECIPES: Partial<Record<string, string>> = (() => {
   const out: Partial<Record<string, string>> = {}
   const entries = Object.entries(CRAFTED_VIAL_TEMPLATES).sort(([a], [b]) =>
