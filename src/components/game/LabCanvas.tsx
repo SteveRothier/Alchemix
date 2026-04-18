@@ -175,13 +175,24 @@ export function LabCanvas({
           {LAB_MESSAGES.canvas.laboratoryTitle}
         </h2>
         <div className="pointer-events-auto flex shrink-0 items-center gap-2">
-          <Link
-            className="lab-recipesBtn"
-            to="/recipes"
-            title={LAB_MESSAGES.canvas.recipesLinkTitle}
-          >
-            {LAB_MESSAGES.canvas.recipesLinkLabel}
-          </Link>
+          {import.meta.env.DEV ? (
+            <Link
+              className="lab-recipesBtn"
+              to="/recipes"
+              title={LAB_MESSAGES.canvas.recipesLinkTitle}
+            >
+              {LAB_MESSAGES.canvas.recipesLinkLabel}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="lab-recipesBtn"
+              title={LAB_MESSAGES.canvas.recipesLinkTitle}
+              onClick={() => window.alert(LAB_MESSAGES.canvas.workshopDevOnlyAlert)}
+            >
+              {LAB_MESSAGES.canvas.recipesLinkLabel}
+            </button>
+          )}
         </div>
       </div>
       {marqueeStyle ? <div className="lab-marqueeRect" style={marqueeStyle} /> : null}

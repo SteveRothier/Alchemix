@@ -292,6 +292,14 @@
   text-decoration: none;
 }
 
+.alchemix-lab button.lab-recipesBtn {
+  margin: 0;
+  font: inherit;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 .alchemix-lab .lab-resetBtn {
   cursor: pointer;
 }

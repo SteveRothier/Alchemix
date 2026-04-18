@@ -74,8 +74,10 @@ export const LAB_MESSAGES = {
   },
   canvas: {
     laboratoryTitle: 'Laboratory',
-    recipesLinkLabel: 'Recipes',
-    recipesLinkTitle: 'Manage vial combinations',
+    recipesLinkLabel: 'Atelier',
+    recipesLinkTitle: 'Open the recipe workshop (local development only)',
+    workshopDevOnlyAlert:
+      'The recipe workshop is only available when you run the app locally (e.g. npm run dev). It is disabled in this build.',
     placementAreaAriaLabel:
       'Vial placement area — drag on the background to select multiple vials',
   },
