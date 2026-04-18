@@ -20,7 +20,7 @@ export const LAB_MESSAGES = {
   },
   offer: {
     onlyElements: 'Only elements can be offered.',
-    neverAgain: 'Never again !',
+    neverAgain: 'Disgusting ! Never again !',
     deathAdded: 'Death added to inventory.',
     noCreatureYet: 'No trophy creature for this element yet.',
     alreadyUnlocked: 'Trophy already unlocked.',

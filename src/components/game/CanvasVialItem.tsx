@@ -5,8 +5,10 @@ import { resolveLabVialDisplayName } from '../../lib/legacyVialIdRenames'
 import type { Vial } from '../../types'
 import { Draggable, registerGsapDraggable } from '../../lib/registerGsapDraggable'
 import {
+  clearLabOfferDragHover,
   collectLabFusionDropTargets,
   fusionDragRectOverlapsTargetChip,
+  updateLabOfferDragHoverFromRect,
   type LabFusionDropTarget,
 } from './labGeometry'
 import { useLabDrag } from './LabDragContext'
@@ -80,10 +82,14 @@ export function CanvasVialItem({
         lastOverDropHit.removeAttribute('data-over-target')
         lastOverDropHit = null
       }
+      clearLabOfferDragHover()
     }
 
     const updateFusionHover = () => {
-      if (!dragChipEl) return
+      if (!dragChipEl) {
+        clearLabOfferDragHover()
+        return
+      }
 
       const dragRect = dragChipEl.getBoundingClientRect()
       let nextHit: HTMLElement | null = null
@@ -100,6 +106,7 @@ export function CanvasVialItem({
         if (nextHit) nextHit.setAttribute('data-over-target', '')
         lastOverDropHit = nextHit
       }
+      updateLabOfferDragHoverFromRect(dragRect)
     }
 
     const scheduleFusionHover = () => {
@@ -191,6 +198,7 @@ export function CanvasVialItem({
 
     return () => {
       cancelFusionHoverRaf()
+      clearLabOfferDragHover()
       document.documentElement.removeAttribute(HTML_ATTR_CANVAS_CHIP_DRAG)
       d.kill()
     }

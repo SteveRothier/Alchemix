@@ -4,8 +4,10 @@ import { createPortal } from 'react-dom'
 import { requestOpenRecipesBookToVial } from '../../lib/recipesBookEvents'
 import { remapSvgIdsInClonedSubtree } from '../../lib/remapSvgIdsForDomClone'
 import {
+  clearLabOfferDragHover,
   collectLabFusionDropTargets,
   fusionDragRectOverlapsTargetChip,
+  updateLabOfferDragHoverFromRect,
   type LabFusionDropTarget,
 } from '../game/labGeometry'
 import type { Vial } from '../../types'
@@ -114,16 +116,23 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
         lastOverDropHit.removeAttribute('data-over-target')
         lastOverDropHit = null
       }
+      clearLabOfferDragHover()
     }
 
     const updateFusionHoverFromGhost = () => {
       const g = ghostEl
-      if (!g) return
+      if (!g) {
+        clearLabOfferDragHover()
+        return
+      }
       const chip =
         ghostChipEl?.isConnected === true
           ? ghostChipEl
           : (g.querySelector('.lab-chipInventory') as HTMLElement | null)
-      if (!(chip instanceof HTMLElement)) return
+      if (!(chip instanceof HTMLElement)) {
+        clearLabOfferDragHover()
+        return
+      }
 
       const dragRect = chip.getBoundingClientRect()
       let nextHit: HTMLElement | null = null
@@ -139,6 +148,7 @@ export function InventoryVialItem({ vial }: InventoryVialItemProps) {
         if (nextHit) nextHit.setAttribute('data-over-target', '')
         lastOverDropHit = nextHit
       }
+      updateLabOfferDragHoverFromRect(dragRect)
     }
 
     const scheduleFusionHoverFromGhost = () => {

@@ -894,6 +894,21 @@ html[data-lab-canvas-chip-drag]
   opacity: 0.75;
 }
 
+/* Fiole offrande : scale au survol pendant un drag (après .lab-controls-fab pour garder la transition). */
+.alchemix-lab .lab-controls-fab.lab-offerFab {
+  transform: scale(1);
+  transform-origin: 50% 50%;
+  transition:
+    color 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.2s ease;
+}
+
+/* Zoom fiole : carte (.lab-chipInventory) qui chevauche la fiole (voir labGeometry updateLabOfferDragHoverFromRect). */
+html[data-lab-offer-drag-hover] .alchemix-lab .lab-controls-fab.lab-offerFab {
+  transform: scale(1.09);
+}
+
 /* Infobulles FAB (clavier / corbeille) — au-dessus, thème labo. */
 .alchemix-lab .lab-fabWithTooltip {
   position: relative;

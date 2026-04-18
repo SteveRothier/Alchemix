@@ -96,6 +96,29 @@ export function rectsIntersect(
   )
 }
 
+/** Attribut sur `<html>` : la carte draguée (inventaire ou plateau) chevauche la fiole d’offrande. */
+export const LAB_OFFER_DRAG_HOVER_ATTR = 'data-lab-offer-drag-hover' as const
+
+export function updateLabOfferDragHoverFromRect(dragRect: DOMRectReadOnly): void {
+  const fab = document.querySelector(
+    '.alchemix-lab .lab-offerFab',
+  ) as HTMLElement | null
+  const root = document.documentElement
+  if (!fab) {
+    root.removeAttribute(LAB_OFFER_DRAG_HOVER_ATTR)
+    return
+  }
+  if (rectsIntersect(dragRect, fab.getBoundingClientRect())) {
+    root.setAttribute(LAB_OFFER_DRAG_HOVER_ATTR, '')
+  } else {
+    root.removeAttribute(LAB_OFFER_DRAG_HOVER_ATTR)
+  }
+}
+
+export function clearLabOfferDragHover(): void {
+  document.documentElement.removeAttribute(LAB_OFFER_DRAG_HOVER_ATTR)
+}
+
 /** Limites alignées sur `clientPointToCanvasPercent`. */
 export function clampLabPlacementPercent(xPct: number, yPct: number) {
   return {
