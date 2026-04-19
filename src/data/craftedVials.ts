@@ -300,6 +300,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
     },
     recipes: [
       { ingredientA: "el-water", ingredientB: "craft-murk" },
+      { ingredientA: "ocean", ingredientB: "craft-murk" },
       { ingredientA: "craft-mist", ingredientB: "Oil" },
     ],
   },
@@ -526,7 +527,6 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       texture: "wave",
     },
     recipes: [
-      { ingredientA: "ocean", ingredientB: "craft-murk" },
       { ingredientA: "el-water", ingredientB: "el-shadow" },
       { ingredientA: "trench", ingredientB: "el-water" },
     ],
@@ -3976,10 +3976,7 @@ export const CRAFTED_VIAL_TEMPLATES: Record<string, CraftedVialTemplate> = {
       opacity: 0.92,
       texture: "wave",
     },
-    recipes: [
-      { ingredientA: "craft-ocean", ingredientB: "craft-rift" },
-      { ingredientA: "craft-abyss", ingredientB: "craft-murk" },
-    ],
+    recipe: { ingredientA: "craft-ocean", ingredientB: "craft-rift" },
   },
   'Trust': {
     id: "Trust",
