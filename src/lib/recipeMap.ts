@@ -10,7 +10,13 @@ function pairKey(idA: string, idB: string): string {
 
 const SEED_RESULT_BY_PAIR = new Map<string, string>()
 
+/*
+ * On exclut volontairement les templates créatures : leurs recettes (ex. stone+stone → golem)
+ * existent uniquement pour le système d’offrande (trophée) et ne doivent pas être fusionnables
+ * dans le laboratoire. Voir `creatureOfferMap.ts` pour la résolution des offrandes.
+ */
 for (const [resultId, tpl] of Object.entries(CRAFTED_VIAL_TEMPLATES)) {
+  if (tpl.type === 'creature') continue
   const recipes = tpl.recipes?.length ? tpl.recipes : tpl.recipe ? [tpl.recipe] : []
   for (const r of recipes) {
     const { ingredientA, ingredientB } = r
