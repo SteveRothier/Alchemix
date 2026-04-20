@@ -39,8 +39,6 @@ export const LAB_MESSAGES = {
     clearTooltip: 'Clear canvas',
     controlsAriaLabel: 'Controls',
     controlsTooltip: 'Controls',
-    languageAriaLabel: 'Choose language',
-    languageTooltip: 'EN / FR',
     playAreaAriaLabel: 'Play area',
     inventoryAriaLabel: 'Inventory',
   },
@@ -50,7 +48,6 @@ export const LAB_MESSAGES = {
     clearQuestion: 'Clear all items on the canvas?',
     resetQuestion:
       'Reset progress? Inventory will return to the 5 starter elements and the laboratory will be cleared.',
-    chooseLanguageAriaLabel: 'Choose language',
     closeCreaturePopupAriaLabel: 'Close creature popup',
     creaturesToDiscoverTitle: 'Creatures to discover',
     trophyCategoriesTitle: 'Categories',
@@ -68,10 +65,6 @@ export const LAB_MESSAGES = {
     { keys: 'Ctrl+Z', detail: 'Undo' },
     { keys: 'Ctrl+Y', detail: 'Redo' },
   ],
-  languageOptions: {
-    english: 'English',
-    french: 'Français',
-  },
   inventory: {
     elementsSectionTitle: 'Elements',
     viewRecipesMenuItem: 'View Recipes',

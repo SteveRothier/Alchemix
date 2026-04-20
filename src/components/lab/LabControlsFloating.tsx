@@ -1,5 +1,5 @@
 import { gsap } from 'gsap'
-import { BookOpen, Globe, Keyboard, Save, Trash2, X } from 'lucide-react'
+import { BookOpen, Keyboard, Save, Trash2, X } from 'lucide-react'
 import {
   type ReactNode,
   useCallback,
@@ -40,11 +40,9 @@ export function LabControlsFloating({
   const [open, setOpen] = useState(false)
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
-  const [langMenuOpen, setLangMenuOpen] = useState(false)
   const [recipesBookOpen, setRecipesBookOpen] = useState(false)
   const [recipesDetailIntentId, setRecipesDetailIntentId] = useState<string | null>(null)
   const fabRef = useRef<HTMLButtonElement>(null)
-  const langFabRef = useRef<HTMLButtonElement>(null)
   const dimRef = useRef<HTMLDivElement>(null)
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeBtnRef = useRef<HTMLButtonElement>(null)
@@ -66,12 +64,6 @@ export function LabControlsFloating({
   const resetClosingRef = useRef(false)
   const resetConfirmOpenRef = useRef(resetConfirmOpen)
   resetConfirmOpenRef.current = resetConfirmOpen
-
-  const langDimRef = useRef<HTMLDivElement>(null)
-  const langDialogRef = useRef<HTMLDivElement>(null)
-  const langClosingRef = useRef(false)
-  const langMenuOpenRef = useRef(langMenuOpen)
-  langMenuOpenRef.current = langMenuOpen
 
   const recipesBookFabRef = useRef<HTMLButtonElement>(null)
   const recipesDimRef = useRef<HTMLDivElement>(null)
@@ -151,23 +143,6 @@ export function LabControlsFloating({
     requestCloseReset()
   }, [onResetProgress, requestCloseReset])
 
-  const requestCloseLang = useCallback(() => {
-    if (!langMenuOpenRef.current || langClosingRef.current) return
-    langClosingRef.current = true
-    const dim = langDimRef.current
-    const dlg = langDialogRef.current
-    const fab = langFabRef.current
-    if (!dim || !dlg || !fab) {
-      setLangMenuOpen(false)
-      langClosingRef.current = false
-      return
-    }
-    playLabIconModalClose(dim, dlg, fab, () => {
-      setLangMenuOpen(false)
-      langClosingRef.current = false
-    })
-  }, [])
-
   const requestCloseRecipesBook = useCallback(() => {
     if (!recipesBookOpenRef.current || recipesClosingRef.current) return
     recipesClosingRef.current = true
@@ -238,32 +213,6 @@ export function LabControlsFloating({
   }, [clearConfirmOpen])
 
   useLayoutEffect(() => {
-    if (!langMenuOpen) return
-    const fab = langFabRef.current
-    const dlg = langDialogRef.current
-    const dim = langDimRef.current
-    if (!fab || !dlg || !dim) return
-    const fr = fab.getBoundingClientRect()
-    const gap = 6
-    Object.assign(dlg.style, {
-      position: 'fixed',
-      right: `${window.innerWidth - fr.right}px`,
-      bottom: `${window.innerHeight - fr.top + gap}px`,
-      left: 'auto',
-      top: 'auto',
-      margin: '0',
-      zIndex: '401',
-    })
-    const tl = playLabIconModalOpen(dim, dlg, fab, () => {
-      dlg.querySelector<HTMLButtonElement>('.lab-langOption')?.focus()
-    })
-    return () => {
-      tl.kill()
-      gsap.killTweensOf([dim, dlg])
-    }
-  }, [langMenuOpen])
-
-  useLayoutEffect(() => {
     if (!resetConfirmOpen) return
     const dim = resetDimRef.current
     const dlg = resetDialogRef.current
@@ -299,7 +248,7 @@ export function LabControlsFloating({
   }, [recipesBookOpen, recipesBookVials])
 
   useEffect(() => {
-    if (!open && !clearConfirmOpen && !langMenuOpen && !resetConfirmOpen && !recipesBookOpen)
+    if (!open && !clearConfirmOpen && !resetConfirmOpen && !recipesBookOpen)
       return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
@@ -314,10 +263,6 @@ export function LabControlsFloating({
       if (clearConfirmOpen) requestCloseClear()
       else if (resetConfirmOpen) requestCloseReset()
       else if (open) requestClose()
-      else if (langMenuOpen) {
-        requestCloseLang()
-        langFabRef.current?.focus()
-      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -325,12 +270,10 @@ export function LabControlsFloating({
     clearConfirmOpen,
     resetConfirmOpen,
     open,
-    langMenuOpen,
     recipesBookOpen,
     requestClose,
     requestCloseClear,
     requestCloseReset,
-    requestCloseLang,
     requestCloseRecipesBook,
   ])
 
@@ -344,10 +287,6 @@ export function LabControlsFloating({
       const cdlg = clearDialogRef.current
       if (cd) gsap.killTweensOf(cd)
       if (cdlg) gsap.killTweensOf(cdlg)
-      const ld = langDimRef.current
-      const ldlg = langDialogRef.current
-      if (ld) gsap.killTweensOf(ld)
-      if (ldlg) gsap.killTweensOf(ldlg)
       const rd = resetDimRef.current
       const rdlg = resetDialogRef.current
       if (rd) gsap.killTweensOf(rd)
@@ -459,45 +398,6 @@ export function LabControlsFloating({
       document.body,
     )
 
-  const langModal =
-    langMenuOpen &&
-    createPortal(
-      <>
-        <div
-          ref={langDimRef}
-          className="lab-controls-dim"
-          role="presentation"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) requestCloseLang()
-          }}
-        />
-        <div
-          ref={langDialogRef}
-          className="lab-langPopover"
-          role="dialog"
-          aria-modal="true"
-          aria-label={LAB_MESSAGES.dialogs.chooseLanguageAriaLabel}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            className="lab-langOption"
-            onClick={requestCloseLang}
-          >
-            {LAB_MESSAGES.languageOptions.english}
-          </button>
-          <button
-            type="button"
-            className="lab-langOption"
-            onClick={requestCloseLang}
-          >
-            {LAB_MESSAGES.languageOptions.french}
-          </button>
-        </div>
-      </>,
-      document.body,
-    )
-
   const resetModal =
     resetConfirmOpen &&
     createPortal(
@@ -586,7 +486,6 @@ export function LabControlsFloating({
     <>
       {controlsModal}
       {clearModal}
-      {langModal}
       {resetModal}
       {recipesModal}
       <div className="pointer-events-none absolute bottom-0 right-0 z-40 flex flex-row items-center gap-2 p-2 max-[560px]:gap-1.5 max-[560px]:p-1.5">
@@ -669,26 +568,6 @@ export function LabControlsFloating({
             </span>
           </div>
         ) : null}
-        <div className="lab-fabWithTooltip lab-langFabWrap pointer-events-auto">
-          <button
-            ref={langFabRef}
-            type="button"
-            className="lab-controls-fab"
-            aria-expanded={langMenuOpen}
-            aria-haspopup="dialog"
-            aria-label={LAB_MESSAGES.dock.languageAriaLabel}
-            onClick={() => {
-              if (langClosingRef.current) return
-              if (langMenuOpenRef.current) requestCloseLang()
-              else setLangMenuOpen(true)
-            }}
-          >
-            <Globe size={22} strokeWidth={2} aria-hidden className="shrink-0" />
-          </button>
-          <span className="lab-fabTooltip lab-langFabTooltip" aria-hidden="true">
-            {LAB_MESSAGES.dock.languageTooltip}
-          </span>
-        </div>
       </div>
     </>
   )
