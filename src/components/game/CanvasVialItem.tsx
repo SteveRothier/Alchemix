@@ -129,7 +129,6 @@ export function CanvasVialItem({
       zIndexBoost: false,
       allowContextMenu: true,
       allowNativeTouchScrolling: false,
-      autoRound: false,
       dragResistance: 0,
       edgeResistance: 0,
       onPress(this: DraggableInstance) {
