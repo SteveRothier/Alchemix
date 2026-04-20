@@ -1028,8 +1028,14 @@ html[data-lab-offer-drag-hover] .alchemix-lab .lab-controls-fab.lab-offerFab {
 
 .lab-trophyPopup {
   pointer-events: auto;
-  width: min(22rem, calc(100% - 2rem));
-  height: min(58dvh, 24.5rem);
+  /* Hauteur plafonnée ~grille catégories (2×5) ; le contenu long défile à l’intérieur. */
+  --lab-trophy-popup-w: min(28rem, calc(100vw - 2rem));
+  --lab-trophy-popup-max-h: min(25rem, calc(100dvh - 2rem));
+  --lab-trophy-popup-h: var(--lab-trophy-popup-max-h);
+  width: var(--lab-trophy-popup-w);
+  height: var(--lab-trophy-popup-h);
+  flex-shrink: 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1149,10 +1155,15 @@ html[data-lab-offer-drag-hover] .alchemix-lab .lab-controls-fab.lab-offerFab {
 }
 
 @media (max-width: 380px) {
-  .lab-trophyPopup,
+  .lab-trophyPopup {
+    --lab-trophy-popup-w: min(calc(100vw - 1rem), 28rem);
+    --lab-trophy-popup-max-h: min(25rem, calc(100dvh - 1.5rem));
+    --lab-trophy-popup-h: var(--lab-trophy-popup-max-h);
+  }
+
   .lab-controls-dialog.lab-recipesDialog {
     width: min(100% - 1rem, calc(100vw - 1rem));
-    height: min(56dvh, 22.5rem);
+    max-height: min(92dvh, calc(100dvh - 1rem));
   }
 
   .lab-trophyTab {
@@ -1172,10 +1183,9 @@ html[data-lab-offer-drag-hover] .alchemix-lab .lab-controls-fab.lab-offerFab {
   color: var(--text-h);
 }
 
-/* Zone scroll Trophy + livre recettes : même padding et barre (WebKit / Windows). */
+/* Liste trophées : remplit la popup à taille fixe ; scroll interne. */
 .lab-trophyList,
 .lab-controls-dialog.lab-recipesDialog .lab-recipesScroll {
-  flex: 1;
   min-height: 0;
   margin: 0;
   padding: 0.35rem 0.55rem 0.55rem;
@@ -1183,6 +1193,20 @@ html[data-lab-offer-drag-hover] .alchemix-lab .lab-controls-fab.lab-offerFab {
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--text-h) 18%, transparent) transparent;
+}
+
+.lab-trophyPopup > .lab-trophyList {
+  flex: 1 1 auto;
+}
+
+.lab-controls-dialog.lab-recipesDialog .lab-recipesScroll {
+  flex: 1;
+}
+
+.lab-trophyPopup > .lab-trophyCategoryDetail {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .lab-trophyList:hover,
@@ -1315,19 +1339,49 @@ html[data-lab-offer-drag-hover] .alchemix-lab .lab-controls-fab.lab-offerFab {
 .lab-trophyCategoryList {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
+  gap: 0.38rem;
+  align-content: start;
+}
+
+/* Grille d’accueil : 5 rangées égales pour remplir la hauteur sous l’en-tête. */
+.lab-trophyPopup > .lab-trophyList.lab-trophyCategoryList {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  align-content: stretch;
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  overflow: hidden;
+}
+
+.lab-trophyPopup > .lab-trophyList.lab-trophyCategoryList > li {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lab-trophyPopup > .lab-trophyList.lab-trophyCategoryList .lab-trophyCategoryCard {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.34rem;
+}
+
+.lab-trophyPopup > .lab-trophyList.lab-trophyCategoryList .lab-trophyCategoryBar {
+  margin-top: auto;
 }
 
 .lab-trophyCategoryCard {
   width: 100%;
-  min-height: 4.1rem;
+  min-height: 3.5rem;
   border-radius: 0.65rem;
   border: 1px solid color-mix(in srgb, var(--border) 72%, var(--lab-hover) 16%);
   background: color-mix(in srgb, var(--panel-bg) 96%, #fff);
   padding: 0.38rem 0.46rem;
   text-align: left;
   display: grid;
-  gap: 0.35rem;
+  gap: 0.34rem;
   cursor: pointer;
 }
 
@@ -1371,12 +1425,18 @@ html[data-lab-offer-drag-hover] .alchemix-lab .lab-controls-fab.lab-offerFab {
 }
 
 .lab-trophyCategoryDetail {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   gap: 0.4rem;
   padding: 0.4rem 0 0.55rem 0.55rem;
+  min-height: 0;
+}
+
+.lab-trophyCategoryDetail .lab-trophyList.lab-trophyCategoryChips {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  max-height: none;
 }
 
 .lab-trophyCategoryDetailStats {
