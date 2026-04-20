@@ -95,6 +95,24 @@
   width: min(9.2rem, 48%);
 }
 
+@media (max-width: 799px) {
+  /* Surcharge la règle desktop display:flex — évite doublon recherche / titre sur mobile. */
+  .alchemix-lab .lab-invPanelRoot .lab-invSectionHeadingRow {
+    display: none !important;
+  }
+
+  .alchemix-lab .lab-invSectionHeadingRow .lab-invSearchWrap {
+    margin-left: 0;
+    width: 100%;
+    max-width: none;
+  }
+
+  /* Grille de pastilles multiligne : défilement vertical sur la section (.lab-invSectionScroll). */
+  .alchemix-lab .lab-inventoryColumn .lab-invChipStrip .lab-invItemWrap {
+    flex-shrink: 0;
+  }
+}
+
 .alchemix-lab .lab-invSearchInput {
   width: 100%;
   padding: 0.3rem 0.45rem;
@@ -945,6 +963,18 @@ html[data-lab-offer-drag-hover] .alchemix-lab .lab-controls-fab.lab-offerFab {
 @media (prefers-reduced-motion: reduce) {
   .alchemix-lab .lab-fabTooltip {
     transition-duration: 0.01ms;
+  }
+}
+
+/* Pas d’infobulles FAB au survol / focus — place limitée, même seuil que le layout <800px. */
+@media (max-width: 799px) {
+  .alchemix-lab .lab-fabTooltip {
+    display: none !important;
+  }
+
+  /* FAB « Contrôles » (raccourcis clavier) — masqué sur étroits. */
+  .alchemix-lab .lab-fabWithTooltip.lab-controlsFabNarrowHide {
+    display: none !important;
   }
 }
 

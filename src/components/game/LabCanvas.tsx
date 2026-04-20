@@ -26,6 +26,22 @@ type LabCanvasProps = {
   onDuplicatePlaced: (source: LabPlacedVial) => void
 }
 
+function useMarqueeSelectionEnabled() {
+  const [enabled, setEnabled] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia('(min-width: 800px)').matches
+      : true,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 800px)')
+    const sync = () => setEnabled(mq.matches)
+    sync()
+    mq.addEventListener('change', sync)
+    return () => mq.removeEventListener('change', sync)
+  }, [])
+  return enabled
+}
+
 export function LabCanvas({
   placed,
   vialsById,
@@ -35,10 +51,17 @@ export function LabCanvas({
   onDuplicatePlaced,
 }: LabCanvasProps) {
   const labSelection = useLabSelection()
+  const marqueeSelectionEnabled = useMarqueeSelectionEnabled()
   const [marquee, setMarquee] = useState<MarqueeBox | null>(null)
   const marqueeActiveRef = useRef(false)
   const marqueeStartRef = useRef({ x: 0, y: 0 })
   const marqueeTargetsRef = useRef<MarqueeHitTarget[]>([])
+
+  useEffect(() => {
+    if (marqueeSelectionEnabled) return
+    marqueeActiveRef.current = false
+    setMarquee(null)
+  }, [marqueeSelectionEnabled])
 
   useLayoutEffect(() => {
     const canvas = canvasRef.current
@@ -78,6 +101,7 @@ export function LabCanvas({
     if (!canvas || !sel) return
 
     const onPointerDownCapture = (e: PointerEvent) => {
+      if (!marqueeSelectionEnabled) return
       if (e.button !== 0) return
       const t = e.target
       if (!(t instanceof Element)) return
@@ -147,7 +171,12 @@ export function LabCanvas({
       canvas.removeEventListener('pointerup', endMarquee)
       canvas.removeEventListener('pointercancel', endMarquee)
     }
-  }, [canvasRef, labSelection, collectIdsIntersectingMarquee])
+  }, [
+    canvasRef,
+    labSelection,
+    collectIdsIntersectingMarquee,
+    marqueeSelectionEnabled,
+  ])
 
   const marqueeStyle =
     marquee === null

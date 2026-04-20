@@ -82,13 +82,12 @@ function InventorySection({
   const n = vials.length
   return (
     <section
-      className="lab-invSectionScroll flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden"
+      className="lab-invSectionScroll flex min-h-0 flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto"
       aria-label={`${title}, ${n} ${n === 1 ? LAB_MESSAGES.inventory.unitSingular : LAB_MESSAGES.inventory.unitPlural}`}
     >
-      <div className="lab-invSectionHeadingRow pr-[0.65rem]">
+      <div className="lab-invSectionHeadingRow hidden pr-[0.65rem] min-[800px]:flex">
         <h3 className="lab-invSectionHeading m-0">
           <span className="lab-invSectionTitle">{title}</span>
-          <span className="lab-invSectionCount">{n}</span>
         </h3>
         <div className="lab-invSearchWrap">
           <input
@@ -102,10 +101,11 @@ function InventorySection({
         </div>
       </div>
       {vials.length === 0 ? (
-        <p className="lab-invEmpty pr-[0.65rem]">—</p>
+        <p className="lab-invEmpty pr-[0.65rem] max-[799px]:pr-2">—</p>
       ) : (
         <div
-          className="flex flex-wrap content-start items-center justify-start gap-[3px] pr-[0.65rem]"
+          className="lab-invChipStrip flex w-full min-w-0 flex-wrap content-start justify-start gap-[3px] pr-[0.65rem] max-[799px]:items-start max-[799px]:align-content-start max-[799px]:pb-1 max-[799px]:pr-2 min-[800px]:items-center"
+          dir="ltr"
           role="list"
         >
           {vials.map((vial) => (
@@ -121,8 +121,9 @@ export function InventoryPanel({ elements }: InventoryPanelProps) {
   const [search, setSearch] = useState('')
   const [sortMode, setSortMode] = useState<InventorySortMode>('time')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
-  const sortWrapRef = useRef<HTMLDivElement>(null)
-  const sortFabRef = useRef<HTMLButtonElement>(null)
+  const sortWrapMobileRef = useRef<HTMLDivElement>(null)
+  const sortWrapDesktopRef = useRef<HTMLDivElement>(null)
+  const sortFabRef = useRef<HTMLButtonElement | null>(null)
   const sortMenuRef = useRef<HTMLDivElement>(null)
   const sortClosingRef = useRef(false)
   const sortMenuOpenRef = useRef(sortMenuOpen)
@@ -150,7 +151,8 @@ export function InventoryPanel({ elements }: InventoryPanelProps) {
     const onPointerDown = (e: PointerEvent) => {
       const t = e.target as Node | null
       if (!t) return
-      if (sortWrapRef.current?.contains(t)) return
+      if (sortWrapMobileRef.current?.contains(t)) return
+      if (sortWrapDesktopRef.current?.contains(t)) return
       if (sortMenuRef.current?.contains(t)) return
       requestCloseSort()
     }
@@ -232,80 +234,106 @@ export function InventoryPanel({ elements }: InventoryPanelProps) {
     return sorted
   }, [elements, search, sortMode])
 
+  const onSortButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    sortFabRef.current = e.currentTarget
+    if (sortClosingRef.current) return
+    if (sortMenuOpenRef.current) requestCloseSort()
+    else setSortMenuOpen(true)
+  }
+
   return (
-    <div className="lab-invPanelRoot relative flex min-h-0 min-w-0 flex-1 flex-col gap-[0.45rem] overflow-hidden pl-[0.65rem] pr-0 pb-2 pt-1">
+    <div className="lab-invPanelRoot relative flex min-h-0 min-w-0 flex-1 flex-col gap-[0.45rem] overflow-hidden pl-[0.65rem] pr-0 pb-2 pt-1 max-[799px]:px-2 max-[799px]:pb-2">
+      <div className="flex min-h-0 shrink-0 items-center gap-2 pb-1 pt-0 min-[800px]:hidden">
+        <div className="lab-invSearchWrap min-w-0 flex-1">
+          <input
+            type="search"
+            className="lab-invSearchInput w-full min-w-0"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={LAB_MESSAGES.inventory.searchPlaceholder}
+            aria-label={LAB_MESSAGES.inventory.searchAriaLabel}
+          />
+        </div>
+        <div ref={sortWrapMobileRef} className="shrink-0">
+          <button
+            type="button"
+            className="lab-controls-fab lab-invSortBtn"
+            aria-haspopup="menu"
+            aria-expanded={sortMenuOpen}
+            aria-label={`${LAB_MESSAGES.inventory.sortAriaLabel}: ${sortLabel}`}
+            onClick={onSortButtonClick}
+          >
+            <ArrowDownUp size={22} strokeWidth={2} aria-hidden />
+          </button>
+        </div>
+      </div>
       <InventorySection
         title={LAB_MESSAGES.inventory.elementsSectionTitle}
         vials={filteredElements}
         search={search}
         onSearchChange={setSearch}
       />
-      <div ref={sortWrapRef} className="lab-invSortDock">
+      <div ref={sortWrapDesktopRef} className="lab-invSortDock max-[799px]:hidden min-[800px]:block">
         <button
-          ref={sortFabRef}
           type="button"
           className="lab-controls-fab lab-invSortBtn"
           aria-haspopup="menu"
           aria-expanded={sortMenuOpen}
           aria-label={`${LAB_MESSAGES.inventory.sortAriaLabel}: ${sortLabel}`}
-          onClick={() => {
-            if (sortClosingRef.current) return
-            if (sortMenuOpenRef.current) requestCloseSort()
-            else setSortMenuOpen(true)
-          }}
+          onClick={onSortButtonClick}
         >
           <ArrowDownUp size={22} strokeWidth={2} aria-hidden />
         </button>
-        {sortMenuOpen
-          ? createPortal(
-          <div
-            ref={sortMenuRef}
-            className="lab-invSortMenu"
-            role="menu"
-            aria-label={LAB_MESSAGES.inventory.sortAriaLabel}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              role="menuitemradio"
-              aria-checked={sortMode === 'time'}
-              className="lab-invSortOption"
-              onClick={() => {
-                setSortMode('time')
-                requestCloseSort()
-              }}
-            >
-              {LAB_MESSAGES.inventory.sortTime}
-            </button>
-            <button
-              type="button"
-              role="menuitemradio"
-              aria-checked={sortMode === 'name'}
-              className="lab-invSortOption"
-              onClick={() => {
-                setSortMode('name')
-                requestCloseSort()
-              }}
-            >
-              {LAB_MESSAGES.inventory.sortName}
-            </button>
-            <button
-              type="button"
-              role="menuitemradio"
-              aria-checked={sortMode === 'color'}
-              className="lab-invSortOption"
-              onClick={() => {
-                setSortMode('color')
-                requestCloseSort()
-              }}
-            >
-              {LAB_MESSAGES.inventory.sortColor}
-            </button>
-          </div>,
-          document.body,
-            )
-          : null}
       </div>
+      {sortMenuOpen
+        ? createPortal(
+            <div
+              ref={sortMenuRef}
+              className="lab-invSortMenu"
+              role="menu"
+              aria-label={LAB_MESSAGES.inventory.sortAriaLabel}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={sortMode === 'time'}
+                className="lab-invSortOption"
+                onClick={() => {
+                  setSortMode('time')
+                  requestCloseSort()
+                }}
+              >
+                {LAB_MESSAGES.inventory.sortTime}
+              </button>
+              <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={sortMode === 'name'}
+                className="lab-invSortOption"
+                onClick={() => {
+                  setSortMode('name')
+                  requestCloseSort()
+                }}
+              >
+                {LAB_MESSAGES.inventory.sortName}
+              </button>
+              <button
+                type="button"
+                role="menuitemradio"
+                aria-checked={sortMode === 'color'}
+                className="lab-invSortOption"
+                onClick={() => {
+                  setSortMode('color')
+                  requestCloseSort()
+                }}
+              >
+                {LAB_MESSAGES.inventory.sortColor}
+              </button>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   )
 }

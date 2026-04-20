@@ -1232,8 +1232,8 @@ export function AlchemixShell() {
     >
       <LabDragContext.Provider value={labDragValue}>
         <LabSelectionContext.Provider value={labSelectionValue}>
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(220px,19.5rem)] gap-0 text-left max-[560px]:grid-cols-[minmax(0,1fr)_minmax(140px,36vw)]">
-          <div className="relative z-10 h-full min-h-0 min-w-0 border-r border-[color:var(--border)] bg-[color:var(--panel-bg,var(--code-bg))]">
+        <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)_auto] gap-0 text-left min-[800px]:grid-cols-[minmax(0,1fr)_minmax(220px,19.5rem)] min-[800px]:grid-rows-1">
+          <div className="relative z-10 flex h-full min-h-0 min-w-0 flex-col border-[color:var(--border)] bg-[color:var(--panel-bg,var(--code-bg))] max-[799px]:border-b min-[800px]:border-b-0 min-[800px]:border-r">
             <section
               className="absolute inset-0 overflow-visible"
               aria-label={LAB_MESSAGES.dock.playAreaAriaLabel}
@@ -1489,7 +1489,7 @@ export function AlchemixShell() {
             ) : null}
           </div>
           <aside
-            className="lab-inventoryColumn relative z-0 flex h-full min-h-0 min-w-0 flex-col overflow-hidden"
+            className="lab-inventoryColumn relative z-0 flex min-h-0 min-w-0 shrink-0 flex-col overflow-hidden max-[799px]:h-[35dvh] min-[800px]:h-full"
             aria-label={LAB_MESSAGES.dock.inventoryAriaLabel}
           >
             <InventoryPanel

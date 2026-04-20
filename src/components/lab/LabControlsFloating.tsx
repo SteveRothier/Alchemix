@@ -625,7 +625,7 @@ export function LabControlsFloating({
             {LAB_MESSAGES.dock.clearTooltip}
           </span>
         </div>
-        <div className="lab-fabWithTooltip pointer-events-auto">
+        <div className="lab-fabWithTooltip lab-controlsFabNarrowHide pointer-events-auto">
           <button
             ref={fabRef}
             type="button"
